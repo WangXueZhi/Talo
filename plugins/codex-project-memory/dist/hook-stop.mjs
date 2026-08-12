@@ -279,8 +279,8 @@ var require_utils = __commonJS({
       }
       return output;
     };
-    exports.basename = (path7, { windows } = {}) => {
-      const segs = path7.split(windows ? /[\\/]/ : "/");
+    exports.basename = (path8, { windows } = {}) => {
+      const segs = path8.split(windows ? /[\\/]/ : "/");
       const last = segs[segs.length - 1];
       if (last === "") {
         return segs[segs.length - 2];
@@ -2089,7 +2089,7 @@ var require_ignore = __commonJS({
       //   path matching.
       // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
       // @returns {TestResult} true if a file is ignored
-      test(path7, checkUnignored, mode) {
+      test(path8, checkUnignored, mode) {
         let ignored = false;
         let unignored = false;
         let matchedRule;
@@ -2098,7 +2098,7 @@ var require_ignore = __commonJS({
           if (unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored) {
             return;
           }
-          const matched = rule[mode].test(path7);
+          const matched = rule[mode].test(path8);
           if (!matched) {
             return;
           }
@@ -2119,17 +2119,17 @@ var require_ignore = __commonJS({
     var throwError = (message, Ctor) => {
       throw new Ctor(message);
     };
-    var checkPath = (path7, originalPath, doThrow) => {
-      if (!isString(path7)) {
+    var checkPath = (path8, originalPath, doThrow) => {
+      if (!isString(path8)) {
         return doThrow(
           `path must be a string, but got \`${originalPath}\``,
           TypeError
         );
       }
-      if (!path7) {
+      if (!path8) {
         return doThrow(`path must not be empty`, TypeError);
       }
-      if (checkPath.isNotRelative(path7)) {
+      if (checkPath.isNotRelative(path8)) {
         const r = "`path.relative()`d";
         return doThrow(
           `path should be a ${r} string, but got "${originalPath}"`,
@@ -2138,7 +2138,7 @@ var require_ignore = __commonJS({
       }
       return true;
     };
-    var isNotRelative = (path7) => REGEX_TEST_INVALID_PATH.test(path7);
+    var isNotRelative = (path8) => REGEX_TEST_INVALID_PATH.test(path8);
     checkPath.isNotRelative = isNotRelative;
     checkPath.convert = (p) => p;
     var Ignore = class {
@@ -2168,19 +2168,19 @@ var require_ignore = __commonJS({
       }
       // @returns {TestResult}
       _test(originalPath, cache, checkUnignored, slices) {
-        const path7 = originalPath && checkPath.convert(originalPath);
+        const path8 = originalPath && checkPath.convert(originalPath);
         checkPath(
-          path7,
+          path8,
           originalPath,
           this._strictPathCheck ? throwError : RETURN_FALSE
         );
-        return this._t(path7, cache, checkUnignored, slices);
+        return this._t(path8, cache, checkUnignored, slices);
       }
-      checkIgnore(path7) {
-        if (!REGEX_TEST_TRAILING_SLASH.test(path7)) {
-          return this.test(path7);
+      checkIgnore(path8) {
+        if (!REGEX_TEST_TRAILING_SLASH.test(path8)) {
+          return this.test(path8);
         }
-        const slices = path7.split(SLASH).filter(Boolean);
+        const slices = path8.split(SLASH).filter(Boolean);
         slices.pop();
         if (slices.length) {
           const parent = this._t(
@@ -2193,18 +2193,18 @@ var require_ignore = __commonJS({
             return parent;
           }
         }
-        return this._rules.test(path7, false, MODE_CHECK_IGNORE);
+        return this._rules.test(path8, false, MODE_CHECK_IGNORE);
       }
-      _t(path7, cache, checkUnignored, slices) {
-        if (path7 in cache) {
-          return cache[path7];
+      _t(path8, cache, checkUnignored, slices) {
+        if (path8 in cache) {
+          return cache[path8];
         }
         if (!slices) {
-          slices = path7.split(SLASH).filter(Boolean);
+          slices = path8.split(SLASH).filter(Boolean);
         }
         slices.pop();
         if (!slices.length) {
-          return cache[path7] = this._rules.test(path7, checkUnignored, MODE_IGNORE);
+          return cache[path8] = this._rules.test(path8, checkUnignored, MODE_IGNORE);
         }
         const parent = this._t(
           slices.join(SLASH) + SLASH,
@@ -2212,29 +2212,29 @@ var require_ignore = __commonJS({
           checkUnignored,
           slices
         );
-        return cache[path7] = parent.ignored ? parent : this._rules.test(path7, checkUnignored, MODE_IGNORE);
+        return cache[path8] = parent.ignored ? parent : this._rules.test(path8, checkUnignored, MODE_IGNORE);
       }
-      ignores(path7) {
-        return this._test(path7, this._ignoreCache, false).ignored;
+      ignores(path8) {
+        return this._test(path8, this._ignoreCache, false).ignored;
       }
       createFilter() {
-        return (path7) => !this.ignores(path7);
+        return (path8) => !this.ignores(path8);
       }
       filter(paths) {
         return makeArray(paths).filter(this.createFilter());
       }
       // @returns {TestResult}
-      test(path7) {
-        return this._test(path7, this._testCache, true);
+      test(path8) {
+        return this._test(path8, this._testCache, true);
       }
     };
     var factory = (options) => new Ignore(options);
-    var isPathValid = (path7) => checkPath(path7 && checkPath.convert(path7), path7, RETURN_FALSE);
+    var isPathValid = (path8) => checkPath(path8 && checkPath.convert(path8), path8, RETURN_FALSE);
     var setupWindows = () => {
       const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
       checkPath.convert = makePosix;
       const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
-      checkPath.isNotRelative = (path7) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path7) || isNotRelative(path7);
+      checkPath.isNotRelative = (path8) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path8) || isNotRelative(path8);
     };
     if (
       // Detect `process` so that it can run in browsers.
@@ -2250,21 +2250,126 @@ var require_ignore = __commonJS({
 });
 
 // src/hook-stop.ts
-import { existsSync as existsSync5, readFileSync as readFileSync5 } from "fs";
-import { pathToFileURL as pathToFileURL2 } from "url";
+import { existsSync as existsSync6, readFileSync as readFileSync6 } from "fs";
+import { pathToFileURL as pathToFileURL3 } from "url";
 
-// src/paths.ts
+// ../../packages/project-memory-core/src/paths.ts
 var import_picomatch = __toESM(require_picomatch2(), 1);
-import { existsSync, mkdirSync, readFileSync } from "fs";
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from "fs";
 import { homedir } from "os";
 import path from "path";
-function resolveDataDir() {
-  const explicit = process.env.CODEX_PROJECT_MEMORY_HOME;
-  if (explicit) {
-    return path.resolve(explicit);
+
+// ../../packages/project-memory-core/src/errors.ts
+var ProjectMemoryError = class extends Error {
+  code;
+  details;
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = "ProjectMemoryError";
+    this.code = code;
+    this.details = details;
   }
+};
+
+// ../../packages/project-memory-core/src/paths.ts
+function configRoot() {
+  const windowsAppData = process.platform === "win32" ? process.env.APPDATA ?? process.env.LOCALAPPDATA : null;
+  return process.env.PROJECT_MEMORY_CONFIG_HOME ? path.resolve(process.env.PROJECT_MEMORY_CONFIG_HOME) : path.join(windowsAppData ?? homedir(), ".project-memory");
+}
+function legacyRoot() {
   const codexHome = process.env.CODEX_HOME ? path.resolve(process.env.CODEX_HOME) : path.join(homedir(), ".codex");
   return path.join(codexHome, "project-memory", "v1");
+}
+function selectionFile() {
+  return path.join(configRoot(), "active-home.json");
+}
+function readSelectedHome() {
+  const filePath = selectionFile();
+  if (!existsSync(filePath)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(filePath, "utf8"));
+    return typeof parsed.activeHome === "string" && parsed.activeHome.trim() ? path.resolve(parsed.activeHome) : null;
+  } catch (error) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Talo home selection is invalid.", {
+      path: filePath,
+      cause: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+function inspectDataHomes() {
+  const neutralHome = path.join(configRoot(), "v1");
+  const legacyHome = legacyRoot();
+  const neutralExists = existsSync(neutralHome);
+  const legacyExists = existsSync(legacyHome);
+  const projectEnv = process.env.PROJECT_MEMORY_HOME;
+  const legacyEnv = process.env.CODEX_PROJECT_MEMORY_HOME;
+  const selected = readSelectedHome();
+  let activeHome = null;
+  let selectionSource = null;
+  if (projectEnv) {
+    activeHome = path.resolve(projectEnv);
+    selectionSource = "project-env";
+  } else if (legacyEnv) {
+    activeHome = path.resolve(legacyEnv);
+    selectionSource = "legacy-env";
+  } else if (selected) {
+    activeHome = selected;
+    selectionSource = "selection";
+  } else if (neutralExists && legacyExists && neutralHome !== legacyHome) {
+    return {
+      activeHome: null,
+      selectionSource: null,
+      neutralHome,
+      legacyHome,
+      neutralExists,
+      legacyExists,
+      ambiguous: true,
+      selectionPath: selectionFile()
+    };
+  } else if (neutralExists) {
+    activeHome = neutralHome;
+    selectionSource = "neutral";
+  } else if (legacyExists) {
+    activeHome = legacyHome;
+    selectionSource = "legacy";
+  } else {
+    activeHome = neutralHome;
+    selectionSource = "new";
+  }
+  return {
+    activeHome,
+    selectionSource,
+    neutralHome,
+    legacyHome,
+    neutralExists,
+    legacyExists,
+    ambiguous: false,
+    selectionPath: selectionFile()
+  };
+}
+function resolveMemoryHubPath() {
+  return path.join(configRoot(), "MEMORY_HUB.html");
+}
+function resolveDataDir() {
+  const inspection = inspectDataHomes();
+  if (inspection.ambiguous || !inspection.activeHome) {
+    throw new ProjectMemoryError(
+      "AMBIGUOUS_MEMORY_HOME",
+      "Both the shared and legacy Talo homes exist. Select one explicitly.",
+      { ...inspection }
+    );
+  }
+  return inspection.activeHome;
 }
 function ensureDataDir(dataDir = resolveDataDir()) {
   mkdirSync(dataDir, { recursive: true, mode: 448 });
@@ -2284,414 +2389,109 @@ function matchesCustomDeny(relativePath, patterns) {
   return patterns.some((pattern) => import_picomatch.default.isMatch(relativePath, pattern, { dot: true }));
 }
 
-// src/service.ts
-import path5, { basename } from "path";
-import { pathToFileURL } from "url";
+// ../../packages/project-memory-core/src/service.ts
+import path6, { basename } from "path";
+import { pathToFileURL as pathToFileURL2 } from "url";
 
-// src/errors.ts
-var ProjectMemoryError = class extends Error {
-  code;
-  details;
-  constructor(code, message, details = {}) {
-    super(message);
-    this.name = "ProjectMemoryError";
-    this.code = code;
-    this.details = details;
-  }
+// ../../packages/project-memory-core/src/display-title.ts
+var FALLBACK_ROLES = {
+  architecture: "conclusion",
+  decision: "conclusion",
+  workflow: "progress",
+  convention: "progress",
+  pitfall: "risk",
+  status: "progress"
 };
-
-// src/git.ts
-import { execFileSync } from "child_process";
-import { realpathSync, statSync } from "fs";
-import path2 from "path";
-function git(pathValue, args) {
-  try {
-    return execFileSync("git", ["-C", pathValue, ...args], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    }).trim();
-  } catch {
-    return null;
-  }
-}
-function detectGitMetadata(inputPath) {
-  const realInput = realpathSync(path2.resolve(inputPath));
-  const directory = statSync(realInput).isDirectory() ? realInput : path2.dirname(realInput);
-  const root = git(directory, ["rev-parse", "--show-toplevel"]);
-  if (!root) {
-    return {
-      rootPath: directory,
-      isGit: false,
-      gitCommonDir: null,
-      remoteUrl: null,
-      headCommit: null
-    };
-  }
-  const rootPath = realpathSync(root);
-  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
-  const gitCommonDir = commonDirRaw ? realpathSync(path2.resolve(rootPath, commonDirRaw)) : null;
-  return {
-    rootPath,
-    isGit: true,
-    gitCommonDir,
-    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
-    headCommit: git(rootPath, ["rev-parse", "HEAD"])
-  };
-}
-function listGitFiles(rootPath) {
-  try {
-    const output = execFileSync(
-      "git",
-      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
-    );
-    return output.split("\0").filter(Boolean);
-  } catch {
-    return null;
-  }
-}
-
-// src/guide.ts
-import { createHash } from "crypto";
-var CITATION_WEIGHTS = {
-  evidence: 3,
-  report: 2,
-  workflow: 2,
-  reference: 1
+var ROLE_PREFIXES = {
+  conclusion: "\u5DF2\u786E\u8BA4",
+  progress: "\u8FDB\u5C55",
+  risk: "\u9700\u8981\u6CE8\u610F",
+  next_step: "\u4E0B\u4E00\u6B65",
+  reference: "\u8D44\u6599"
 };
-var RELATION_LABELS = {
-  related_to: "\u76F8\u5173",
-  depends_on: "\u4F9D\u8D56",
-  supports: "\u652F\u6301",
-  contradicts: "\u77DB\u76FE",
-  supersedes: "\u66FF\u4EE3",
-  derived_from: "\u6765\u6E90\u4E8E"
+var ROLE_FALLBACKS = {
+  conclusion: "\u5DF2\u786E\u8BA4\u7684\u9879\u76EE\u7ED3\u8BBA",
+  progress: "\u6700\u8FD1\u9879\u76EE\u8FDB\u5C55",
+  risk: "\u9700\u8981\u5173\u6CE8\u7684\u95EE\u9898",
+  next_step: "\u5DF2\u786E\u8BA4\u7684\u4E0B\u4E00\u6B65",
+  reference: "\u9879\u76EE\u53C2\u8003\u8D44\u6599"
 };
-function pairKey(left, right) {
-  return [left, right].sort().join("\0");
+function compactText(value) {
+  return value.replaceAll(/\s+/g, " ").replaceAll(/^[#>*`\-\s]+|[#>*`\s]+$/g, "").trim();
 }
-function stableId(prefix, values) {
-  return `${prefix}_${createHash("sha256").update(values.join("\0")).digest("hex").slice(0, 16)}`;
+function firstSentence(value, maxLength = 30) {
+  const compact2 = compactText(value);
+  const sentence = compact2.split(/[。！？.!?]\s*/u)[0]?.trim() ?? compact2;
+  return sentence.length > maxLength ? `${sentence.slice(0, maxLength - 1)}\u2026` : sentence;
 }
-function fileName(sourcePath) {
-  return sourcePath.split("/").at(-1) ?? sourcePath;
+function isTechnicalMemoryTitle(value) {
+  const title = compactText(value);
+  if (!title) return false;
+  return [
+    /\b[0-9a-f]{7,64}\b/iu,
+    /\b(?:build|deploy|candidate|memory|proposal)[-_:][a-z0-9._:-]+\b/iu,
+    /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/iu,
+    /(?:^|\s)(?:\/Users\/|[A-Za-z]:\\|\.{0,2}\/|[\w.-]+\/[\w./-]+)/u,
+    /\b(?:related_to|observes|causes|depends_on|supports|contradicts|supersedes|derived_from)\b/u,
+    /(?:端口|port)\s*[:：]?\s*\d{2,5}\b/iu,
+    /(?:构建指纹|提交哈希|commit hash|candidateRef|memoryId|proposalId)/iu
+  ].some((pattern) => pattern.test(title));
 }
-function sortedMemories(memories) {
-  return [...memories].sort((left, right) => left.id.localeCompare(right.id));
+function readableCandidate(value) {
+  if (!value) return null;
+  const candidate = firstSentence(value);
+  return candidate && !isTechnicalMemoryTitle(candidate) ? candidate : null;
 }
-function relationDegrees(graph) {
-  const degrees = new Map(graph.nodes.map((memory) => [memory.id, 0]));
-  for (const relation of graph.relations) {
-    degrees.set(relation.fromMemoryId, (degrees.get(relation.fromMemoryId) ?? 0) + 1);
-    degrees.set(relation.toMemoryId, (degrees.get(relation.toMemoryId) ?? 0) + 1);
-  }
-  return degrees;
+function buildMemoryDisplayTitle(source) {
+  const role = source.briefRole ?? (source.kind ? FALLBACK_ROLES[source.kind] : "reference");
+  const topic = readableCandidate(source.topic);
+  if (topic) return role === "reference" ? `${topic}\u8D44\u6599` : `${ROLE_PREFIXES[role]}\uFF1A${topic}`;
+  const narrative = readableCandidate(source.narrative?.conclusion);
+  if (narrative) return narrative;
+  const summary = readableCandidate(source.summary);
+  if (summary) return summary;
+  const original = readableCandidate(source.title);
+  return original ?? ROLE_FALLBACKS[role];
 }
-function connectedComponents(graph) {
-  const adjacency = new Map(graph.nodes.map((memory) => [memory.id, /* @__PURE__ */ new Set()]));
-  for (const relation of graph.relations) {
-    adjacency.get(relation.fromMemoryId)?.add(relation.toMemoryId);
-    adjacency.get(relation.toMemoryId)?.add(relation.fromMemoryId);
-  }
-  const visited = /* @__PURE__ */ new Set();
-  const components = [];
-  for (const memory of sortedMemories(graph.nodes)) {
-    if (visited.has(memory.id)) continue;
-    const component = [];
-    const queue = [memory.id];
-    visited.add(memory.id);
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current) continue;
-      component.push(current);
-      for (const neighbor of adjacency.get(current) ?? []) {
-        if (visited.has(neighbor)) continue;
-        visited.add(neighbor);
-        queue.push(neighbor);
-      }
-    }
-    components.push(component.sort());
-  }
-  return components.sort(
-    (left, right) => right.length - left.length || (left[0] ?? "").localeCompare(right[0] ?? "")
+function withoutRolePrefix(value) {
+  return firstSentence(value, 48).replace(/^(?:进展|已确认|需要注意|下一步|资料)\s*[:：]\s*/u, "");
+}
+function eventDate(source) {
+  return (source.narrative?.occurredAt ?? source.createdAt ?? source.updatedAt ?? "\u65F6\u95F4\u672A\u8865\u5168").slice(0, 10);
+}
+function buildContextualMemoryDisplayTitles(sources) {
+  const topicTitles = new Map(
+    sources.map((source) => [
+      source.id,
+      withoutRolePrefix(source.displayTitle ?? buildMemoryDisplayTitle(source)) || "\u9879\u76EE\u4E8B\u4EF6"
+    ])
   );
-}
-function buildHighlights(graph, degrees) {
-  const memories = [...graph.nodes];
-  const highlights = [];
-  const select = (kind, candidates, reason, value) => {
-    const memory = candidates[0];
-    if (!memory) return;
-    highlights.push({
-      id: `highlight:${kind}:${memory.id}`,
-      kind,
-      memoryId: memory.id,
-      title: memory.title,
-      reason: reason(memory),
-      value: value(memory)
-    });
-  };
-  const byDegree = [...memories].sort(
-    (left, right) => (degrees.get(right.id) ?? 0) - (degrees.get(left.id) ?? 0) || right.citations.length - left.citations.length || left.id.localeCompare(right.id)
+  const counts = /* @__PURE__ */ new Map();
+  for (const title of topicTitles.values()) counts.set(title, (counts.get(title) ?? 0) + 1);
+  const provisional = sources.map((source) => {
+    const topicTitle = topicTitles.get(source.id) ?? "\u9879\u76EE\u4E8B\u4EF6";
+    const original = withoutRolePrefix(source.title);
+    const narrative = withoutRolePrefix(source.narrative?.conclusion ?? "");
+    const readable = original && !isTechnicalMemoryTitle(original) ? original : narrative || topicTitle;
+    if ((counts.get(topicTitle) ?? 0) === 1) return { source, title: readable };
+    return { source, title: `${eventDate(source)}\uFF5C${readable}` };
+  });
+  const totals = /* @__PURE__ */ new Map();
+  const occurrences = /* @__PURE__ */ new Map();
+  for (const item of provisional) totals.set(item.title, (totals.get(item.title) ?? 0) + 1);
+  return new Map(
+    provisional.map(({ source, title }) => {
+      const occurrence = (occurrences.get(title) ?? 0) + 1;
+      occurrences.set(title, occurrence);
+      return [
+        source.id,
+        (totals.get(title) ?? 0) > 1 ? `${title} \xB7 ${source.sequence ?? occurrence}` : title
+      ];
+    })
   );
-  if ((degrees.get(byDegree[0]?.id ?? "") ?? 0) > 0) {
-    select(
-      "connected",
-      byDegree,
-      (memory) => `\u8FDE\u63A5 ${degrees.get(memory.id) ?? 0} \u6761\u5DF2\u5BA1\u6838\u5173\u7CFB`,
-      (memory) => degrees.get(memory.id) ?? 0
-    );
-  }
-  select(
-    "evidence",
-    [...memories].sort(
-      (left, right) => right.citations.length - left.citations.length || left.id.localeCompare(right.id)
-    ),
-    (memory) => `\u8BB0\u5F55 ${memory.citations.length} \u4E2A\u53EF\u8FFD\u6EAF\u6765\u6E90`,
-    (memory) => memory.citations.length
-  );
-  select(
-    "recent",
-    [...memories].sort(
-      (left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt) || left.id.localeCompare(right.id)
-    ),
-    (memory) => `\u6700\u8FD1\u66F4\u65B0\u4E8E ${memory.updatedAt}`,
-    (memory) => memory.updatedAt
-  );
-  return highlights;
-}
-function buildRelationSuggestions(projectId, graph, limit) {
-  const memories = sortedMemories(graph.nodes.filter((memory) => memory.projectId === projectId));
-  if (memories.length < 2) return [];
-  const existingPairs = new Set(
-    graph.relations.map((relation) => pairKey(relation.fromMemoryId, relation.toMemoryId))
-  );
-  const signalsByPair = /* @__PURE__ */ new Map();
-  const memoryById = new Map(memories.map((memory) => [memory.id, memory]));
-  const addSignal = (leftId, rightId, signal) => {
-    if (leftId === rightId || existingPairs.has(pairKey(leftId, rightId))) return;
-    const key = pairKey(leftId, rightId);
-    const signals = signalsByPair.get(key) ?? [];
-    if (!signals.some((candidate) => candidate.key === signal.key)) signals.push(signal);
-    signalsByPair.set(key, signals);
-  };
-  const citationIndex = /* @__PURE__ */ new Map();
-  for (const memory of memories) {
-    const seen = /* @__PURE__ */ new Set();
-    for (const citation of memory.citations) {
-      if (!citation.accessible) continue;
-      const key = `${citation.sourceProjectId}\0${citation.sourcePath}`;
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const indexed = citationIndex.get(key) ?? [];
-      indexed.push({
-        memoryId: memory.id,
-        role: citation.role,
-        sourceProjectId: citation.sourceProjectId,
-        sourcePath: citation.sourcePath
-      });
-      citationIndex.set(key, indexed);
-    }
-  }
-  for (const [key, references] of citationIndex) {
-    if (references.length / memories.length > 0.6) continue;
-    for (let leftIndex = 0; leftIndex < references.length; leftIndex += 1) {
-      for (let rightIndex = leftIndex + 1; rightIndex < references.length; rightIndex += 1) {
-        const left = references[leftIndex];
-        const right = references[rightIndex];
-        if (!left || !right) continue;
-        const role = CITATION_WEIGHTS[left.role] >= CITATION_WEIGHTS[right.role] ? left.role : right.role;
-        addSignal(left.memoryId, right.memoryId, {
-          kind: "shared_citation",
-          key: `citation:${key}`,
-          label: `\u5171\u4EAB${role === "evidence" ? "\u8BC1\u636E" : role === "report" ? "\u62A5\u544A" : role === "workflow" ? "\u6D41\u7A0B" : "\u53C2\u8003"}\uFF1A${fileName(left.sourcePath)}`,
-          weight: CITATION_WEIGHTS[role],
-          role,
-          sourceProjectId: left.sourceProjectId,
-          sourcePath: left.sourcePath
-        });
-      }
-    }
-  }
-  const topicIndex = /* @__PURE__ */ new Map();
-  for (const memory of memories) {
-    const topic = memory.topic?.trim();
-    if (!topic) continue;
-    topicIndex.set(topic, [...topicIndex.get(topic) ?? [], memory.id]);
-  }
-  for (const [topic, memoryIds] of topicIndex) {
-    for (let leftIndex = 0; leftIndex < memoryIds.length; leftIndex += 1) {
-      for (let rightIndex = leftIndex + 1; rightIndex < memoryIds.length; rightIndex += 1) {
-        const leftId = memoryIds[leftIndex];
-        const rightId = memoryIds[rightIndex];
-        if (!leftId || !rightId) continue;
-        addSignal(leftId, rightId, {
-          kind: "same_topic",
-          key: `topic:${topic}`,
-          label: `\u540C\u5C5E\u4E3B\u9898\uFF1A${topic}`,
-          weight: 2
-        });
-      }
-    }
-  }
-  const tagFrequency = /* @__PURE__ */ new Map();
-  for (const memory of memories) {
-    for (const tag of new Set(memory.tags.map((value) => value.trim()).filter(Boolean))) {
-      tagFrequency.set(tag, (tagFrequency.get(tag) ?? 0) + 1);
-    }
-  }
-  for (let leftIndex = 0; leftIndex < memories.length; leftIndex += 1) {
-    for (let rightIndex = leftIndex + 1; rightIndex < memories.length; rightIndex += 1) {
-      const left = memories[leftIndex];
-      const right = memories[rightIndex];
-      if (!left || !right) continue;
-      const rightTags = new Set(right.tags);
-      const shared = [...new Set(left.tags)].filter(
-        (tag) => rightTags.has(tag) && (tagFrequency.get(tag) ?? 0) / memories.length <= 0.5
-      ).sort();
-      if (shared.length < 2) continue;
-      for (const tag of shared.slice(0, 2)) {
-        addSignal(left.id, right.id, {
-          kind: "shared_tag",
-          key: `tag:${tag}`,
-          label: `\u5171\u4EAB\u6807\u7B7E\uFF1A${tag}`,
-          weight: 1
-        });
-      }
-    }
-  }
-  const suggestions = [];
-  for (const [key, rawSignals] of signalsByPair) {
-    const [fromMemoryId, toMemoryId] = key.split("\0");
-    if (!fromMemoryId || !toMemoryId || !memoryById.has(fromMemoryId) || !memoryById.has(toMemoryId))
-      continue;
-    const signals = [...rawSignals].sort(
-      (left, right) => right.weight - left.weight || left.key.localeCompare(right.key)
-    );
-    const score = signals.reduce((total, signal) => total + signal.weight, 0);
-    if (score < 2) continue;
-    const signalKeys = signals.map((signal) => signal.key).sort();
-    suggestions.push({
-      id: stableId("hint", [projectId, fromMemoryId, toMemoryId, ...signalKeys]),
-      projectId,
-      fromMemoryId,
-      toMemoryId,
-      type: "related_to",
-      rationale: signals.map((signal) => signal.label).join("\uFF1B"),
-      score,
-      signals
-    });
-  }
-  return suggestions.sort(
-    (left, right) => right.score - left.score || left.fromMemoryId.localeCompare(right.fromMemoryId) || left.toMemoryId.localeCompare(right.toMemoryId)
-  ).slice(0, Math.max(1, Math.min(limit, 50)));
-}
-function buildGaps(graph, degrees) {
-  const gaps = [];
-  for (const memory of sortedMemories(graph.nodes)) {
-    if ((degrees.get(memory.id) ?? 0) === 0) {
-      gaps.push({
-        id: `gap:isolated:${memory.id}`,
-        kind: "isolated",
-        memoryIds: [memory.id],
-        message: `\u201C${memory.title}\u201D\u5C1A\u672A\u8FDE\u63A5\u4EFB\u4F55\u5DF2\u5BA1\u6838\u5173\u7CFB\u3002`
-      });
-    }
-    if (memory.stale) {
-      gaps.push({
-        id: `gap:stale-memory:${memory.id}`,
-        kind: "stale_memory",
-        memoryIds: [memory.id],
-        message: `\u201C${memory.title}\u201D\u5DF2\u8FC7\u671F\uFF1A${memory.staleReason ?? "\u6765\u6E90\u53D1\u751F\u53D8\u5316"}`
-      });
-    }
-    const staleCitations = memory.citations.filter((citation) => citation.stale);
-    if (staleCitations.length > 0) {
-      gaps.push({
-        id: `gap:stale-citation:${memory.id}`,
-        kind: "stale_citation",
-        memoryIds: [memory.id],
-        message: `\u201C${memory.title}\u201D\u6709 ${staleCitations.length} \u4E2A\u6765\u6E90\u5DF2\u5931\u6548\u3002`
-      });
-    }
-  }
-  return gaps;
-}
-function buildSuggestedQuestions(graph, suggestions, degrees) {
-  const memoryById = new Map(graph.nodes.map((memory) => [memory.id, memory]));
-  const questions = [];
-  for (const relation of graph.relations) {
-    const from = memoryById.get(relation.fromMemoryId);
-    const to = memoryById.get(relation.toMemoryId);
-    if (!from || !to) continue;
-    questions.push({
-      id: `question:relation:${relation.id}`,
-      question: `\u201C${from.title}\u201D\u5982\u4F55${RELATION_LABELS[relation.type]}\u201C${to.title}\u201D\uFF1F`,
-      why: `\u5DF2\u6709\u4E00\u6761\u5DF2\u5BA1\u6838\u7684${RELATION_LABELS[relation.type]}\u5173\u7CFB\uFF0C\u53EF\u6CBF\u5173\u7CFB\u7406\u7531\u548C\u6765\u6E90\u7EE7\u7EED\u8FFD\u6EAF\u3002`,
-      memoryIds: [from.id, to.id]
-    });
-  }
-  for (const suggestion of suggestions) {
-    const from = memoryById.get(suggestion.fromMemoryId);
-    const to = memoryById.get(suggestion.toMemoryId);
-    if (!from || !to) continue;
-    questions.push({
-      id: `question:suggestion:${suggestion.id}`,
-      question: `\u201C${from.title}\u201D\u4E0E\u201C${to.title}\u201D\u4E4B\u95F4\u662F\u5426\u7F3A\u5C11\u4E00\u6761\u6B63\u5F0F\u5173\u7CFB\uFF1F`,
-      why: suggestion.rationale,
-      memoryIds: [from.id, to.id]
-    });
-  }
-  for (const memory of sortedMemories(graph.nodes)) {
-    if ((degrees.get(memory.id) ?? 0) !== 0) continue;
-    questions.push({
-      id: `question:isolated:${memory.id}`,
-      question: `\u201C${memory.title}\u201D\u5E94\u4E0E\u54EA\u4E9B\u5DF2\u6709\u8BB0\u5FC6\u5EFA\u7ACB\u8054\u7CFB\uFF1F`,
-      why: "\u8BE5\u8BB0\u5FC6\u5F53\u524D\u662F\u5B64\u7ACB\u8282\u70B9\uFF0C\u53EF\u80FD\u5B58\u5728\u5C1A\u672A\u5BA1\u6838\u7684\u77E5\u8BC6\u8054\u7CFB\u3002",
-      memoryIds: [memory.id]
-    });
-  }
-  return questions.slice(0, 5);
-}
-function analyzeKnowledgeGraph(projectId, projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), relationSuggestionLimit = 12) {
-  const degrees = relationDegrees(graph);
-  const components = connectedComponents(graph);
-  const relationSuggestions = buildRelationSuggestions(projectId, graph, relationSuggestionLimit);
-  const topics = /* @__PURE__ */ new Map();
-  for (const memory of graph.nodes) {
-    const topic = memory.topic ?? "\u672A\u5206\u7EC4";
-    topics.set(topic, [...topics.get(topic) ?? [], memory]);
-  }
-  return {
-    projectId,
-    projectName,
-    generatedAt,
-    summary: {
-      memoryCount: graph.nodes.length,
-      formalRelationCount: graph.relations.length,
-      citationCount: graph.nodes.reduce((total, memory) => total + memory.citations.length, 0),
-      staleMemoryCount: graph.nodes.filter((memory) => memory.stale).length,
-      staleCitationCount: graph.nodes.reduce(
-        (total, memory) => total + memory.citations.filter((citation) => citation.stale).length,
-        0
-      ),
-      componentCount: components.length,
-      isolatedCount: graph.nodes.filter((memory) => (degrees.get(memory.id) ?? 0) === 0).length
-    },
-    topics: [...topics].sort(([left], [right]) => left.localeCompare(right, "zh-CN")).map(([name, memories]) => ({
-      name,
-      memoryIds: sortedMemories(memories).map((memory) => memory.id),
-      memoryCount: memories.length,
-      staleCount: memories.filter((memory) => memory.stale).length
-    })),
-    highlights: buildHighlights(graph, degrees),
-    gaps: buildGaps(graph, degrees),
-    suggestedQuestions: buildSuggestedQuestions(graph, relationSuggestions, degrees),
-    relationSuggestions
-  };
 }
 
-// src/retrieval.ts
+// ../../packages/project-memory-core/src/retrieval.ts
 var TOKEN_ESTIMATION_NOTE = "Model-independent estimate for context planning; not billing or model tokenizer output.";
 var FIELD_WEIGHTS = {
   title: 6,
@@ -2739,8 +2539,8 @@ function estimateTokens(value) {
 }
 function temporarySummary(memory) {
   if (memory.summary) return memory.summary;
-  const compact = memory.content.replace(/\s+/g, " ").trim();
-  return compact.length <= 220 ? compact : `${compact.slice(0, 217)}...`;
+  const compact2 = memory.content.replace(/\s+/g, " ").trim();
+  return compact2.length <= 220 ? compact2 : `${compact2.slice(0, 217)}...`;
 }
 function memoryFields(memory) {
   return {
@@ -2962,11 +2762,895 @@ function buildGetResult(memories, budgetTokens) {
   };
 }
 
-// src/security.ts
-var import_ignore = __toESM(require_ignore(), 1);
+// ../../packages/project-memory-core/src/brief.ts
+var FALLBACK_ROLES2 = {
+  architecture: "conclusion",
+  decision: "conclusion",
+  workflow: "progress",
+  convention: "progress",
+  pitfall: "risk",
+  status: "progress"
+};
+function resolvedBriefRole(memory) {
+  if (memory.briefRole) return { role: memory.briefRole, source: "reviewed" };
+  return { role: FALLBACK_ROLES2[memory.kind] ?? "reference", source: "inferred" };
+}
+function compareRecent(left, right) {
+  return Date.parse(right.updatedAt) - Date.parse(left.updatedAt) || left.id.localeCompare(right.id);
+}
+function briefItem(memory) {
+  const resolved = resolvedBriefRole(memory);
+  return {
+    memoryId: memory.id,
+    title: memory.title,
+    displayTitle: buildMemoryDisplayTitle(memory),
+    summary: temporarySummary(memory),
+    topic: memory.topic,
+    briefRole: resolved.role,
+    roleSource: resolved.source,
+    stale: memory.stale,
+    citationCount: memory.citations.length,
+    updatedAt: memory.updatedAt,
+    occurredAt: memory.narrative?.occurredAt ?? null,
+    narrative: memory.narrative ?? null
+  };
+}
+function compareOccurred(left, right) {
+  const leftOccurred = left.narrative?.occurredAt;
+  const rightOccurred = right.narrative?.occurredAt;
+  if (leftOccurred && rightOccurred) {
+    return Date.parse(rightOccurred) - Date.parse(leftOccurred) || compareRecent(left, right);
+  }
+  if (leftOccurred) return -1;
+  if (rightOccurred) return 1;
+  return compareRecent(left, right);
+}
+function handoffItem(memory) {
+  return { ...briefItem(memory), isLegacy: !memory.narrative };
+}
+function coverageFor(memories) {
+  const relevant = memories.filter((memory) => resolvedBriefRole(memory).role !== "reference");
+  if (relevant.length === 0)
+    return "\u6839\u636E\u5DF2\u4FDD\u5B58\u8BB0\u5F55\u6574\u7406\uFF1A\u76EE\u524D\u8FD8\u6CA1\u6709\u8DB3\u591F\u7684\u5DE5\u4F5C\u8BB0\u5F55\u6765\u8BF4\u660E\u8FD9\u4EFD\u9879\u76EE\u8D44\u6599\u4E3B\u8981\u8986\u76D6\u4EC0\u4E48\u3002";
+  const topics = [...new Set(relevant.map((memory) => memory.topic).filter(Boolean))].slice(0, 3);
+  const titles = relevant.slice(0, 3).map((memory) => `\u300A${buildMemoryDisplayTitle(memory)}\u300B`);
+  const subject = topics.length > 0 ? `\u56F4\u7ED5${topics.join("\u3001")}` : "\u56F4\u7ED5\u6700\u8FD1\u4FDD\u5B58\u7684\u9879\u76EE\u5DE5\u4F5C";
+  return `\u6839\u636E\u5DF2\u4FDD\u5B58\u8BB0\u5F55\u6574\u7406\uFF1A\u8FD9\u4EFD\u8D44\u6599\u4E3B\u8981${subject}\uFF0C\u5305\u62EC${titles.join("\u3001")}\u7B49\u5DE5\u4F5C\u3002`;
+}
+function startHere(memories) {
+  const byRole = (role) => memories.filter((memory) => resolvedBriefRole(memory).role === role);
+  const next = byRole("next_step").sort(compareOccurred);
+  const conclusions = byRole("conclusion").sort(compareOccurred);
+  const progress = byRole("progress").filter((memory) => Boolean(memory.narrative?.conclusion)).sort(compareOccurred);
+  const candidates = [
+    ...next.map((memory) => ({ memory, reason: "\u8FD9\u662F\u5F53\u524D\u5DF2\u786E\u8BA4\u8981\u505A\u7684\u4E8B\u3002" })),
+    ...conclusions.map((memory) => ({ memory, reason: "\u8FD9\u662F\u6700\u8FD1\u5DF2\u786E\u8BA4\u3001\u4F1A\u5F71\u54CD\u5F53\u524D\u5224\u65AD\u7684\u7ED3\u8BBA\u3002" })),
+    ...progress.map((memory) => ({
+      memory,
+      reason: "\u8FD9\u9879\u5DE5\u4F5C\u5DF2\u7ECF\u4EA7\u51FA\u7ED3\u8BBA\uFF0C\u80FD\u5E2E\u52A9\u4F60\u7406\u89E3\u76EE\u524D\u8FDB\u5C55\u3002"
+    })),
+    ...memories.sort(compareOccurred).map((memory) => ({ memory, reason: "\u8FD9\u662F\u6700\u8FD1\u4FDD\u5B58\u7684\u9879\u76EE\u8BB0\u5F55\u3002" }))
+  ];
+  const seen = /* @__PURE__ */ new Set();
+  return candidates.filter(({ memory }) => !seen.has(memory.id) && seen.add(memory.id)).slice(0, 4).map(({ memory, reason }) => ({ ...handoffItem(memory), reason }));
+}
+function buildSuggestions(memories, sections) {
+  const suggestions = [];
+  const stale = memories.filter(
+    (memory) => memory.stale || memory.citations.some((citation) => citation.stale)
+  );
+  for (const memory of stale.slice(0, 2)) {
+    suggestions.push({
+      id: `suggestion:recheck:${memory.id}`,
+      text: `\u91CD\u65B0\u6838\u5BF9\u300A${buildMemoryDisplayTitle(memory)}\u300B\u7684\u6765\u6E90\u662F\u5426\u4ECD\u7136\u6709\u6548`,
+      reason: "\u8FD9\u6761\u8BB0\u5FC6\u6216\u5B83\u5F15\u7528\u7684\u6587\u4EF6\u5DF2\u7ECF\u53D1\u751F\u53D8\u5316\u3002",
+      memoryIds: [memory.id]
+    });
+  }
+  if ((sections.get("next_step")?.length ?? 0) === 0) {
+    const risk = sections.get("risk")?.[0];
+    const conclusion = sections.get("conclusion")?.[0];
+    if (risk) {
+      suggestions.push({
+        id: `suggestion:resolve-risk:${risk.memoryId}`,
+        text: `\u786E\u8BA4\u300A${risk.displayTitle}\u300B\u4E2D\u7684\u8FB9\u754C\u540E\uFF0C\u518D\u51B3\u5B9A\u4E0B\u4E00\u6B65\u6267\u884C\u52A8\u4F5C`,
+        reason: "\u9879\u76EE\u5C1A\u672A\u4FDD\u5B58\u660E\u786E\u7684\u4E0B\u4E00\u6B65\uFF0C\u800C\u8FD9\u6761\u98CE\u9669\u4F1A\u5F71\u54CD\u540E\u7EED\u884C\u52A8\u3002",
+        memoryIds: [risk.memoryId]
+      });
+    } else if (conclusion) {
+      suggestions.push({
+        id: `suggestion:plan:${conclusion.memoryId}`,
+        text: `\u57FA\u4E8E\u300A${conclusion.displayTitle}\u300B\u786E\u8BA4\u5E76\u4FDD\u5B58\u4E0B\u4E00\u6B65\u6267\u884C\u8BA1\u5212`,
+        reason: "\u9879\u76EE\u5DF2\u6709\u7ED3\u8BBA\uFF0C\u4F46\u5C1A\u672A\u4FDD\u5B58\u660E\u786E\u7684\u4E0B\u4E00\u6B65\u3002",
+        memoryIds: [conclusion.memoryId]
+      });
+    }
+  }
+  return suggestions.slice(0, 3);
+}
+function buildProjectBrief(projectId, projectName, graph, guide, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), limit = 12) {
+  const memories = [...graph.nodes].sort(compareRecent).slice(0, limit);
+  const sections = /* @__PURE__ */ new Map([
+    ["conclusion", []],
+    ["progress", []],
+    ["risk", []],
+    ["next_step", []],
+    ["reference", []]
+  ]);
+  for (const memory of memories) {
+    const item = briefItem(memory);
+    sections.get(item.briefRole)?.push(item);
+  }
+  const memoryById = new Map(memories.map((memory) => [memory.id, memory]));
+  const recommendations = /* @__PURE__ */ new Map();
+  for (const highlight of guide.highlights) {
+    if (!memoryById.has(highlight.memoryId)) continue;
+    const current = recommendations.get(highlight.memoryId) ?? {
+      title: highlight.title,
+      displayTitle: buildMemoryDisplayTitle(memoryById.get(highlight.memoryId)),
+      reasons: []
+    };
+    if (!current.reasons.includes(highlight.reason)) current.reasons.push(highlight.reason);
+    recommendations.set(highlight.memoryId, current);
+  }
+  const topicIndex = /* @__PURE__ */ new Map();
+  for (const memory of memories) {
+    const topic = memory.topic?.trim();
+    if (!topic) continue;
+    topicIndex.set(topic, [...topicIndex.get(topic) ?? [], memory.id]);
+  }
+  const topics = [...topicIndex].filter(([, memoryIds]) => memoryIds.length >= 2).sort(([left], [right]) => left.localeCompare(right, "zh-CN")).map(([name, memoryIds]) => ({ name, memoryIds, memoryCount: memoryIds.length }));
+  const currentConclusions = sections.get("conclusion") ?? [];
+  const completedWork = sections.get("progress") ?? [];
+  const risks = sections.get("risk") ?? [];
+  const nextSteps = sections.get("next_step") ?? [];
+  const references = sections.get("reference") ?? [];
+  const citationCount = memories.reduce((total, memory) => total + memory.citations.length, 0);
+  const staleCitationCount = memories.reduce(
+    (total, memory) => total + memory.citations.filter((citation) => citation.stale).length,
+    0
+  );
+  return {
+    projectId,
+    projectName,
+    generatedAt,
+    overview: `\u5DF2\u4FDD\u5B58 ${memories.length} \u6761\u9879\u76EE\u8BB0\u5FC6\uFF0C\u5305\u62EC ${currentConclusions.length} \u9879\u5F53\u524D\u7ED3\u8BBA\u3001${completedWork.length} \u9879\u5DF2\u5B8C\u6210\u5DE5\u4F5C\u3001${risks.length} \u9879\u98CE\u9669\u8FB9\u754C\u548C ${nextSteps.length} \u9879\u5DF2\u786E\u8BA4\u4E0B\u4E00\u6B65\u3002`,
+    summary: {
+      memoryCount: memories.length,
+      conclusionCount: currentConclusions.length,
+      progressCount: completedWork.length,
+      riskCount: risks.length,
+      nextStepCount: nextSteps.length,
+      citationCount,
+      staleMemoryCount: memories.filter((memory) => memory.stale).length,
+      staleCitationCount
+    },
+    currentConclusions,
+    completedWork,
+    risks,
+    nextSteps,
+    references,
+    systemSuggestions: buildSuggestions(memories, sections),
+    recommendedReading: [...recommendations].slice(0, 3).map(([memoryId, value]) => ({
+      memoryId,
+      title: value.title,
+      displayTitle: value.displayTitle,
+      reasons: value.reasons
+    })),
+    recentUpdates: memories.slice(0, 5).map(briefItem),
+    topics,
+    handoff: {
+      coverage: coverageFor(memories),
+      startHere: startHere(memories),
+      recentWork: memories.filter((memory) => resolvedBriefRole(memory).role !== "reference").sort(compareOccurred).slice(0, 5).map(handoffItem),
+      history: memories.filter((memory) => resolvedBriefRole(memory).role !== "reference").sort(compareOccurred).map(handoffItem)
+    }
+  };
+}
+
+// ../../packages/project-memory-core/src/git.ts
+import { execFileSync } from "child_process";
+import { realpathSync, statSync } from "fs";
+import path2 from "path";
+function git(pathValue, args) {
+  try {
+    return execFileSync("git", ["-C", pathValue, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+function detectGitMetadata(inputPath) {
+  const realInput = realpathSync(path2.resolve(inputPath));
+  const directory = statSync(realInput).isDirectory() ? realInput : path2.dirname(realInput);
+  const root = git(directory, ["rev-parse", "--show-toplevel"]);
+  if (!root) {
+    return {
+      rootPath: directory,
+      isGit: false,
+      gitCommonDir: null,
+      remoteUrl: null,
+      headCommit: null
+    };
+  }
+  const rootPath = realpathSync(root);
+  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
+  const gitCommonDir = commonDirRaw ? realpathSync(path2.resolve(rootPath, commonDirRaw)) : null;
+  return {
+    rootPath,
+    isGit: true,
+    gitCommonDir,
+    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
+    headCommit: git(rootPath, ["rev-parse", "HEAD"])
+  };
+}
+function listGitFiles(rootPath) {
+  try {
+    const output = execFileSync(
+      "git",
+      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
+    );
+    return output.split("\0").filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+// ../../packages/project-memory-core/src/guide.ts
+import { createHash } from "crypto";
+var CITATION_WEIGHTS = {
+  evidence: 3,
+  report: 2,
+  workflow: 2,
+  reference: 1
+};
+var RELATION_LABELS = {
+  related_to: "\u76F8\u5173",
+  observes: "\u6CE8\u610F\u5230",
+  causes: "\u539F\u56E0",
+  depends_on: "\u4F9D\u8D56",
+  supports: "\u652F\u6301",
+  contradicts: "\u77DB\u76FE",
+  supersedes: "\u66FF\u4EE3",
+  derived_from: "\u6765\u6E90\u4E8E"
+};
+function pairKey(left, right) {
+  return [left, right].sort().join("\0");
+}
+function stableId(prefix, values) {
+  return `${prefix}_${createHash("sha256").update(values.join("\0")).digest("hex").slice(0, 16)}`;
+}
+function fileName(sourcePath) {
+  return sourcePath.split("/").at(-1) ?? sourcePath;
+}
+function sortedMemories(memories) {
+  return [...memories].sort((left, right) => left.id.localeCompare(right.id));
+}
+function relationDegrees(graph) {
+  const degrees = new Map(graph.nodes.map((memory) => [memory.id, 0]));
+  for (const relation of graph.relations) {
+    degrees.set(relation.fromMemoryId, (degrees.get(relation.fromMemoryId) ?? 0) + 1);
+    degrees.set(relation.toMemoryId, (degrees.get(relation.toMemoryId) ?? 0) + 1);
+  }
+  return degrees;
+}
+function connectedComponents(graph) {
+  const adjacency = new Map(graph.nodes.map((memory) => [memory.id, /* @__PURE__ */ new Set()]));
+  for (const relation of graph.relations) {
+    adjacency.get(relation.fromMemoryId)?.add(relation.toMemoryId);
+    adjacency.get(relation.toMemoryId)?.add(relation.fromMemoryId);
+  }
+  const visited = /* @__PURE__ */ new Set();
+  const components = [];
+  for (const memory of sortedMemories(graph.nodes)) {
+    if (visited.has(memory.id)) continue;
+    const component = [];
+    const queue = [memory.id];
+    visited.add(memory.id);
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) continue;
+      component.push(current);
+      for (const neighbor of adjacency.get(current) ?? []) {
+        if (visited.has(neighbor)) continue;
+        visited.add(neighbor);
+        queue.push(neighbor);
+      }
+    }
+    components.push(component.sort());
+  }
+  return components.sort(
+    (left, right) => right.length - left.length || (left[0] ?? "").localeCompare(right[0] ?? "")
+  );
+}
+function buildHighlights(graph, degrees) {
+  const memories = [...graph.nodes];
+  const highlights = [];
+  const select = (kind, candidates, reason, value) => {
+    const memory = candidates[0];
+    if (!memory) return;
+    highlights.push({
+      id: `highlight:${kind}:${memory.id}`,
+      kind,
+      memoryId: memory.id,
+      title: buildMemoryDisplayTitle(memory),
+      reason: reason(memory),
+      value: value(memory)
+    });
+  };
+  const byDegree = [...memories].sort(
+    (left, right) => (degrees.get(right.id) ?? 0) - (degrees.get(left.id) ?? 0) || right.citations.length - left.citations.length || left.id.localeCompare(right.id)
+  );
+  if ((degrees.get(byDegree[0]?.id ?? "") ?? 0) > 0) {
+    select(
+      "connected",
+      byDegree,
+      (memory) => `\u8FDE\u63A5 ${degrees.get(memory.id) ?? 0} \u6761\u5DF2\u5BA1\u6838\u5173\u7CFB`,
+      (memory) => degrees.get(memory.id) ?? 0
+    );
+  }
+  select(
+    "evidence",
+    [...memories].sort(
+      (left, right) => right.citations.length - left.citations.length || left.id.localeCompare(right.id)
+    ),
+    (memory) => `\u8BB0\u5F55 ${memory.citations.length} \u4E2A\u53EF\u8FFD\u6EAF\u6765\u6E90`,
+    (memory) => memory.citations.length
+  );
+  select(
+    "recent",
+    [...memories].sort(
+      (left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt) || left.id.localeCompare(right.id)
+    ),
+    (memory) => `\u6700\u8FD1\u66F4\u65B0\u4E8E ${memory.updatedAt}`,
+    (memory) => memory.updatedAt
+  );
+  return highlights;
+}
+function buildRelationSuggestions(projectId, graph, limit) {
+  const memories = sortedMemories(graph.nodes.filter((memory) => memory.projectId === projectId));
+  if (memories.length < 2) return [];
+  const existingPairs = new Set(
+    graph.relations.map((relation) => pairKey(relation.fromMemoryId, relation.toMemoryId))
+  );
+  const signalsByPair = /* @__PURE__ */ new Map();
+  const memoryById = new Map(memories.map((memory) => [memory.id, memory]));
+  const addSignal = (leftId, rightId, signal) => {
+    if (leftId === rightId || existingPairs.has(pairKey(leftId, rightId))) return;
+    const key = pairKey(leftId, rightId);
+    const signals = signalsByPair.get(key) ?? [];
+    if (!signals.some((candidate) => candidate.key === signal.key)) signals.push(signal);
+    signalsByPair.set(key, signals);
+  };
+  const citationIndex = /* @__PURE__ */ new Map();
+  for (const memory of memories) {
+    const seen = /* @__PURE__ */ new Set();
+    for (const citation of memory.citations) {
+      if (!citation.accessible) continue;
+      const key = `${citation.sourceProjectId}\0${citation.sourcePath}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const indexed = citationIndex.get(key) ?? [];
+      indexed.push({
+        memoryId: memory.id,
+        role: citation.role,
+        sourceProjectId: citation.sourceProjectId,
+        sourcePath: citation.sourcePath
+      });
+      citationIndex.set(key, indexed);
+    }
+  }
+  for (const [key, references] of citationIndex) {
+    if (references.length / memories.length > 0.6) continue;
+    for (let leftIndex = 0; leftIndex < references.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < references.length; rightIndex += 1) {
+        const left = references[leftIndex];
+        const right = references[rightIndex];
+        if (!left || !right) continue;
+        const role = CITATION_WEIGHTS[left.role] >= CITATION_WEIGHTS[right.role] ? left.role : right.role;
+        addSignal(left.memoryId, right.memoryId, {
+          kind: "shared_citation",
+          key: `citation:${key}`,
+          label: `\u5171\u4EAB${role === "evidence" ? "\u8BC1\u636E" : role === "report" ? "\u62A5\u544A" : role === "workflow" ? "\u6D41\u7A0B" : "\u53C2\u8003"}\uFF1A${fileName(left.sourcePath)}`,
+          weight: CITATION_WEIGHTS[role],
+          role,
+          sourceProjectId: left.sourceProjectId,
+          sourcePath: left.sourcePath
+        });
+      }
+    }
+  }
+  const topicIndex = /* @__PURE__ */ new Map();
+  for (const memory of memories) {
+    const topic = memory.topic?.trim();
+    if (!topic) continue;
+    topicIndex.set(topic, [...topicIndex.get(topic) ?? [], memory.id]);
+  }
+  for (const [topic, memoryIds] of topicIndex) {
+    for (let leftIndex = 0; leftIndex < memoryIds.length; leftIndex += 1) {
+      for (let rightIndex = leftIndex + 1; rightIndex < memoryIds.length; rightIndex += 1) {
+        const leftId = memoryIds[leftIndex];
+        const rightId = memoryIds[rightIndex];
+        if (!leftId || !rightId) continue;
+        addSignal(leftId, rightId, {
+          kind: "same_topic",
+          key: `topic:${topic}`,
+          label: `\u540C\u5C5E\u4E3B\u9898\uFF1A${topic}`,
+          weight: 2
+        });
+      }
+    }
+  }
+  const tagFrequency = /* @__PURE__ */ new Map();
+  for (const memory of memories) {
+    for (const tag of new Set(memory.tags.map((value) => value.trim()).filter(Boolean))) {
+      tagFrequency.set(tag, (tagFrequency.get(tag) ?? 0) + 1);
+    }
+  }
+  for (let leftIndex = 0; leftIndex < memories.length; leftIndex += 1) {
+    for (let rightIndex = leftIndex + 1; rightIndex < memories.length; rightIndex += 1) {
+      const left = memories[leftIndex];
+      const right = memories[rightIndex];
+      if (!left || !right) continue;
+      const rightTags = new Set(right.tags);
+      const shared = [...new Set(left.tags)].filter(
+        (tag) => rightTags.has(tag) && (tagFrequency.get(tag) ?? 0) / memories.length <= 0.5
+      ).sort();
+      if (shared.length < 2) continue;
+      for (const tag of shared.slice(0, 2)) {
+        addSignal(left.id, right.id, {
+          kind: "shared_tag",
+          key: `tag:${tag}`,
+          label: `\u5171\u4EAB\u6807\u7B7E\uFF1A${tag}`,
+          weight: 1
+        });
+      }
+    }
+  }
+  const suggestions = [];
+  for (const [key, rawSignals] of signalsByPair) {
+    const [fromMemoryId, toMemoryId] = key.split("\0");
+    if (!fromMemoryId || !toMemoryId || !memoryById.has(fromMemoryId) || !memoryById.has(toMemoryId))
+      continue;
+    const signals = [...rawSignals].sort(
+      (left, right) => right.weight - left.weight || left.key.localeCompare(right.key)
+    );
+    const score = signals.reduce((total, signal) => total + signal.weight, 0);
+    if (score < 2) continue;
+    const signalKeys = signals.map((signal) => signal.key).sort();
+    suggestions.push({
+      id: stableId("hint", [projectId, fromMemoryId, toMemoryId, ...signalKeys]),
+      projectId,
+      fromMemoryId,
+      toMemoryId,
+      type: "related_to",
+      rationale: signals.map((signal) => signal.label).join("\uFF1B"),
+      score,
+      signals
+    });
+  }
+  return suggestions.sort(
+    (left, right) => right.score - left.score || left.fromMemoryId.localeCompare(right.fromMemoryId) || left.toMemoryId.localeCompare(right.toMemoryId)
+  ).slice(0, Math.max(1, Math.min(limit, 50)));
+}
+function buildGaps(graph, degrees) {
+  const gaps = [];
+  for (const memory of sortedMemories(graph.nodes)) {
+    if ((degrees.get(memory.id) ?? 0) === 0) {
+      gaps.push({
+        id: `gap:isolated:${memory.id}`,
+        kind: "isolated",
+        memoryIds: [memory.id],
+        message: `\u201C${buildMemoryDisplayTitle(memory)}\u201D\u5C1A\u672A\u8FDE\u63A5\u4EFB\u4F55\u5DF2\u5BA1\u6838\u5173\u7CFB\u3002`
+      });
+    }
+    if (memory.stale) {
+      gaps.push({
+        id: `gap:stale-memory:${memory.id}`,
+        kind: "stale_memory",
+        memoryIds: [memory.id],
+        message: `\u201C${buildMemoryDisplayTitle(memory)}\u201D\u5DF2\u8FC7\u671F\uFF1A${memory.staleReason ?? "\u6765\u6E90\u53D1\u751F\u53D8\u5316"}`
+      });
+    }
+    const staleCitations = memory.citations.filter((citation) => citation.stale);
+    if (staleCitations.length > 0) {
+      gaps.push({
+        id: `gap:stale-citation:${memory.id}`,
+        kind: "stale_citation",
+        memoryIds: [memory.id],
+        message: `\u201C${buildMemoryDisplayTitle(memory)}\u201D\u6709 ${staleCitations.length} \u4E2A\u6765\u6E90\u5DF2\u5931\u6548\u3002`
+      });
+    }
+  }
+  return gaps;
+}
+function buildSuggestedQuestions(graph, suggestions, degrees) {
+  const memoryById = new Map(graph.nodes.map((memory) => [memory.id, memory]));
+  const questions = [];
+  for (const relation of graph.relations) {
+    const from = memoryById.get(relation.fromMemoryId);
+    const to = memoryById.get(relation.toMemoryId);
+    if (!from || !to) continue;
+    const fromTitle = buildMemoryDisplayTitle(from);
+    const toTitle = buildMemoryDisplayTitle(to);
+    const question = relation.type === "causes" ? `\u201C${fromTitle}\u201D\u4E3A\u4EC0\u4E48\u662F\u201C${toTitle}\u201D\u7684\u539F\u56E0\uFF1F` : `\u201C${fromTitle}\u201D\u5982\u4F55${RELATION_LABELS[relation.type]}\u201C${toTitle}\u201D\uFF1F`;
+    questions.push({
+      id: `question:relation:${relation.id}`,
+      question,
+      why: `\u5DF2\u6709\u4E00\u6761\u5DF2\u5BA1\u6838\u7684${RELATION_LABELS[relation.type]}\u5173\u7CFB\uFF0C\u53EF\u6CBF\u5173\u7CFB\u7406\u7531\u548C\u6765\u6E90\u7EE7\u7EED\u8FFD\u6EAF\u3002`,
+      memoryIds: [from.id, to.id]
+    });
+  }
+  for (const suggestion of suggestions) {
+    const from = memoryById.get(suggestion.fromMemoryId);
+    const to = memoryById.get(suggestion.toMemoryId);
+    if (!from || !to) continue;
+    questions.push({
+      id: `question:suggestion:${suggestion.id}`,
+      question: `\u201C${buildMemoryDisplayTitle(from)}\u201D\u4E0E\u201C${buildMemoryDisplayTitle(to)}\u201D\u4E4B\u95F4\u662F\u5426\u7F3A\u5C11\u4E00\u6761\u6B63\u5F0F\u5173\u7CFB\uFF1F`,
+      why: suggestion.rationale,
+      memoryIds: [from.id, to.id]
+    });
+  }
+  for (const memory of sortedMemories(graph.nodes)) {
+    if ((degrees.get(memory.id) ?? 0) !== 0) continue;
+    questions.push({
+      id: `question:isolated:${memory.id}`,
+      question: `\u201C${buildMemoryDisplayTitle(memory)}\u201D\u5E94\u4E0E\u54EA\u4E9B\u5DF2\u6709\u8BB0\u5FC6\u5EFA\u7ACB\u8054\u7CFB\uFF1F`,
+      why: "\u8BE5\u8BB0\u5FC6\u5F53\u524D\u662F\u5B64\u7ACB\u8282\u70B9\uFF0C\u53EF\u80FD\u5B58\u5728\u5C1A\u672A\u5BA1\u6838\u7684\u77E5\u8BC6\u8054\u7CFB\u3002",
+      memoryIds: [memory.id]
+    });
+  }
+  return questions.slice(0, 5);
+}
+function analyzeKnowledgeGraph(projectId, projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), relationSuggestionLimit = 12) {
+  const degrees = relationDegrees(graph);
+  const components = connectedComponents(graph);
+  const relationSuggestions = buildRelationSuggestions(projectId, graph, relationSuggestionLimit);
+  const topics = /* @__PURE__ */ new Map();
+  for (const memory of graph.nodes) {
+    const topic = memory.topic ?? "\u672A\u5206\u7EC4";
+    topics.set(topic, [...topics.get(topic) ?? [], memory]);
+  }
+  return {
+    projectId,
+    projectName,
+    generatedAt,
+    summary: {
+      memoryCount: graph.nodes.length,
+      formalRelationCount: graph.relations.length,
+      citationCount: graph.nodes.reduce((total, memory) => total + memory.citations.length, 0),
+      staleMemoryCount: graph.nodes.filter((memory) => memory.stale).length,
+      staleCitationCount: graph.nodes.reduce(
+        (total, memory) => total + memory.citations.filter((citation) => citation.stale).length,
+        0
+      ),
+      componentCount: components.length,
+      isolatedCount: graph.nodes.filter((memory) => (degrees.get(memory.id) ?? 0) === 0).length
+    },
+    topics: [...topics].sort(([left], [right]) => left.localeCompare(right, "zh-CN")).map(([name, memories]) => ({
+      name,
+      memoryIds: sortedMemories(memories).map((memory) => memory.id),
+      memoryCount: memories.length,
+      staleCount: memories.filter((memory) => memory.stale).length
+    })),
+    highlights: buildHighlights(graph, degrees),
+    gaps: buildGaps(graph, degrees),
+    suggestedQuestions: buildSuggestedQuestions(graph, relationSuggestions, degrees),
+    relationSuggestions
+  };
+}
+
+// ../../packages/project-memory-core/src/hub.ts
 import { createHash as createHash2 } from "crypto";
-import { existsSync as existsSync2, lstatSync, readdirSync, readFileSync as readFileSync2, realpathSync as realpathSync2, statSync as statSync2 } from "fs";
+function text(value) {
+  return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+}
+function hash(value) {
+  return createHash2("sha256").update(value).digest("base64");
+}
+var css = `
+:root{color-scheme:dark;--void:#080b12;--stage:#0c111b;--panel:#111827;--panel-raised:#151f30;--panel-soft:rgba(21,31,48,.72);--ink:#eef4ff;--ink-soft:#c7d3e4;--muted:#8190a7;--muted-bright:#aebbd0;--line:#253149;--line-soft:rgba(148,163,184,.14);--cyan:#71e5fb;--cyan-deep:#39cce8;--blue:#8dc8ff;--green:#62e5b1;--amber:#f7bd68;--red:#ff9bac;--purple:#c6a1ff;--shadow:0 18px 48px rgba(0,0,0,.24);--sans:"Avenir Next","PingFang SC","Microsoft YaHei",sans-serif;--mono:"SF Mono","Cascadia Code","Roboto Mono",ui-monospace,monospace}
+*{box-sizing:border-box}html{background:var(--void)}body{margin:0;min-width:320px;background:radial-gradient(circle at 75% -12%,#172554 0,transparent 32%),var(--void);color:var(--ink);font-family:var(--sans);line-height:1.55}.shell{min-height:100vh}.masthead{position:relative;isolation:isolate;overflow:hidden;padding:30px clamp(22px,5vw,72px) 34px;background:linear-gradient(135deg,rgba(15,25,43,.97),rgba(8,12,21,.98));border-bottom:1px solid #263a54;box-shadow:0 16px 48px rgba(0,0,0,.18)}.masthead:before{content:"";position:absolute;z-index:-1;inset:-30% -10% auto auto;width:560px;height:420px;background:radial-gradient(circle,rgba(57,204,232,.17),transparent 68%);pointer-events:none}.masthead:after{content:"";position:absolute;z-index:-1;right:0;bottom:0;left:0;height:1px;background:linear-gradient(90deg,transparent,var(--cyan-deep),transparent);opacity:.8}.masthead-inner{max-width:1440px;margin:0 auto}.masthead-top{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:38px}.brand{display:flex;align-items:center;gap:12px}.brand-mark{width:40px;height:40px;display:grid;place-items:center;border:1px solid #2b6076;border-radius:12px;background:linear-gradient(145deg,#12304a,#12172b);color:var(--cyan);box-shadow:0 10px 26px rgba(0,0,0,.2)}.brand-copy{display:grid;gap:2px}.brand-copy strong{font-size:15px}.brand-copy span{color:var(--muted);font:10px var(--mono)}.masthead-status{display:inline-flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid #263c56;border-radius:999px;background:rgba(17,29,47,.7);color:var(--muted-bright);font:10px var(--mono)}.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px rgba(98,229,177,.75)}.hero-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:36px;align-items:end}.eyebrow{display:flex;align-items:center;gap:8px;margin:0 0 11px;color:var(--cyan);font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase}.eyebrow:before{content:"";width:18px;height:1px;background:var(--cyan)}.masthead h1{max-width:800px;margin:0;color:#f7fbff;font-size:clamp(34px,5vw,58px);font-weight:650;letter-spacing:-.05em;line-height:1.08}.masthead .hero-copy{max-width:780px;margin:17px 0 0;color:var(--muted-bright);font-size:15px;line-height:1.8}.hero-aside{display:grid;min-width:220px;gap:12px}.hero-link{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:11px 0;border:0;border-bottom:1px solid var(--line-soft);background:transparent;color:var(--ink-soft);font-size:12px;text-decoration:none}.hero-link:hover{padding-left:5px;color:var(--cyan)}.hero-link span{color:var(--muted);font:9px var(--mono)}.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;margin-top:34px;border:1px solid var(--line);background:var(--line)}.metric{display:grid;gap:5px;min-width:0;padding:16px 17px;background:rgba(10,16,28,.88)}.metric strong{color:var(--cyan);font:650 26px/1 var(--mono)}.metric span{color:var(--muted);font:10px var(--mono)}.metric:nth-child(3) strong{color:var(--amber)}.metric:nth-child(4) strong{color:var(--red)}.toolbar{position:sticky;top:0;z-index:5;display:grid;grid-template-columns:minmax(260px,1fr) auto minmax(0,auto) auto;gap:10px;align-items:center;padding:12px clamp(22px,5vw,72px);background:rgba(8,11,18,.88);border-bottom:1px solid var(--line);backdrop-filter:blur(18px)}.search{width:100%;min-width:180px;height:42px;border:1px solid var(--line);border-radius:11px;background:#0e1421;padding:0 14px;color:var(--ink);font:13px var(--sans);outline:none}.search::placeholder{color:#66758c}.search:focus,.sort:focus{border-color:var(--cyan-deep);box-shadow:0 0 0 3px rgba(57,204,232,.12)}.sort{height:42px;border:1px solid var(--line);border-radius:11px;background:#0e1421;padding:0 12px;color:var(--ink-soft);font:11px var(--mono);outline:none}.filters{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:12px;background:#0e1421}.filter{border:0;border-radius:8px;background:transparent;padding:7px 10px;color:var(--muted);font:11px var(--sans);cursor:pointer;white-space:nowrap}.filter:hover,.filter[aria-pressed=true]{background:#1b2a40;color:#eef7ff}.filter[aria-pressed=true]{box-shadow:inset 0 0 0 1px rgba(113,229,251,.2)}.content{padding:36px clamp(22px,5vw,72px) 70px}.section{max-width:1440px;margin:0 auto 42px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:14px;padding:0 2px}.section h2{margin:0;color:#f3f7ff;font-size:22px;letter-spacing:-.025em}.section-head:after{content:"";order:-1;width:3px;height:22px;border-radius:99px;background:var(--cyan-deep);box-shadow:0 0 14px rgba(57,204,232,.4)}.section-note{color:var(--muted);font:10px var(--mono);text-align:right}.project-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}.project{position:relative;display:flex;flex-direction:column;min-height:286px;padding:18px;border:1px solid #263149;border-radius:14px;background:linear-gradient(145deg,rgba(20,28,44,.96),rgba(12,18,30,.96));box-shadow:var(--shadow);text-decoration:none;color:inherit;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.project:before{content:"";position:absolute;top:0;right:18px;left:18px;height:1px;background:linear-gradient(90deg,transparent,rgba(113,229,251,.36),transparent)}.project:hover,.project:focus-visible{transform:translateY(-3px);border-color:#395975;box-shadow:0 20px 42px rgba(0,0,0,.32);outline:none}.project-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.project h3{margin:0;color:#f1f6ff;font-size:17px;line-height:1.35}.date{white-space:nowrap;color:var(--muted);font:10px var(--mono)}.overview{display:-webkit-box;overflow:hidden;min-height:44px;margin:10px 0 18px;color:#8d9bb0;font-size:12px;line-height:1.7;-webkit-box-orient:vertical;-webkit-line-clamp:2}.facts{display:grid;gap:8px;margin-top:auto}.fact{display:grid;grid-template-columns:64px minmax(0,1fr);gap:10px;padding:8px 10px;border:1px solid rgba(38,49,73,.8);border-radius:9px;background:rgba(8,13,23,.5);font-size:11px}.fact b{color:#68778e;font:10px var(--mono)}.fact span{min-width:0;overflow:hidden;color:#cbd8e9;text-overflow:ellipsis;white-space:nowrap}.pending-note{margin:13px 0 0;padding:10px 11px;border:1px solid rgba(247,189,104,.2);border-radius:9px;background:rgba(76,48,18,.16);color:var(--amber);font-size:11px;line-height:1.55}.badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:14px}.badge{padding:4px 8px;border:1px solid #273850;border-radius:999px;background:#111c2c;color:#91a2b9;font:10px var(--mono)}.badge.risk{border-color:#5f2734;background:#29151b;color:var(--red)}.badge.pending{border-color:#654821;background:#2a2115;color:var(--amber)}.badge.ok{border-color:#245169;background:#112b40;color:var(--cyan)}.empty{padding:32px;border:1px dashed #33445d;border-radius:14px;color:var(--muted);text-align:center}.footer{max-width:1440px;margin:0 auto;padding-top:20px;border-top:1px solid var(--line-soft);color:#5f6b81;font:10px var(--mono)}.hidden{display:none!important}@media(max-width:980px){.toolbar{grid-template-columns:minmax(0,1fr) auto}.filters{grid-column:1/-1;overflow-x:auto}.filter{white-space:nowrap}.hero-grid{grid-template-columns:1fr}.hero-aside{grid-template-columns:repeat(2,minmax(0,1fr))}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:720px){.masthead{padding-top:24px}.masthead-top{margin-bottom:28px}.masthead-status{font-size:9px}.toolbar{align-items:stretch;grid-template-columns:1fr;padding-top:10px;padding-bottom:10px}.sort{width:100%}.filters{grid-column:auto;overflow-x:auto;flex-wrap:nowrap}.content{padding-top:28px}.project-grid{grid-template-columns:1fr}.summary{grid-template-columns:repeat(2,minmax(0,1fr));margin-top:26px}.metric{padding:13px}.hero-aside{grid-template-columns:1fr}.section-head{align-items:flex-start;flex-direction:column;gap:6px}.section-note{text-align:left}}
+.project-title{min-width:0;display:flex;align-items:center;gap:9px}.project-glyph{width:25px;height:25px;display:grid;place-items:center;flex:0 0 25px;border:1px solid #2b6076;border-radius:8px;background:#112b40;color:var(--cyan);font:16px/1 var(--mono)}#recent,#projects{scroll-margin-top:90px}
+`;
+var script = `(()=>{const search=document.getElementById('search');const sort=document.getElementById('sort');const buttons=[...document.querySelectorAll('[data-filter]')];let filter='all';function norm(v){return String(v||'').toLocaleLowerCase()}function reorder(){document.querySelectorAll('[data-grid]').forEach(grid=>{[...grid.children].sort((a,b)=>sort.value==='name'?a.dataset.name.localeCompare(b.dataset.name,'zh-CN'):(b.dataset.date||'').localeCompare(a.dataset.date||'')||a.dataset.name.localeCompare(b.dataset.name,'zh-CN')).forEach(el=>grid.appendChild(el))})}function apply(){const query=norm(search.value).trim();const names=new Set;document.querySelectorAll('[data-project]').forEach(el=>{const attention=el.dataset.attention==='true';const pending=el.dataset.pending==='true';const stale=el.dataset.stale==='true';const risk=el.dataset.risk==='true';const matches=filter==='all'||filter==='attention'&&attention||filter==='pending'&&pending||filter==='stale'&&stale||filter==='risk'&&risk;const show=matches&&(!query||norm(el.dataset.search).includes(query));el.classList.toggle('hidden',!show);if(show)names.add(el.dataset.name)});document.getElementById('empty').classList.toggle('hidden',names.size!==0);document.getElementById('result-count').textContent=names.size+' \u4E2A\u9879\u76EE'}search.addEventListener('input',apply);sort.addEventListener('change',()=>{reorder();apply()});buttons.forEach(button=>button.addEventListener('click',()=>{filter=button.dataset.filter;buttons.forEach(item=>item.setAttribute('aria-pressed',String(item===button)));apply()}));reorder();apply()})();`;
+function date(value) {
+  if (!value) return "\u6682\u65E0\u8BB0\u5F55";
+  return value.slice(0, 10);
+}
+function projectCard(project) {
+  const search = [
+    project.name,
+    project.overview,
+    project.latestActivityTitle,
+    project.latestConclusion?.title,
+    project.latestConclusion?.summary,
+    project.nextStep?.title,
+    project.risk?.title,
+    project.searchText
+  ].filter(Boolean).join(" ");
+  const badges = [
+    project.pendingProposalCount > 0 ? `<span class="badge pending">${project.pendingProposalCount} \u9879\u5F85\u5BA1\u6838</span>` : "",
+    project.staleCitationCount > 0 ? `<span class="badge risk">${project.staleCitationCount} \u4E2A\u6765\u6E90\u9700\u6838\u5BF9</span>` : "",
+    project.pendingProposalCount === 0 && project.staleCitationCount === 0 ? '<span class="badge ok">\u8BB0\u5F55\u72B6\u6001\u6B63\u5E38</span>' : ""
+  ].join("");
+  const platformNames = {
+    codex: "Codex",
+    claude: "Claude",
+    antigravity: "Antigravity",
+    generic: "\u5176\u4ED6 AI",
+    legacy: "\u65E7\u7248\u672C"
+  };
+  const pending = project.pendingProposals.length > 0 ? `<p class="pending-note">\u5F85\u5BA1\u6838\u6765\u81EA ${project.pendingProposals.map((proposal) => text(platformNames[proposal.platform] ?? proposal.platform)).join("\u3001")}\uFF1A${text(
+    project.pendingProposals.flatMap((proposal) => proposal.summaries).slice(0, 3).join("\uFF1B")
+  )}</p>` : "";
+  return `<a class="project" data-project data-name="${text(project.name)}" data-date="${text(project.latestActivityAt ?? "")}" data-attention="${project.needsAttention}" data-risk="${Boolean(project.risk)}" data-pending="${project.pendingProposalCount > 0}" data-stale="${project.staleCitationCount > 0}" data-search="${text(search)}" href="${text(project.storyPath)}">
+    <div class="project-top"><div class="project-title"><span class="project-glyph" aria-hidden="true">\u2301</span><h3>${text(project.name)}</h3></div><span class="date">${date(project.latestActivityAt)}</span></div>
+    <p class="overview">${text(project.overview)}</p>
+    <div class="facts">
+      <div class="fact"><b>\u6700\u8FD1\u505A\u4E86</b><span>${text(project.latestActivityTitle ?? "\u6682\u65E0\u5DF2\u4FDD\u5B58\u7684\u5DE5\u4F5C\u8BB0\u5F55")}</span></div>
+      <div class="fact"><b>\u5F53\u524D\u7ED3\u8BBA</b><span>${text(project.latestConclusion?.title ?? "\u6682\u65E0\u5DF2\u786E\u8BA4\u7ED3\u8BBA")}</span></div>
+      <div class="fact"><b>\u4E0B\u4E00\u6B65</b><span>${text(project.nextStep?.title ?? "\u6682\u65E0\u5DF2\u786E\u8BA4\u4E0B\u4E00\u6B65")}</span></div>
+      <div class="fact"><b>\u98CE\u9669</b><span>${text(project.risk?.title ?? "\u6682\u65E0\u5DF2\u8BB0\u5F55\u98CE\u9669")}</span></div>
+    </div>
+    ${pending}
+    <div class="badges">${badges}</div>
+  </a>`;
+}
+function section(title, note, projects) {
+  if (projects.length === 0) return "";
+  return `<section class="section"><div class="section-head"><h2>${title}</h2><span class="section-note">${note}</span></div><div class="project-grid" data-grid>${projects.map(projectCard).join("")}</div></section>`;
+}
+function renderMemoryHubHtml(hub) {
+  const csp = [
+    "default-src 'none'",
+    `style-src 'sha256-${hash(css)}'`,
+    `script-src 'sha256-${hash(script)}'`,
+    "img-src data:",
+    "connect-src 'none'",
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'none'"
+  ].join("; ");
+  return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="${text(csp)}"><title>Talo \xB7 \u8BB0\u5FC6\u4E2D\u5FC3</title><style>${css}</style></head><body><div class="shell">
+  <header class="masthead"><div class="masthead-inner"><div class="masthead-top"><div class="brand"><span class="brand-mark" aria-hidden="true">\u2318</span><div class="brand-copy"><strong>Talo</strong><span>\u9879\u76EE\u5DE5\u4F5C\u8BB0\u5FC6 \xB7 \u672C\u5730\u7A7A\u95F4</span></div></div><span class="masthead-status"><i class="status-dot"></i>\u672C\u5730 \xB7 \u79C1\u6709 \xB7 \u79BB\u7EBF</span></div><div class="hero-grid"><div><p class="eyebrow">\u9879\u76EE\u603B\u89C8</p><h1>\u9879\u76EE\u8BB0\u5FC6\u4E2D\u5FC3</h1><p class="hero-copy">\u4ECE\u6700\u8FD1\u53D1\u751F\u7684\u5DE5\u4F5C\u5F00\u59CB\uFF0C\u5FEB\u901F\u770B\u6E05\u6BCF\u4E2A\u9879\u76EE\u4E3A\u4EC0\u4E48\u505A\u3001\u505A\u4E86\u4EC0\u4E48\u3001\u4F9D\u636E\u5728\u54EA\u91CC\uFF0C\u4EE5\u53CA\u63A5\u4E0B\u6765\u8981\u5904\u7406\u4EC0\u4E48\u3002</p></div><div class="hero-aside"><a class="hero-link" href="#recent">\u6700\u8FD1\u53D1\u751F<span>\u6309\u65F6\u95F4\u9605\u8BFB \u2192</span></a><a class="hero-link" href="#projects">\u5168\u90E8\u9879\u76EE<span>\u6253\u5F00\u76EE\u5F55 \u2192</span></a></div></div><div class="summary"><div class="metric"><strong>${hub.summary.projectCount}</strong><span>\u5DF2\u6CE8\u518C\u9879\u76EE</span></div><div class="metric"><strong>${hub.summary.memoryCount}</strong><span>\u6B63\u5F0F\u8BB0\u5FC6</span></div><div class="metric"><strong>${hub.summary.pendingProposalCount}</strong><span>\u5F85\u5BA1\u6838</span></div><div class="metric"><strong>${hub.summary.attentionProjectCount}</strong><span>\u9700\u8981\u5173\u6CE8</span></div></div></div></header>
+  <div class="toolbar"><input id="search" class="search" aria-label="\u641C\u7D22\u9879\u76EE\u8BB0\u5FC6" placeholder="\u641C\u7D22\u9879\u76EE\u3001\u7ED3\u8BBA\u3001\u4EA7\u51FA\u3001\u6765\u6E90\u8BF4\u660E\u6216\u4E0B\u4E00\u6B65"><select id="sort" class="sort" aria-label="\u9879\u76EE\u6392\u5E8F"><option value="recent">\u6700\u8FD1\u66F4\u65B0</option><option value="name">\u6309\u540D\u79F0</option></select><div class="filters"><button class="filter" data-filter="all" aria-pressed="true">\u5168\u90E8</button><button class="filter" data-filter="attention" aria-pressed="false">\u9700\u8981\u5173\u6CE8</button><button class="filter" data-filter="risk" aria-pressed="false">\u6709\u98CE\u9669</button><button class="filter" data-filter="pending" aria-pressed="false">\u5F85\u5BA1\u6838</button><button class="filter" data-filter="stale" aria-pressed="false">\u6765\u6E90\u5931\u6548</button></div><span id="result-count" class="section-note"></span></div>
+  <main class="content"><div id="recent"></div>${section("\u6700\u8FD1\u53D1\u751F", "\u6309\u5B9E\u9645\u5DE5\u4F5C\u65F6\u95F4\u6392\u5E8F", hub.recentProjects)}${section("\u9700\u8981\u5173\u6CE8", "\u98CE\u9669\u3001\u5931\u6548\u6765\u6E90\u6216\u5F85\u5BA1\u6838\u5185\u5BB9", hub.attentionProjects)}${section("\u5F85\u5BA1\u6838", "\u6765\u81EA\u5404\u4E2A AI \u5E73\u53F0\u7684\u5019\u9009\u5185\u5BB9", hub.pendingProjects)}<section id="projects" class="section"><div class="section-head"><h2>\u5168\u90E8\u9879\u76EE</h2><span class="section-note">\u70B9\u51FB\u9879\u76EE\u8FDB\u5165\u5B8C\u6574\u65F6\u95F4\u7EBF</span></div><div class="project-grid" data-grid>${hub.projects.map(projectCard).join("")}</div><div id="empty" class="empty hidden">\u6CA1\u6709\u627E\u5230\u5339\u914D\u7684\u9879\u76EE\u3002</div></section><footer class="footer">\u751F\u6210\u4E8E ${text(hub.generatedAt)} \xB7 \u672C\u5730\u9759\u6001\u5FEB\u7167 \xB7 \u4E0D\u8FDE\u63A5\u7F51\u7EDC</footer></main>
+  </div><template id="hub-data">${text(JSON.stringify({ generatedAt: hub.generatedAt }))}</template><script>${script}</script></body></html>`;
+}
+
+// ../../packages/project-memory-core/src/platform-projects.ts
+import {
+  closeSync,
+  existsSync as existsSync2,
+  openSync,
+  readdirSync as readdirSync2,
+  readFileSync as readFileSync2,
+  readSync,
+  statSync as statSync2
+} from "fs";
+import { homedir as homedir2 } from "os";
 import path3 from "path";
+import { fileURLToPath } from "url";
+var MAX_CODEX_SESSION_FILES = 2e3;
+var MAX_SESSION_META_BYTES = 256 * 1024;
+function readFirstLine(filePath) {
+  let descriptor = null;
+  try {
+    descriptor = openSync(filePath, "r");
+    const buffer = Buffer.alloc(MAX_SESSION_META_BYTES);
+    const bytesRead = readSync(descriptor, buffer, 0, buffer.length, 0);
+    const firstLine = buffer.subarray(0, bytesRead).toString("utf8").split("\n", 1)[0];
+    return firstLine || null;
+  } catch {
+    return null;
+  } finally {
+    if (descriptor !== null) closeSync(descriptor);
+  }
+}
+function listFiles(root, depth = 0, result = []) {
+  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync2(root)) return result;
+  let entries;
+  try {
+    entries = readdirSync2(root, { encoding: "utf8", withFileTypes: true });
+  } catch {
+    return result;
+  }
+  for (const entry of entries) {
+    if (result.length >= MAX_CODEX_SESSION_FILES) break;
+    const entryPath = path3.join(root, entry.name);
+    if (entry.isDirectory()) listFiles(entryPath, depth + 1, result);
+    else if (entry.isFile() && entry.name.endsWith(".jsonl")) result.push(entryPath);
+  }
+  return result;
+}
+function normalizeProjectPath(inputPath) {
+  try {
+    if (!existsSync2(inputPath) || !statSync2(inputPath).isDirectory()) return null;
+    return detectGitMetadata(inputPath).rootPath;
+  } catch {
+    return null;
+  }
+}
+function addCandidate(candidates, candidate) {
+  const key = `${candidate.platform}:${candidate.path}`;
+  const existing = candidates.get(key);
+  if (!existing || (candidate.lastSeenAt ?? "") > (existing.lastSeenAt ?? "")) {
+    candidates.set(key, candidate);
+  }
+}
+function scanCodexProjects(options) {
+  const homeDir = options.homeDir ?? homedir2();
+  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path3.join(homeDir, ".codex");
+  const sessionRoot = path3.join(codexHome, "sessions");
+  const sessionsByPath = /* @__PURE__ */ new Map();
+  const candidates = /* @__PURE__ */ new Map();
+  for (const sessionPath of listFiles(sessionRoot)) {
+    const firstLine = readFirstLine(sessionPath);
+    if (!firstLine) continue;
+    try {
+      const record = JSON.parse(firstLine);
+      if (record.type !== "session_meta" || typeof record.payload?.cwd !== "string") continue;
+      const existing = sessionsByPath.get(record.payload.cwd);
+      if (!existing || (record.timestamp ?? "") > (existing.lastSeenAt ?? "")) {
+        sessionsByPath.set(record.payload.cwd, {
+          platformProjectId: record.payload.session_id ?? record.payload.id ?? null,
+          lastSeenAt: record.timestamp ?? null
+        });
+      }
+    } catch {
+    }
+  }
+  for (const [sessionCwd, session] of sessionsByPath) {
+    const projectPath = normalizeProjectPath(sessionCwd);
+    if (!projectPath) continue;
+    addCandidate(candidates, {
+      platform: "codex",
+      platformProjectId: session.platformProjectId,
+      name: path3.basename(projectPath),
+      path: projectPath,
+      lastSeenAt: session.lastSeenAt,
+      source: "codex-session"
+    });
+  }
+  return [...candidates.values()];
+}
+function scanAntigravityProjects(options) {
+  const homeDir = options.homeDir ?? homedir2();
+  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path3.join(homeDir, ".gemini");
+  const configRoot2 = path3.join(geminiHome, "config", "projects");
+  const candidates = /* @__PURE__ */ new Map();
+  let entries;
+  try {
+    entries = readdirSync2(configRoot2, { encoding: "utf8", withFileTypes: true });
+  } catch {
+    return [];
+  }
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
+    const filePath = path3.join(configRoot2, entry.name);
+    try {
+      const config = JSON.parse(readFileSync2(filePath, "utf8"));
+      for (const resource of config.projectResources?.resources ?? []) {
+        if (typeof resource.folderUri !== "string") continue;
+        let requestedPath;
+        try {
+          requestedPath = resource.folderUri.startsWith("file:") ? fileURLToPath(resource.folderUri) : resource.folderUri;
+        } catch {
+          continue;
+        }
+        const projectPath = normalizeProjectPath(requestedPath);
+        if (!projectPath) continue;
+        addCandidate(candidates, {
+          platform: "antigravity",
+          platformProjectId: config.id ?? path3.basename(entry.name, ".json"),
+          name: config.name?.trim() || path3.basename(projectPath),
+          path: projectPath,
+          lastSeenAt: config.updatedAt ?? null,
+          source: "antigravity-config"
+        });
+      }
+    } catch {
+    }
+  }
+  return [...candidates.values()];
+}
+function scanClaudeProjects(options) {
+  const homeDir = options.homeDir ?? homedir2();
+  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path3.join(homeDir, ".claude");
+  const sessionRoot = path3.join(claudeHome, "projects");
+  const sessionsByPath = /* @__PURE__ */ new Map();
+  const candidates = /* @__PURE__ */ new Map();
+  for (const sessionPath of listFiles(sessionRoot)) {
+    let descriptor = null;
+    try {
+      descriptor = openSync(sessionPath, "r");
+      const buffer = Buffer.alloc(MAX_SESSION_META_BYTES);
+      const bytesRead = readSync(descriptor, buffer, 0, buffer.length, 0);
+      for (const line of buffer.subarray(0, bytesRead).toString("utf8").split("\n")) {
+        if (!line.trim()) continue;
+        try {
+          const record = JSON.parse(line);
+          if (typeof record.cwd !== "string") continue;
+          const existing = sessionsByPath.get(record.cwd);
+          if (!existing || (record.timestamp ?? "") > (existing.lastSeenAt ?? "")) {
+            sessionsByPath.set(record.cwd, {
+              platformProjectId: record.sessionId ?? record.session_id ?? null,
+              lastSeenAt: record.timestamp ?? null
+            });
+          }
+        } catch {
+        }
+      }
+    } catch {
+    } finally {
+      if (descriptor !== null) closeSync(descriptor);
+    }
+  }
+  for (const [sessionCwd, session] of sessionsByPath) {
+    const projectPath = normalizeProjectPath(sessionCwd);
+    if (!projectPath) continue;
+    addCandidate(candidates, {
+      platform: "claude",
+      platformProjectId: session.platformProjectId,
+      name: path3.basename(projectPath),
+      path: projectPath,
+      lastSeenAt: session.lastSeenAt,
+      source: "claude-session"
+    });
+  }
+  return [...candidates.values()];
+}
+function discoverDesktopPlatformProjects(options = {}) {
+  const candidates = [
+    ...scanCodexProjects(options),
+    ...scanClaudeProjects(options),
+    ...scanAntigravityProjects(options)
+  ];
+  return candidates.sort(
+    (left, right) => left.platform.localeCompare(right.platform) || left.name.localeCompare(right.name, "zh-CN") || left.path.localeCompare(right.path)
+  );
+}
+function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjects) {
+  const hubById = new Map(hubProjects.map((project) => [project.projectId, project]));
+  const registeredByPath = new Map(
+    registeredProjects.map((project) => [project.primaryPath, project])
+  );
+  const projects = candidates.map((candidate) => {
+    const registered = registeredByPath.get(candidate.path) ?? null;
+    const hubProject = registered ? hubById.get(registered.id) : null;
+    return {
+      ...candidate,
+      registered: Boolean(registered),
+      registeredProjectId: registered?.id ?? null,
+      memoryCount: hubProject?.memoryCount ?? 0
+    };
+  });
+  const groups = ["codex", "claude", "antigravity"].map(
+    (platform) => {
+      const platformProjects = projects.filter((project) => project.platform === platform);
+      return {
+        platform,
+        displayName: platform === "codex" ? "Codex" : platform === "claude" ? "Claude Code" : "Antigravity",
+        projectCount: platformProjects.length,
+        registeredCount: platformProjects.filter((project) => project.registered).length,
+        unregisteredCount: platformProjects.filter((project) => !project.registered).length,
+        projects: platformProjects
+      };
+    }
+  );
+  return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), platforms: groups };
+}
+
+// ../../packages/project-memory-core/src/security.ts
+var import_ignore = __toESM(require_ignore(), 1);
+import { createHash as createHash3 } from "crypto";
+import { existsSync as existsSync3, lstatSync, readdirSync as readdirSync3, readFileSync as readFileSync3, realpathSync as realpathSync2, statSync as statSync3 } from "fs";
+import path4 from "path";
 var MAX_FILE_BYTES = 1024 * 1024;
 var MAX_SEARCH_RESULTS = 50;
 var MAX_SEARCH_FILES = 1e4;
@@ -2998,7 +3682,7 @@ var SECRET_PATTERNS = [
   /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i
 ];
 function normalizeRelative(relativePath) {
-  if (!relativePath || path3.isAbsolute(relativePath)) {
+  if (!relativePath || path4.isAbsolute(relativePath)) {
     throw new ProjectMemoryError("PATH_DENIED", "Path must be relative to the project root.", {
       path: relativePath
     });
@@ -3016,25 +3700,25 @@ function isDeniedPath(relativePath, customPatterns = []) {
   const normalized = relativePath.replaceAll("\\", "/");
   const parts = normalized.split("/").filter(Boolean);
   const basename2 = parts.at(-1)?.toLowerCase() ?? "";
-  const extension = path3.extname(basename2);
+  const extension = path4.extname(basename2);
   return parts.some((part) => DENIED_SEGMENTS.has(part)) || /^\.env(?:\.|$)/i.test(basename2) || DENIED_BASENAMES.has(basename2) || DENIED_EXTENSIONS.has(extension) || matchesCustomDeny(normalized, customPatterns);
 }
-function containsSecret(text) {
-  return SECRET_PATTERNS.some((pattern) => pattern.test(text));
+function containsSecret(text2) {
+  return SECRET_PATTERNS.some((pattern) => pattern.test(text2));
 }
-function assertNoSecret(text, field) {
-  if (containsSecret(text)) {
+function assertNoSecret(text2, field) {
+  if (containsSecret(text2)) {
     throw new ProjectMemoryError("SECRET_DETECTED", `Potential secret detected in ${field}.`, {
       field
     });
   }
 }
 function sha256(data) {
-  return createHash2("sha256").update(data).digest("hex");
+  return createHash3("sha256").update(data).digest("hex");
 }
 function ensureInsideRoot(rootPath, candidatePath) {
-  const relative = path3.relative(rootPath, candidatePath);
-  if (relative === "" || !relative.startsWith("..") && !path3.isAbsolute(relative)) {
+  const relative = path4.relative(rootPath, candidatePath);
+  if (relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative)) {
     return;
   }
   throw new ProjectMemoryError("PATH_DENIED", "Resolved path escapes the project root.", {
@@ -3049,13 +3733,13 @@ function resolveReadableFile(rootPath, relativePath, customPatterns = []) {
     });
   }
   const realRoot = realpathSync2(rootPath);
-  const candidate = path3.resolve(realRoot, normalized);
-  if (!existsSync2(candidate)) {
+  const candidate = path4.resolve(realRoot, normalized);
+  if (!existsSync3(candidate)) {
     throw new ProjectMemoryError("FILE_NOT_FOUND", "File does not exist.", { path: normalized });
   }
   const realCandidate = realpathSync2(candidate);
   ensureInsideRoot(realRoot, realCandidate);
-  if (!statSync2(realCandidate).isFile()) {
+  if (!statSync3(realCandidate).isFile()) {
     throw new ProjectMemoryError("PATH_DENIED", "Path is not a regular file.", {
       path: normalized
     });
@@ -3068,7 +3752,7 @@ function isBinary(data) {
 }
 function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
   const resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
-  const size = statSync2(resolved.absolutePath).size;
+  const size = statSync3(resolved.absolutePath).size;
   if (size > MAX_FILE_BYTES) {
     throw new ProjectMemoryError("FILE_TOO_LARGE", "File exceeds the 1 MiB read limit.", {
       path: resolved.relativePath,
@@ -3076,7 +3760,7 @@ function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
       limit: MAX_FILE_BYTES
     });
   }
-  const buffer = readFileSync2(resolved.absolutePath);
+  const buffer = readFileSync3(resolved.absolutePath);
   if (isBinary(buffer)) {
     throw new ProjectMemoryError("BINARY_FILE", "Binary files cannot be read.", {
       path: resolved.relativePath
@@ -3093,17 +3777,17 @@ function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
 }
 function walkNonGitFiles(rootPath) {
   const matcher = (0, import_ignore.default)();
-  const gitignore = path3.join(rootPath, ".gitignore");
-  if (existsSync2(gitignore)) {
-    matcher.add(readFileSync2(gitignore, "utf8"));
+  const gitignore = path4.join(rootPath, ".gitignore");
+  if (existsSync3(gitignore)) {
+    matcher.add(readFileSync3(gitignore, "utf8"));
   }
   const output = [];
   const queue = [""];
   while (queue.length > 0 && output.length < MAX_SEARCH_FILES) {
     const relativeDir = queue.shift() ?? "";
-    const absoluteDir = path3.join(rootPath, relativeDir);
-    for (const entry of readdirSync(absoluteDir, { withFileTypes: true })) {
-      const relative = path3.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
+    const absoluteDir = path4.join(rootPath, relativeDir);
+    for (const entry of readdirSync3(absoluteDir, { withFileTypes: true })) {
+      const relative = path4.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
       if (matcher.ignores(relative) || isDeniedPath(relative)) {
         continue;
       }
@@ -3155,12 +3839,12 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
     if (stats.size > MAX_FILE_BYTES) {
       continue;
     }
-    const buffer = readFileSync2(resolved.absolutePath);
+    const buffer = readFileSync3(resolved.absolutePath);
     if (isBinary(buffer)) {
       continue;
     }
-    const text = buffer.toString("utf8");
-    const lines = text.split(/\r?\n/);
+    const text2 = buffer.toString("utf8");
+    const lines = text2.split(/\r?\n/);
     for (let index = 0; index < lines.length; index += 1) {
       const line = lines[index] ?? "";
       const matchIndex = line.toLocaleLowerCase().indexOf(needle);
@@ -3182,7 +3866,7 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
   return results;
 }
 
-// src/types.ts
+// ../../packages/project-memory-core/src/types.ts
 var MEMORY_KINDS = [
   "architecture",
   "decision",
@@ -3191,9 +3875,25 @@ var MEMORY_KINDS = [
   "pitfall",
   "status"
 ];
+var MEMORY_PHASES = [
+  "context",
+  "data_collection",
+  "analysis",
+  "decision",
+  "execution",
+  "verification",
+  "handoff",
+  "learning",
+  "risk",
+  "next_step",
+  "other"
+];
+var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
 var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
 var RELATION_TYPES = [
   "related_to",
+  "observes",
+  "causes",
   "depends_on",
   "supports",
   "contradicts",
@@ -3201,19 +3901,215 @@ var RELATION_TYPES = [
   "derived_from"
 ];
 
-// src/view.ts
-import { createHash as createHash3 } from "crypto";
-import { existsSync as existsSync3, readFileSync as readFileSync3 } from "fs";
-import path4 from "path";
-import { fileURLToPath } from "url";
+// ../../packages/project-memory-core/src/view.ts
+import { createHash as createHash4 } from "crypto";
+import { existsSync as existsSync4, readFileSync as readFileSync4 } from "fs";
+import path5 from "path";
+import { fileURLToPath as fileURLToPath2, pathToFileURL } from "url";
+
+// ../../packages/project-memory-core/src/event-metadata.ts
+var DATE_SEGMENT = /^20\d{2}-\d{2}-\d{2}$/u;
+var RUN_ID_PATTERNS = [
+  /\brun[_ -]?id\s*[:=：]\s*([A-Za-z0-9._:/-]+)/iu,
+  /\brunId\s*[:=：]\s*([A-Za-z0-9._:/-]+)/u,
+  /运行批次\s*[:：]?\s*([A-Za-z0-9._:/-]+)/u
+];
+var PHASE_RULES = [
+  ["learning", /(SOP|规范|规则|标准|手册)/iu],
+  ["data_collection", /(报表|报告|下载|补数|补齐|采集|抓取|落盘|数据缺失|原始数据)/iu],
+  ["verification", /(验证|复核|纠偏|验收|确认结果|回归)/iu],
+  ["analysis", /(复盘|对账|诊断|分析|核对|排查|周报)/iu],
+  ["decision", /(动作方案|方案|决策|授权|确定|选择|批准)/iu],
+  ["execution", /(执行|上线|修改|补救|实施|调整|发布)/iu],
+  ["learning", /流程/iu],
+  ["handoff", /(交接|移交|交付)/iu],
+  ["risk", /(风险|阻塞|注意|缺口|隐患)/iu],
+  ["next_step", /(下一步|待办|后续动作)/iu]
+];
+function compact(value) {
+  return (value ?? "").replaceAll(/\s+/gu, " ").trim();
+}
+function dateKey(input) {
+  const occurredAt = input.narrative?.occurredAt;
+  const value = occurredAt ?? input.createdAt ?? input.updatedAt;
+  if (!value) return null;
+  const match = value.match(/^(20\d{2}-\d{2}-\d{2})/u);
+  return match?.[1] ?? null;
+}
+function extractRunId(input) {
+  const text2 = [
+    input.summary,
+    input.content,
+    input.narrative?.reason,
+    input.narrative?.action,
+    input.narrative?.outcome,
+    input.narrative?.conclusion
+  ].map((value) => compact(value)).join(" ");
+  for (const pattern of RUN_ID_PATTERNS) {
+    const match = text2.match(pattern);
+    if (match?.[1]) return match[1].replace(/[),.;，。；）】]+$/u, "");
+  }
+  return null;
+}
+function extractStableWorkUnit(sourcePath) {
+  const segments = compact(sourcePath).split(/[\\/]+/u).filter(Boolean);
+  const dateIndex = segments.findIndex((segment) => DATE_SEGMENT.test(segment));
+  if (dateIndex >= 1) return `${segments[dateIndex - 1]}/${segments[dateIndex]}`;
+  return null;
+}
+function inferredPhase(input) {
+  if (input.phase) return input.phase;
+  const primaryText = [input.title, input.narrative?.action, input.narrative?.conclusion].map((value) => compact(value)).join(" ");
+  const primaryPhase = PHASE_RULES.find(([, pattern]) => pattern.test(primaryText))?.[0];
+  if (primaryPhase) return primaryPhase;
+  const secondaryText = [
+    input.summary,
+    input.content,
+    input.topic,
+    input.narrative?.reason,
+    input.narrative?.outcome
+  ].map((value) => compact(value)).join(" ");
+  return PHASE_RULES.find(([, pattern]) => pattern.test(secondaryText))?.[0] ?? "other";
+}
+function directMetadata(input) {
+  const explicitWorkUnitId = compact(input.workUnitId) || null;
+  const explicitRunId = compact(input.runId) || null;
+  if (explicitWorkUnitId) {
+    return {
+      workUnitId: explicitWorkUnitId,
+      runId: explicitRunId,
+      phase: inferredPhase(input),
+      sequence: input.sequence ?? null,
+      groupingEvidence: "explicit"
+    };
+  }
+  const runId = explicitRunId ?? extractRunId(input);
+  if (runId) {
+    return {
+      workUnitId: `run:${runId}`,
+      runId,
+      phase: inferredPhase(input),
+      sequence: input.sequence ?? null,
+      groupingEvidence: explicitRunId ? "explicit" : "run_id"
+    };
+  }
+  const workUnit = extractStableWorkUnit(input.sourcePath) ?? input.citations?.map((citation) => extractStableWorkUnit(citation.sourcePath)).find(Boolean) ?? null;
+  if (workUnit) {
+    return {
+      workUnitId: `source:${workUnit}`,
+      runId: null,
+      phase: inferredPhase(input),
+      sequence: input.sequence ?? null,
+      groupingEvidence: "source_path"
+    };
+  }
+  return {
+    workUnitId: null,
+    runId: null,
+    phase: inferredPhase(input),
+    sequence: input.sequence ?? null,
+    groupingEvidence: "none"
+  };
+}
+function resolveEventMetadata(inputs, relations = []) {
+  const result = new Map(inputs.map((input) => [input.id, directMetadata(input)]));
+  const byId = new Map(inputs.map((input) => [input.id, input]));
+  const relationNeighbors = /* @__PURE__ */ new Map();
+  for (const relation of relations) {
+    if (!byId.has(relation.fromMemoryId) || !byId.has(relation.toMemoryId)) continue;
+    if (!relationNeighbors.has(relation.fromMemoryId))
+      relationNeighbors.set(relation.fromMemoryId, /* @__PURE__ */ new Set());
+    if (!relationNeighbors.has(relation.toMemoryId))
+      relationNeighbors.set(relation.toMemoryId, /* @__PURE__ */ new Set());
+    relationNeighbors.get(relation.fromMemoryId)?.add(relation.toMemoryId);
+    relationNeighbors.get(relation.toMemoryId)?.add(relation.fromMemoryId);
+    const from = byId.get(relation.fromMemoryId);
+    const to = byId.get(relation.toMemoryId);
+    const fromMetadata = result.get(relation.fromMemoryId);
+    const toMetadata = result.get(relation.toMemoryId);
+    if (!from || !to || !fromMetadata || !toMetadata || fromMetadata.workUnitId || toMetadata.workUnitId)
+      continue;
+    const sameTopic = compact(from.topic) && compact(from.topic) === compact(to.topic);
+    const sameDate = dateKey(from) === dateKey(to);
+    if (sameTopic || sameDate) {
+      const workUnitId = `relation:${[from.id, to.id].sort().join(":")}`;
+      fromMetadata.workUnitId = workUnitId;
+      toMetadata.workUnitId = workUnitId;
+      fromMetadata.groupingEvidence = "formal_relation";
+      toMetadata.groupingEvidence = "formal_relation";
+    }
+  }
+  for (const input of inputs) {
+    const current = result.get(input.id);
+    if (!current || current.workUnitId) continue;
+    const candidates = [...relationNeighbors.get(input.id) ?? []].map((id) => ({ id, metadata: result.get(id), input: byId.get(id) })).filter((candidate) => candidate.metadata?.workUnitId && candidate.input).filter((candidate) => {
+      const sameTopic = compact(candidate.input?.topic) && compact(candidate.input?.topic) === compact(input.topic);
+      const sameDate = dateKey(candidate.input) === dateKey(input);
+      return sameTopic || sameDate;
+    });
+    const groups = [
+      ...new Set(candidates.map((candidate) => candidate.metadata?.workUnitId).filter(Boolean))
+    ];
+    if (groups.length === 1) {
+      current.workUnitId = groups[0] ?? null;
+      current.groupingEvidence = "formal_relation";
+    }
+  }
+  const grouped = /* @__PURE__ */ new Map();
+  for (const input of inputs) {
+    const metadata = result.get(input.id);
+    if (!metadata?.workUnitId) continue;
+    const list = grouped.get(metadata.workUnitId) ?? [];
+    list.push({ input, metadata });
+    grouped.set(metadata.workUnitId, list);
+  }
+  for (const list of grouped.values()) {
+    list.sort((left, right) => {
+      const leftTime = left.input.narrative?.occurredAt ?? left.input.createdAt ?? left.input.updatedAt ?? "";
+      const rightTime = right.input.narrative?.occurredAt ?? right.input.createdAt ?? right.input.updatedAt ?? "";
+      return leftTime.localeCompare(rightTime) || left.input.id.localeCompare(right.input.id);
+    });
+    list.forEach((entry, index) => {
+      if (entry.metadata.sequence === null) entry.metadata.sequence = index + 1;
+    });
+  }
+  return result;
+}
+function resolveMemoryEventMetadata(memories, relations = []) {
+  return resolveEventMetadata(memories, relations);
+}
+
+// ../../packages/project-memory-core/src/view.ts
 var RELATION_LABELS2 = {
   related_to: "\u76F8\u5173",
+  observes: "\u6CE8\u610F\u5230",
+  causes: "\u539F\u56E0",
   depends_on: "\u4F9D\u8D56",
   supports: "\u652F\u6301",
   contradicts: "\u77DB\u76FE",
   supersedes: "\u66FF\u4EE3",
   derived_from: "\u6765\u6E90\u4E8E"
 };
+function relationSentence(relation, fromTitle, toTitle) {
+  switch (relation.type) {
+    case "related_to":
+      return `\u300A${fromTitle}\u300B\u4E0E\u300A${toTitle}\u300B\u6709\u5173\u8054`;
+    case "observes":
+      return `\u300A${fromTitle}\u300B\u6CE8\u610F\u5230\u300A${toTitle}\u300B`;
+    case "causes":
+      return `\u300A${fromTitle}\u300B\u662F\u300A${toTitle}\u300B\u7684\u539F\u56E0`;
+    case "depends_on":
+      return `\u300A${fromTitle}\u300B\u4F9D\u8D56\u300A${toTitle}\u300B`;
+    case "supports":
+      return `\u300A${fromTitle}\u300B\u4E3A\u300A${toTitle}\u300B\u63D0\u4F9B\u652F\u6301`;
+    case "contradicts":
+      return `\u300A${fromTitle}\u300B\u4E0E\u300A${toTitle}\u300B\u5B58\u5728\u77DB\u76FE`;
+    case "supersedes":
+      return `\u300A${fromTitle}\u300B\u66FF\u4EE3\u300A${toTitle}\u300B`;
+    case "derived_from":
+      return `\u300A${fromTitle}\u300B\u7684\u4F9D\u636E\u6765\u81EA\u300A${toTitle}\u300B`;
+  }
+}
 var CITATION_LABELS = {
   evidence: "\u8BC1\u636E",
   report: "\u62A5\u544A",
@@ -3227,69 +4123,101 @@ function summaryFor(memory) {
 function markdownText(value) {
   return value.replaceAll("\\", "\\\\").replaceAll("|", "\\|");
 }
-function renderGraphMarkdown(projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), providedGuide) {
+function renderGraphMarkdown(projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), providedGuide, providedBrief) {
   const projectId = providedGuide?.projectId ?? graph.nodes[0]?.projectId ?? "unknown-project";
   const guide = providedGuide ?? analyzeKnowledgeGraph(projectId, projectName, graph, generatedAt, 12);
+  const brief = providedBrief ?? buildProjectBrief(projectId, projectName, graph, guide, generatedAt, 12);
   const memoryById = new Map(graph.nodes.map((memory) => [memory.id, memory]));
   const lines = [
-    `# ${projectName} \u8BB0\u5FC6\u77E5\u8BC6\u56FE\u8C31`,
+    `# ${projectName} \u9879\u76EE\u8BB0\u5FC6`,
     "",
     `> \u9759\u6001\u5FEB\u7167\uFF1A${generatedAt}`,
     "",
-    "## \u77E5\u8BC6\u6982\u51B5",
+    "## \u9879\u76EE\u4EA4\u63A5",
     "",
-    `- ${guide.summary.memoryCount} \u6761\u8BB0\u5FC6 \xB7 ${guide.summary.formalRelationCount} \u6761\u5DF2\u5BA1\u6838\u5173\u7CFB \xB7 ${guide.summary.citationCount} \u4E2A\u6765\u6E90`,
-    `- ${guide.summary.componentCount} \u4E2A\u8FDE\u901A\u5206\u91CF \xB7 ${guide.summary.isolatedCount} \u4E2A\u5B64\u7ACB\u8282\u70B9`,
-    `- ${guide.summary.staleMemoryCount} \u6761\u8FC7\u671F\u8BB0\u5FC6 \xB7 ${guide.summary.staleCitationCount} \u4E2A\u5931\u6548\u6765\u6E90`,
+    brief.handoff.coverage,
     "",
-    "## \u63A8\u8350\u5148\u8BFB",
+    "## \u4ECE\u8FD9\u91CC\u5F00\u59CB",
     ""
   ];
-  if (guide.highlights.length === 0) {
-    lines.push("- \u6682\u65E0\u8BB0\u5FC6");
-  } else {
-    for (const highlight of guide.highlights) {
-      lines.push(`- **${markdownText(highlight.title)}**\uFF1A${markdownText(highlight.reason)}`);
+  if (brief.handoff.startHere.length === 0) lines.push("- \u6682\u65E0\u5DF2\u4FDD\u5B58\u7684\u5DE5\u4F5C\u8BB0\u5F55");
+  else {
+    for (const item of brief.handoff.startHere) {
+      lines.push(
+        `- **${markdownText(item.displayTitle)}**\uFF1A${markdownText(item.reason)} ${markdownText(item.summary)}`
+      );
     }
   }
-  lines.push("", "## \u77E5\u8BC6\u7F3A\u53E3", "");
-  if (guide.gaps.length === 0) {
-    lines.push("- \u672A\u53D1\u73B0\u660E\u663E\u7F3A\u53E3");
-  } else {
-    for (const gap of guide.gaps) lines.push(`- ${markdownText(gap.message)}`);
-  }
-  lines.push("", "## \u5EFA\u8BAE\u63A2\u7D22", "");
-  if (guide.suggestedQuestions.length === 0) {
-    lines.push("- \u6682\u65E0\u5EFA\u8BAE\u95EE\u9898");
-  } else {
-    for (const question of guide.suggestedQuestions) {
-      lines.push(`- **${markdownText(question.question)}** \xB7 ${markdownText(question.why)}`);
+  lines.push("", "## \u6700\u8FD1\u53D1\u751F\u4E86\u4EC0\u4E48", "");
+  if (brief.handoff.recentWork.length === 0) lines.push("- \u6682\u65E0\u53EF\u7528\u4E8E\u65F6\u95F4\u7EBF\u7684\u5DE5\u4F5C\u8BB0\u5F55");
+  else {
+    for (const item of brief.handoff.recentWork) {
+      lines.push(
+        `- **${item.occurredAt ? item.occurredAt.slice(0, 10) : "\u8BB0\u5F55\u65F6\u95F4\u672A\u77E5"} \xB7 ${markdownText(item.displayTitle)}**\uFF1A${markdownText(item.narrative?.outcome ?? "\u65E7\u8BB0\u5F55\u5C1A\u672A\u8865\u5168\u4EA7\u51FA\u4FE1\u606F")}`
+      );
     }
   }
+  lines.push("", "## \u5F53\u524D\u72B6\u6001", "");
+  lines.push("## \u5F53\u524D\u7ED3\u8BBA", "");
+  const appendItems = (items, empty) => {
+    if (items.length === 0) lines.push(`- ${empty}`);
+    else {
+      for (const item of items) {
+        lines.push(`- **${markdownText(item.displayTitle)}**\uFF1A${markdownText(item.summary)}`);
+      }
+    }
+  };
+  appendItems(brief.currentConclusions, "\u6682\u65E0\u5F53\u524D\u7ED3\u8BBA");
+  lines.push("", "## \u5DF2\u5B8C\u6210\u5DE5\u4F5C", "");
+  appendItems(brief.completedWork, "\u6682\u65E0\u5DF2\u5B8C\u6210\u5DE5\u4F5C");
+  lines.push("", "## \u98CE\u9669\u4E0E\u8BC1\u636E\u8FB9\u754C", "");
+  appendItems(brief.risks, "\u6682\u65E0\u5DF2\u8BB0\u5F55\u98CE\u9669");
+  lines.push("", "## \u4E0B\u4E00\u6B65", "");
+  appendItems(brief.nextSteps, "\u6682\u65E0\u5DF2\u786E\u8BA4\u7684\u4E0B\u4E00\u6B65");
+  if (brief.systemSuggestions.length > 0) {
+    lines.push("", "**\u7CFB\u7EDF\u5EFA\u8BAE\uFF08\u672A\u7ECF\u5BA1\u6838\uFF09**", "");
+    for (const suggestion of brief.systemSuggestions) {
+      lines.push(`- ${markdownText(suggestion.text)} \xB7 ${markdownText(suggestion.reason)}`);
+    }
+  }
+  lines.push("", "## \u63A8\u8350\u9605\u8BFB", "");
+  if (brief.recommendedReading.length === 0) lines.push("- \u6682\u65E0\u63A8\u8350");
+  else {
+    for (const item of brief.recommendedReading) {
+      lines.push(
+        `- **${markdownText(item.displayTitle)}**\uFF1A${markdownText(item.reasons.join("\uFF1B"))}`
+      );
+    }
+  }
+  if (brief.topics.length > 0) {
+    lines.push("", "## \u5171\u4EAB\u4E3B\u9898", "");
+    for (const topic of brief.topics) {
+      lines.push(`- **${markdownText(topic.name)}**\uFF1A${topic.memoryCount} \u6761\u8BB0\u5FC6`);
+    }
+  }
+  lines.push("", "## \u6765\u6E90\u72B6\u6001", "");
+  lines.push(
+    `- ${brief.summary.citationCount} \u4E2A\u53EF\u8FFD\u6EAF\u6765\u6E90 \xB7 ${brief.summary.staleCitationCount} \u4E2A\u5931\u6548\u6765\u6E90 \xB7 ${brief.summary.staleMemoryCount} \u6761\u8FC7\u671F\u8BB0\u5FC6`
+  );
   lines.push("", "## \u5F85\u5BA1\u6838\u5173\u8054\u7EBF\u7D22", "");
-  if (guide.relationSuggestions.length === 0) {
-    lines.push("- \u6682\u65E0\u5173\u8054\u7EBF\u7D22");
-  } else {
+  if (guide.relationSuggestions.length === 0) lines.push("- \u6682\u65E0\u5173\u8054\u7EBF\u7D22");
+  else {
     for (const suggestion of guide.relationSuggestions) {
       const from = memoryById.get(suggestion.fromMemoryId);
       const to = memoryById.get(suggestion.toMemoryId);
       lines.push(
-        `- \`${suggestion.id}\` \xB7 **${markdownText(from?.title ?? suggestion.fromMemoryId)}** \u2194 **${markdownText(to?.title ?? suggestion.toMemoryId)}** \xB7 \u5F3A\u5EA6 ${suggestion.score} \xB7 ${markdownText(suggestion.rationale)}`
+        `- **${markdownText(from ? buildMemoryDisplayTitle(from) : "\u5DF2\u6709\u8BB0\u5FC6")}** \u4E0E **${markdownText(to ? buildMemoryDisplayTitle(to) : "\u5DF2\u6709\u8BB0\u5FC6")}** \u53EF\u80FD\u76F8\u5173\uFF1A${markdownText(suggestion.rationale)}`
       );
     }
-  }
-  lines.push("", "## \u4E3B\u9898\u6982\u89C8", "");
-  for (const topic of guide.topics) {
-    lines.push(
-      "- **" + markdownText(topic.name) + "**\uFF1A" + topic.memoryCount + " \u6761\u8BB0\u5FC6\uFF0C" + topic.staleCount + " \u6761\u8FC7\u671F"
-    );
   }
   lines.push("", "## \u8BB0\u5FC6\u8BE6\u60C5", "");
   for (const memory of graph.nodes) {
     lines.push(
-      `### ${markdownText(memory.title)}${memory.stale ? " [\u5DF2\u8FC7\u671F]" : ""}`,
+      `### ${markdownText(buildMemoryDisplayTitle(memory))}${memory.stale ? " [\u5DF2\u8FC7\u671F]" : ""}`,
       "",
       `- \u4E3B\u9898\uFF1A${markdownText(memory.topic ?? "\u672A\u5206\u7EC4")}`,
+      `- \u539F\u59CB\u6807\u9898\uFF1A${markdownText(memory.title)}`,
+      `- \u9996\u9875\u4F4D\u7F6E\uFF1A${memory.briefRole ?? "\u6839\u636E\u8BB0\u5FC6\u7C7B\u578B\u81EA\u52A8\u5F52\u7C7B"}`,
       `- \u7C7B\u578B\uFF1A${memory.kind}`,
       `- \u6458\u8981\uFF1A${markdownText(summaryFor(memory))}`,
       `- \u7F6E\u4FE1\u5EA6\uFF1A${memory.confidence}`,
@@ -3297,9 +4225,22 @@ function renderGraphMarkdown(projectName, graph, generatedAt = (/* @__PURE__ */ 
       "",
       memory.content,
       "",
-      "**\u6765\u6E90**",
+      "**\u8FD9\u9879\u5DE5\u4F5C\u600E\u4E48\u53D1\u751F\u7684**",
       ""
     );
+    if (!memory.narrative) {
+      lines.push("- \u65E7\u8BB0\u5F55\u5C1A\u672A\u8865\u5168\u8FD9\u9879\u4FE1\u606F\u3002", "");
+    } else {
+      lines.push(
+        `- \u65E5\u671F\uFF1A${memory.narrative.occurredAt.slice(0, 10)}`,
+        `- \u505A\u4E86\u4EC0\u4E48\uFF1A${markdownText(memory.narrative.action)}`,
+        `- \u4E3A\u4EC0\u4E48\u505A\uFF1A${markdownText(memory.narrative.reason)}`,
+        `- \u4EA7\u51FA\u4E86\u4EC0\u4E48\uFF1A${markdownText(memory.narrative.outcome)}`,
+        `- \u73B0\u5728\u610F\u5473\u7740\u4EC0\u4E48\uFF1A${markdownText(memory.narrative.conclusion)}`,
+        ""
+      );
+    }
+    lines.push("**\u6765\u6E90**", "");
     if (memory.citations.length === 0) {
       lines.push("- \u65E0\u5DF2\u8BB0\u5F55\u6765\u6E90");
     } else {
@@ -3319,11 +4260,10 @@ function renderGraphMarkdown(projectName, graph, generatedAt = (/* @__PURE__ */ 
       lines.push("- \u65E0\u5DF2\u8BB0\u5F55\u5173\u7CFB");
     } else {
       for (const relation of connected) {
-        const outgoing = relation.fromMemoryId === memory.id;
-        const otherId = outgoing ? relation.toMemoryId : relation.fromMemoryId;
-        const other = graph.nodes.find((candidate) => candidate.id === otherId);
+        const from = graph.nodes.find((candidate) => candidate.id === relation.fromMemoryId);
+        const to = graph.nodes.find((candidate) => candidate.id === relation.toMemoryId);
         lines.push(
-          "- " + (outgoing ? "\u2192 " : "\u2190 ") + RELATION_LABELS2[relation.type] + " \xB7 " + markdownText(other?.title ?? otherId) + " \xB7 " + markdownText(relation.rationale) + " \xB7 " + relation.confidence
+          `- ${markdownText(relationSentence(relation, from ? buildMemoryDisplayTitle(from) : "\u5DF2\u6709\u8BB0\u5FC6", to ? buildMemoryDisplayTitle(to) : "\u5DF2\u6709\u8BB0\u5FC6"))}\uFF1A${markdownText(relation.rationale)} \xB7 ${RELATION_LABELS2[relation.type]} \xB7 ${relation.confidence}`
         );
       }
     }
@@ -3332,19 +4272,35 @@ function renderGraphMarkdown(projectName, graph, generatedAt = (/* @__PURE__ */ 
   return `${lines.join("\n").trimEnd()}
 `;
 }
-function buildViewData(projectName, graph, generatedAt, guide) {
+function buildGraphViewData(projectName, graph, generatedAt, guide, brief) {
+  const eventMetadata = resolveMemoryEventMetadata(graph.nodes, graph.relations);
+  const contextualTitles = buildContextualMemoryDisplayTitles(
+    graph.nodes.map((memory) => ({
+      ...memory,
+      sequence: eventMetadata.get(memory.id)?.sequence ?? memory.sequence
+    }))
+  );
   return {
     projectName,
     generatedAt,
+    hubUrl: pathToFileURL(resolveMemoryHubPath()).href,
     guide,
+    brief,
     memories: graph.nodes.map((memory) => ({
       id: memory.id,
       projectId: memory.projectId,
       projectName: memory.projectName,
       kind: memory.kind,
       title: memory.title,
+      displayTitle: contextualTitles.get(memory.id) ?? buildMemoryDisplayTitle(memory),
       summary: memory.summary,
       topic: memory.topic,
+      briefRole: memory.briefRole,
+      workUnitId: eventMetadata.get(memory.id)?.workUnitId ?? null,
+      runId: eventMetadata.get(memory.id)?.runId ?? null,
+      phase: eventMetadata.get(memory.id)?.phase ?? "other",
+      sequence: eventMetadata.get(memory.id)?.sequence ?? null,
+      narrative: memory.narrative ?? null,
       content: memory.content,
       tags: memory.tags,
       citations: memory.citations.map((citation) => ({
@@ -3360,7 +4316,10 @@ function buildViewData(projectName, graph, generatedAt, guide) {
         accessible: citation.accessible,
         fileUrl: citation.accessible ? citation.fileUrl : null
       })),
+      submittedBy: memory.submittedBy ?? null,
+      sourceProposalId: memory.sourceProposalId ?? null,
       confidence: memory.confidence,
+      createdAt: memory.createdAt,
       updatedAt: memory.updatedAt,
       stale: memory.stale,
       staleReason: memory.staleReason
@@ -3382,30 +4341,33 @@ function htmlAttribute(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 function browserAsset(name) {
-  const moduleDir = path4.dirname(fileURLToPath(import.meta.url));
+  const moduleDir = path5.dirname(fileURLToPath2(import.meta.url));
   const candidates = [
-    path4.join(moduleDir, "browser", name),
-    path4.resolve(moduleDir, "..", "dist", "browser", name)
+    path5.join(moduleDir, "browser", name),
+    path5.resolve(moduleDir, "..", "dist", "browser", name),
+    path5.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
+    path5.resolve(process.cwd(), "dist", "browser", name)
   ];
-  const assetPath = candidates.find((candidate) => existsSync3(candidate));
+  const assetPath = candidates.find((candidate) => existsSync4(candidate));
   if (!assetPath) {
     throw new Error(`Browser asset ${name} is missing. Run pnpm build:browser first.`);
   }
-  return readFileSync3(assetPath, "utf8");
+  return readFileSync4(assetPath, "utf8");
 }
 function contentHash(value) {
-  return createHash3("sha256").update(value).digest("base64");
+  return createHash4("sha256").update(value).digest("base64");
 }
-function renderGraphHtml(projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), providedGuide) {
+function renderGraphHtml(projectName, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), providedGuide, providedBrief) {
   const projectId = providedGuide?.projectId ?? graph.nodes[0]?.projectId ?? "unknown-project";
   const guide = providedGuide ?? analyzeKnowledgeGraph(projectId, projectName, graph, generatedAt, 12);
-  const data = buildViewData(projectName, graph, generatedAt, guide);
-  const css = browserAsset("graph-app.css").replaceAll("</style", "<\\/style");
-  const script = browserAsset("graph-app.js").replaceAll("</script", "<\\/script");
+  const brief = providedBrief ?? buildProjectBrief(projectId, projectName, graph, guide, generatedAt, 12);
+  const data = buildGraphViewData(projectName, graph, generatedAt, guide, brief);
+  const css2 = browserAsset("graph-app.css").replaceAll("</style", "<\\/style");
+  const script2 = browserAsset("graph-app.js").replaceAll("</script", "<\\/script");
   const csp = [
     "default-src 'none'",
-    `style-src 'sha256-${contentHash(css)}'`,
-    `script-src 'sha256-${contentHash(script)}'`,
+    `style-src 'sha256-${contentHash(css2)}'`,
+    `script-src 'sha256-${contentHash(script2)}'`,
     "img-src data:",
     "font-src 'none'",
     "connect-src 'none'",
@@ -3422,19 +4384,19 @@ function renderGraphHtml(projectName, graph, generatedAt = (/* @__PURE__ */ new 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${htmlAttribute(csp)}">
-<title>${htmlText(projectName)} \xB7 \u8BB0\u5FC6\u77E5\u8BC6\u56FE\u8C31</title>
-<style>${css}</style>
+<title>${htmlText(projectName)} \xB7 \u9879\u76EE\u8BB0\u5FC6</title>
+<style>${css2}</style>
 </head>
 <body>
 <div id="app"></div>
 <template id="graph-data">${htmlText(JSON.stringify(data))}</template>
-<script>${script}</script>
+<script>${script2}</script>
 </body>
 </html>
 `;
 }
 
-// src/service.ts
+// ../../packages/project-memory-core/src/service.ts
 var MAX_CANDIDATES = 20;
 var MAX_UPDATE_CANDIDATES = 20;
 var MAX_TITLE_LENGTH = 200;
@@ -3444,6 +4406,9 @@ var MAX_TOPIC_LENGTH = 120;
 var MAX_CITATIONS = 12;
 var MAX_CITATION_LOCATOR_LENGTH = 240;
 var MAX_CITATION_NOTE_LENGTH = 500;
+var MAX_NARRATIVE_FIELD_LENGTH = 1600;
+var MAX_OUTPUTS = 12;
+var MAX_OUTPUT_LABEL_LENGTH = 240;
 var MAX_TAGS = 20;
 var MAX_TAG_LENGTH = 50;
 var MAX_RELATION_CANDIDATES = 40;
@@ -3458,18 +4423,38 @@ var MAX_GET_MEMORY_IDS = 20;
 var SYMMETRIC_RELATION_TYPES = /* @__PURE__ */ new Set(["related_to", "contradicts"]);
 var RELATION_LABELS3 = {
   related_to: "\u76F8\u5173",
+  observes: "\u6CE8\u610F\u5230",
+  causes: "\u539F\u56E0",
   depends_on: "\u4F9D\u8D56",
   supports: "\u652F\u6301",
   contradicts: "\u77DB\u76FE",
   supersedes: "\u66FF\u4EE3",
   derived_from: "\u6765\u6E90\u4E8E"
 };
+function desktopHubBriefItem(memory, briefRole) {
+  return {
+    memoryId: memory.id,
+    title: memory.title,
+    displayTitle: buildMemoryDisplayTitle(memory),
+    summary: memory.summary ?? memory.narrative?.conclusion ?? memory.content.slice(0, MAX_SUMMARY_LENGTH),
+    topic: memory.topic,
+    briefRole,
+    roleSource: memory.briefRole ? "reviewed" : "inferred",
+    stale: memory.stale,
+    citationCount: memory.citations.length,
+    updatedAt: memory.updatedAt,
+    occurredAt: memory.narrative?.occurredAt ?? null,
+    narrative: memory.narrative ?? null
+  };
+}
 var ProjectMemoryService = class {
   constructor(store, dataDir) {
     this.store = store;
+    this.dataDir = dataDir;
     this.denyPatterns = loadLocalConfig(dataDir).denyPatterns;
   }
   store;
+  dataDir;
   denyPatterns;
   detectProject(inputPath) {
     let metadata;
@@ -3639,7 +4624,7 @@ var ProjectMemoryService = class {
         stale,
         staleReason: stale ? "source_file_changed" : null,
         accessible: true,
-        fileUrl: pathToFileURL(path5.resolve(metadata.rootPath, current.path)).href
+        fileUrl: pathToFileURL2(path6.resolve(metadata.rootPath, current.path)).href
       };
     } catch {
       return {
@@ -3784,6 +4769,80 @@ var ProjectMemoryService = class {
     }
     return prepared;
   }
+  prepareNarrative(projectId, candidate, citations, required) {
+    if (!candidate) {
+      if (required) {
+        throw new ProjectMemoryError(
+          "INVALID_INPUT",
+          "A non-reference memory with a brief role must include a complete narrative."
+        );
+      }
+      return null;
+    }
+    const occurredAt = candidate.occurredAt?.trim();
+    const fields = [
+      candidate.reason,
+      candidate.action,
+      candidate.outcome,
+      candidate.conclusion
+    ].map((value) => value?.trim());
+    const occurredAtTimestamp = occurredAt ? Date.parse(occurredAt) : Number.NaN;
+    if (!occurredAt || Number.isNaN(occurredAtTimestamp) || fields.some((value) => !value || value.length > MAX_NARRATIVE_FIELD_LENGTH)) {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "Narrative requires a valid occurredAt and concise reason, action, outcome, and conclusion."
+      );
+    }
+    if (occurredAtTimestamp > Date.now()) {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "Narrative occurredAt cannot be in the future."
+      );
+    }
+    assertNoSecret([occurredAt, ...fields].join(" "), "memory narrative");
+    const outputs = candidate.outputs ?? [];
+    if (outputs.length > MAX_OUTPUTS) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Too many narrative outputs.");
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const preparedOutputs = outputs.map((output) => {
+      const sourceProjectId = output.sourceProjectId ?? projectId;
+      const citation = citations.find(
+        (item) => item.sourceProjectId === sourceProjectId && item.sourcePath === output.sourcePath
+      );
+      if (!citation) {
+        throw new ProjectMemoryError(
+          "INVALID_INPUT",
+          "Every narrative output must point to a verified citation in the same memory.",
+          { sourceProjectId, sourcePath: output.sourcePath }
+        );
+      }
+      const label = output.label?.trim() || null;
+      if (label && label.length > MAX_OUTPUT_LABEL_LENGTH) {
+        throw new ProjectMemoryError("INVALID_INPUT", "Narrative output label is too long.");
+      }
+      assertNoSecret(label ?? "", "narrative output label");
+      const key = `${citation.sourceProjectId}:${citation.sourcePath}`;
+      if (seen.has(key)) {
+        throw new ProjectMemoryError("INVALID_INPUT", "Duplicate narrative output.");
+      }
+      seen.add(key);
+      return {
+        sourceProjectId: citation.sourceProjectId,
+        sourcePath: citation.sourcePath,
+        role: citation.role,
+        label
+      };
+    });
+    return {
+      occurredAt: new Date(occurredAtTimestamp).toISOString(),
+      reason: fields[0],
+      action: fields[1],
+      outcome: fields[2],
+      conclusion: fields[3],
+      outputs: preparedOutputs
+    };
+  }
   prepareCandidate(projectId, candidate) {
     if (!MEMORY_KINDS.includes(candidate.kind)) {
       throw new ProjectMemoryError("INVALID_INPUT", "Unsupported memory kind.", {
@@ -3794,6 +4853,30 @@ var ProjectMemoryService = class {
     const content = candidate.content.trim();
     const summary = candidate.summary?.trim() || null;
     const topic = candidate.topic?.trim() || null;
+    const briefRole = candidate.briefRole ?? null;
+    const workUnitId = candidate.workUnitId?.trim() || null;
+    const runId = candidate.runId?.trim() || null;
+    const phase = candidate.phase ?? null;
+    const sequence = candidate.sequence ?? null;
+    if (briefRole && !BRIEF_ROLES.includes(briefRole)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Unsupported project brief role.", {
+        briefRole
+      });
+    }
+    if (phase && !MEMORY_PHASES.includes(phase)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Unsupported memory phase.", { phase });
+    }
+    if (sequence !== null && (!Number.isInteger(sequence) || sequence < 1)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Memory sequence must be a positive integer.");
+    }
+    for (const [value, label] of [
+      [workUnitId, "work unit id"],
+      [runId, "run id"]
+    ]) {
+      if (value && value.length > 200) {
+        throw new ProjectMemoryError("INVALID_INPUT", `${label} is too long.`);
+      }
+    }
     const tags = [...new Set((candidate.tags ?? []).map((tag) => tag.trim()).filter(Boolean))];
     if (!title || title.length > MAX_TITLE_LENGTH) {
       throw new ProjectMemoryError(
@@ -3846,19 +4929,32 @@ var ProjectMemoryService = class {
       sourceFileHash = source.fileHash;
       sourcePath = source.path;
     }
+    const citations = this.prepareCitations(projectId, candidate.citations ?? []);
+    const narrative = this.prepareNarrative(
+      projectId,
+      candidate.narrative,
+      citations,
+      briefRole !== null && briefRole !== "reference"
+    );
     return {
       ...candidate,
       ...ref ? { ref } : {},
       title,
       summary,
       topic,
+      briefRole,
+      workUnitId,
+      runId,
+      phase,
+      sequence,
       content,
       tags,
       sourceProjectId,
       sourcePath,
       sourceCommit,
       sourceFileHash,
-      citations: this.prepareCitations(projectId, candidate.citations ?? []),
+      citations,
+      narrative,
       confidence: candidate.confidence ?? "observed"
     };
   }
@@ -3871,11 +4967,33 @@ var ProjectMemoryService = class {
         { memoryId: candidate.memoryId }
       );
     }
-    if (candidate.summary === void 0 && candidate.topic === void 0 && candidate.citations === void 0) {
+    if (candidate.summary === void 0 && candidate.topic === void 0 && candidate.briefRole === void 0 && candidate.workUnitId === void 0 && candidate.runId === void 0 && candidate.phase === void 0 && candidate.sequence === void 0 && candidate.narrative === void 0 && candidate.citations === void 0) {
       throw new ProjectMemoryError("INVALID_INPUT", "Memory update has no enrichment fields.");
     }
     const summary = candidate.summary?.trim();
     const topic = candidate.topic?.trim();
+    const briefRole = candidate.briefRole;
+    const workUnitId = candidate.workUnitId?.trim();
+    const runId = candidate.runId?.trim();
+    const phase = candidate.phase;
+    const sequence = candidate.sequence;
+    if (briefRole !== void 0 && !BRIEF_ROLES.includes(briefRole)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Unsupported project brief role.", {
+        briefRole
+      });
+    }
+    if (phase !== void 0 && !MEMORY_PHASES.includes(phase)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Unsupported memory phase.", { phase });
+    }
+    if (sequence !== void 0 && (!Number.isInteger(sequence) || sequence < 1)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Memory sequence must be a positive integer.");
+    }
+    if (workUnitId !== void 0 && (!workUnitId || workUnitId.length > 200)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Work unit id must be non-empty and concise.");
+    }
+    if (runId !== void 0 && (!runId || runId.length > 200)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Run id must be non-empty and concise.");
+    }
     if (summary !== void 0 && (!summary || summary.length > MAX_SUMMARY_LENGTH)) {
       throw new ProjectMemoryError(
         "INVALID_INPUT",
@@ -3887,11 +5005,27 @@ var ProjectMemoryService = class {
     }
     assertNoSecret(summary ?? "", "memory summary");
     assertNoSecret(topic ?? "", "memory topic");
+    const citations = candidate.citations !== void 0 ? this.prepareCitations(projectId, candidate.citations) : memory.citations.map((citation) => ({
+      sourceProjectId: citation.sourceProjectId,
+      sourcePath: citation.sourcePath,
+      role: citation.role,
+      locator: citation.locator,
+      note: citation.note,
+      sourceCommit: citation.sourceCommit,
+      sourceFileHash: citation.sourceFileHash
+    }));
+    const narrative = candidate.narrative === void 0 ? void 0 : this.prepareNarrative(projectId, candidate.narrative, citations, false);
     return {
       memoryId: memory.id,
       ...summary !== void 0 ? { summary } : {},
       ...topic !== void 0 ? { topic } : {},
-      ...candidate.citations !== void 0 ? { citations: this.prepareCitations(projectId, candidate.citations) } : {}
+      ...briefRole !== void 0 ? { briefRole } : {},
+      ...workUnitId !== void 0 ? { workUnitId } : {},
+      ...runId !== void 0 ? { runId } : {},
+      ...phase !== void 0 ? { phase } : {},
+      ...sequence !== void 0 ? { sequence } : {},
+      ...narrative !== void 0 ? { narrative } : {},
+      ...candidate.citations !== void 0 ? { citations } : {}
     };
   }
   prepareRelationCandidate(projectId, candidateRefs, candidate) {
@@ -3969,8 +5103,50 @@ var ProjectMemoryService = class {
       confidence: candidate.confidence ?? "inferred"
     };
   }
-  proposeMemory(projectId, candidates, relations = [], updates = []) {
+  assertWorkUnitRelationCoverage(candidates, relations) {
+    const groups = /* @__PURE__ */ new Map();
+    for (const candidate of candidates) {
+      if (!candidate.workUnitId || candidate.briefRole === "reference") continue;
+      groups.set(candidate.workUnitId, [...groups.get(candidate.workUnitId) ?? [], candidate]);
+    }
+    const relatedRefs = /* @__PURE__ */ new Set();
+    for (const relation of relations) {
+      for (const endpoint of [relation.from, relation.to]) {
+        if ("candidateRef" in endpoint && endpoint.candidateRef) {
+          relatedRefs.add(endpoint.candidateRef);
+        }
+      }
+    }
+    for (const [workUnitId, events] of groups) {
+      if (events.length < 2) continue;
+      const missingRefs = events.filter((event) => !event.ref);
+      if (missingRefs.length > 0) {
+        throw new ProjectMemoryError(
+          "INVALID_INPUT",
+          "Every event in a multi-event work unit must define a candidate ref so relations can be reviewed.",
+          { workUnitId, titles: missingRefs.map((event) => event.title) }
+        );
+      }
+      const unconnected = events.filter((event) => !relatedRefs.has(event.ref));
+      if (unconnected.length > 0) {
+        throw new ProjectMemoryError(
+          "INVALID_INPUT",
+          "Every event in a multi-event work unit must participate in at least one proposed relation.",
+          { workUnitId, refs: unconnected.map((event) => event.ref) }
+        );
+      }
+    }
+  }
+  proposeMemory(projectId, candidates, relations = [], updates = [], actor = { platform: "codex", adapterVersion: null }) {
     this.store.requireProject(projectId);
+    const rawPlatform = actor.platform.trim();
+    const platform = ["claude", "claude-code"].includes(rawPlatform.toLocaleLowerCase()) ? "claude" : rawPlatform;
+    if (!platform || platform.length > 80) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Proposal actor platform is invalid.");
+    }
+    if (actor.adapterVersion !== null && actor.adapterVersion.length > 120) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Proposal adapter version is invalid.");
+    }
     if (candidates.length + updates.length + relations.length === 0 || candidates.length > MAX_CANDIDATES || updates.length > MAX_UPDATE_CANDIDATES || relations.length > MAX_RELATION_CANDIDATES) {
       throw new ProjectMemoryError(
         "INVALID_INPUT",
@@ -3985,12 +5161,38 @@ var ProjectMemoryService = class {
     const preparedRelations = relations.map(
       (candidate) => this.prepareRelationCandidate(projectId, new Set(refs), candidate)
     );
+    this.assertWorkUnitRelationCoverage(prepared, preparedRelations);
     const preparedUpdates = updates.map(
       (candidate) => this.prepareUpdateCandidate(projectId, candidate)
     );
-    return this.store.createProposal(projectId, prepared, preparedUpdates, preparedRelations);
+    return this.store.createProposal(projectId, prepared, preparedUpdates, preparedRelations, {
+      platform,
+      adapterVersion: actor.adapterVersion
+    });
   }
-  commitMemory(proposalId, acceptedItemIds, acceptedRelationIds = [], acceptedUpdateIds = []) {
+  commitMemory(proposalId, acceptedItemIds, acceptedRelationIds = [], acceptedUpdateIds = [], refreshSources = false) {
+    const proposal = this.store.getProposal(proposalId);
+    if (!proposal) {
+      throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+        proposalId
+      });
+    }
+    const checks = this.store.getProposalSourceChecks(
+      proposalId,
+      acceptedItemIds,
+      acceptedUpdateIds
+    );
+    if (refreshSources) {
+      const refreshedChecks = this.readCurrentProposalSources(
+        proposalId,
+        proposal.projectId,
+        checks,
+        true
+      );
+      this.store.refreshProposalSources(proposalId, refreshedChecks);
+    } else {
+      this.validateProposalSources(proposalId, proposal.projectId, checks);
+    }
     const result = this.store.commitProposal(
       proposalId,
       acceptedItemIds,
@@ -4002,6 +5204,52 @@ var ProjectMemoryService = class {
       memories: result.memories.map((memory) => this.enrichStaleness(memory)),
       updatedMemories: result.updatedMemories.map((memory) => this.enrichStaleness(memory))
     };
+  }
+  refreshProposalSources(proposalId, acceptedItemIds, acceptedUpdateIds) {
+    const proposal = this.store.getProposal(proposalId);
+    if (!proposal) {
+      throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+        proposalId
+      });
+    }
+    const checks = this.store.getProposalSourceChecks(
+      proposalId,
+      acceptedItemIds,
+      acceptedUpdateIds
+    );
+    const refreshedChecks = this.readCurrentProposalSources(
+      proposalId,
+      proposal.projectId,
+      checks,
+      true
+    );
+    return this.store.refreshProposalSources(proposalId, refreshedChecks);
+  }
+  validateProposalSources(proposalId, projectId, checks) {
+    this.readCurrentProposalSources(proposalId, projectId, checks, false);
+  }
+  readCurrentProposalSources(proposalId, projectId, checks, allowChanges) {
+    const refreshedChecks = [];
+    for (const check of checks) {
+      this.requireReadAccess(projectId, check.sourceProjectId);
+      const sourceProject = this.store.requireProject(check.sourceProjectId);
+      const metadata = detectGitMetadata(sourceProject.primaryPath);
+      const current = readProjectFile(
+        metadata.rootPath,
+        check.sourcePath,
+        metadata.headCommit,
+        this.denyPatterns
+      );
+      if (!allowChanges && current.fileHash !== check.sourceFileHash) {
+        throw new ProjectMemoryError(
+          "STALE_SOURCE",
+          "A proposal source changed after review was prepared.",
+          { proposalId, itemId: check.itemId, sourcePath: check.sourcePath }
+        );
+      }
+      refreshedChecks.push({ ...check, sourceFileHash: current.fileHash });
+    }
+    return refreshedChecks;
   }
   rejectMemory(proposalId) {
     return this.store.rejectProposal(proposalId);
@@ -4183,7 +5431,7 @@ var ProjectMemoryService = class {
     for (const memory of graph.nodes) {
       const stale = memory.stale ? " [\u5DF2\u8FC7\u671F]" : "";
       lines.push(
-        `  ${nodeId(memory.id)}["${escapeLabel(`${memory.projectName}: ${memory.title}${stale}`)}"]`
+        `  ${nodeId(memory.id)}["${escapeLabel(`${memory.projectName}: ${buildMemoryDisplayTitle(memory)}${stale}`)}"]`
       );
     }
     for (const relation of graph.relations) {
@@ -4199,17 +5447,289 @@ var ProjectMemoryService = class {
     const project = this.store.requireProject(projectId);
     const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
-    return renderGraphMarkdown(project.name, graph, generatedAt, guide);
+    const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
+    return renderGraphMarkdown(project.name, graph, generatedAt, guide, brief);
   }
   buildGraphGuide(projectId, graph, limit = 12, generatedAt = (/* @__PURE__ */ new Date()).toISOString()) {
     const project = this.store.requireProject(projectId);
     return analyzeKnowledgeGraph(projectId, project.name, graph, generatedAt, limit);
   }
+  buildProjectBrief(projectId, graph, limit = 12, generatedAt = (/* @__PURE__ */ new Date()).toISOString(), providedGuide) {
+    if (!Number.isInteger(limit) || limit < 1 || limit > MAX_GRAPH_NODES) {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        `Project brief limit must be between 1 and ${MAX_GRAPH_NODES}.`
+      );
+    }
+    const project = this.store.requireProject(projectId);
+    const guide = providedGuide ?? this.buildGraphGuide(projectId, graph, Math.min(limit, 12), generatedAt);
+    return buildProjectBrief(projectId, project.name, graph, guide, generatedAt, limit);
+  }
+  buildProjectStory(projectId, graph, generatedAt = (/* @__PURE__ */ new Date()).toISOString()) {
+    const projectGraph = graph ?? this.buildGraph(projectId, null, 1, false);
+    const guide = this.buildGraphGuide(projectId, projectGraph, 12, generatedAt);
+    const brief = this.buildProjectBrief(
+      projectId,
+      projectGraph,
+      MAX_GRAPH_NODES,
+      generatedAt,
+      guide
+    );
+    const memoryById = new Map(projectGraph.nodes.map((memory) => [memory.id, memory]));
+    const sentence = (relation) => {
+      const fromMemory = memoryById.get(relation.fromMemoryId);
+      const toMemory = memoryById.get(relation.toMemoryId);
+      const from = `\u300A${fromMemory ? buildMemoryDisplayTitle(fromMemory) : "\u672A\u627E\u5230\u7684\u8BB0\u5F55"}\u300B`;
+      const to = `\u300A${toMemory ? buildMemoryDisplayTitle(toMemory) : "\u672A\u627E\u5230\u7684\u8BB0\u5F55"}\u300B`;
+      switch (relation.type) {
+        case "observes":
+          return `${from}\u5728\u6267\u884C\u8FC7\u7A0B\u4E2D\u6CE8\u610F\u5230${to}\u3002`;
+        case "causes":
+          return `${from}\u662F\u4FC3\u6210${to}\u7684\u539F\u56E0\u3002`;
+        case "depends_on":
+          return `${from}\u9700\u8981\u5148\u53C2\u8003${to}\u3002`;
+        case "supports":
+          return `${from}\u4E3A${to}\u63D0\u4F9B\u4E86\u652F\u6301\u3002`;
+        case "contradicts":
+          return `${from}\u4E0E${to}\u5B58\u5728\u4E0D\u4E00\u81F4\uFF0C\u9700\u8981\u91CD\u65B0\u6838\u5BF9\u3002`;
+        case "supersedes":
+          return `${from}\u66F4\u65B0\u5E76\u66FF\u4EE3\u4E86${to}\u3002`;
+        case "derived_from":
+          return `${from}\u662F\u6839\u636E${to}\u6574\u7406\u51FA\u6765\u7684\u3002`;
+        default:
+          return `${from}\u4E0E${to}\u8BB0\u5F55\u7684\u662F\u76F8\u4E92\u5173\u8054\u7684\u5DE5\u4F5C\u3002`;
+      }
+    };
+    return {
+      protocolVersion: 1,
+      projectId,
+      projectName: brief.projectName,
+      generatedAt,
+      overview: brief.handoff.coverage,
+      startHere: brief.handoff.startHere,
+      timeline: brief.handoff.history,
+      currentConclusions: brief.currentConclusions,
+      risks: brief.risks,
+      nextSteps: brief.nextSteps,
+      suggestions: brief.systemSuggestions,
+      relations: projectGraph.relations.map((relation) => ({
+        relationId: relation.id,
+        fromMemoryId: relation.fromMemoryId,
+        toMemoryId: relation.toMemoryId,
+        sentence: sentence(relation),
+        rationale: relation.rationale
+      }))
+    };
+  }
+  buildMemoryHub(regenerateProjectPages = false) {
+    const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const pendingByProject = /* @__PURE__ */ new Map();
+    for (const proposal of this.store.listProposals("pending")) {
+      const existing = pendingByProject.get(proposal.projectId) ?? [];
+      existing.push(proposal);
+      pendingByProject.set(proposal.projectId, existing);
+    }
+    const projects = this.store.listProjects().map((project) => {
+      const graph = this.buildGraph(project.id, null, 1, false);
+      const brief = this.buildProjectBrief(project.id, graph, MAX_GRAPH_NODES, generatedAt);
+      if (regenerateProjectPages) this.writeGraphHtml(project.id, graph);
+      const latest = brief.handoff.history[0] ?? null;
+      const pendingProposalCount = this.store.countPendingProposals(project.id);
+      const pendingProposals = (pendingByProject.get(project.id) ?? []).slice(0, 4).map((proposal) => ({
+        platform: proposal.actor.platform,
+        createdAt: proposal.createdAt,
+        summaries: [
+          ...proposal.items.map((item) => buildMemoryDisplayTitle(item.candidate)),
+          ...proposal.updateItems.map(
+            (item) => `\u8865\u5168\uFF1A${(() => {
+              const memory = graph.nodes.find(
+                (candidate) => candidate.id === item.candidate.memoryId
+              );
+              return memory ? buildMemoryDisplayTitle(memory) : "\u5DF2\u6709\u8BB0\u5F55";
+            })()}`
+          ),
+          ...proposal.relationItems.map(() => "\u53EF\u80FD\u6709\u5173\u7684\u8BB0\u5F55")
+        ].slice(0, 4)
+      }));
+      const storyPath = pathToFileURL2(this.store.knowledgeGraphPath(project.id)).href;
+      const searchText = graph.nodes.flatMap((memory) => [
+        buildMemoryDisplayTitle(memory),
+        memory.title,
+        memory.summary ?? "",
+        memory.narrative?.outcome ?? "",
+        memory.narrative?.conclusion ?? "",
+        ...memory.narrative?.outputs.map((output) => output.label ?? output.sourcePath) ?? [],
+        ...memory.citations.map((citation) => citation.note ?? citation.sourcePath)
+      ]).join(" ");
+      return {
+        projectId: project.id,
+        name: project.name,
+        primaryPath: project.primaryPath,
+        overview: brief.handoff.coverage,
+        latestActivityAt: latest?.occurredAt ?? latest?.updatedAt ?? null,
+        latestActivityTitle: latest?.displayTitle ?? null,
+        latestConclusion: brief.currentConclusions[0] ?? null,
+        nextStep: brief.nextSteps[0] ?? null,
+        risk: brief.risks[0] ?? null,
+        memoryCount: brief.summary.memoryCount,
+        staleCitationCount: brief.summary.staleCitationCount,
+        pendingProposalCount,
+        pendingProposals,
+        needsAttention: pendingProposalCount > 0 || brief.summary.staleCitationCount > 0 || brief.risks.length > 0,
+        storyPath,
+        searchText
+      };
+    });
+    const byRecent = [...projects].sort(
+      (left, right) => (right.latestActivityAt ?? "").localeCompare(left.latestActivityAt ?? "") || left.name.localeCompare(right.name, "zh-CN")
+    );
+    const byName = [...projects].sort(
+      (left, right) => left.name.localeCompare(right.name, "zh-CN")
+    );
+    return {
+      protocolVersion: 1,
+      generatedAt,
+      storageHome: this.dataDir,
+      summary: {
+        projectCount: projects.length,
+        memoryCount: projects.reduce((total, project) => total + project.memoryCount, 0),
+        pendingProposalCount: projects.reduce(
+          (total, project) => total + project.pendingProposalCount,
+          0
+        ),
+        attentionProjectCount: projects.filter((project) => project.needsAttention).length
+      },
+      recentProjects: byRecent.slice(0, 6),
+      attentionProjects: byRecent.filter((project) => project.needsAttention),
+      pendingProjects: byRecent.filter((project) => project.pendingProposalCount > 0),
+      projects: byName
+    };
+  }
+  buildDesktopHubSnapshot() {
+    const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const pendingByProject = /* @__PURE__ */ new Map();
+    for (const proposal of this.store.listProposals("pending")) {
+      const existing = pendingByProject.get(proposal.projectId) ?? [];
+      existing.push(proposal);
+      pendingByProject.set(proposal.projectId, existing);
+    }
+    const projects = this.store.listProjects().map((project) => {
+      const memories = this.store.getContext(project.id, 1e3);
+      const latest = memories[0] ?? null;
+      const conclusion = memories.find((memory) => memory.briefRole === "conclusion") ?? memories.find((memory) => memory.kind === "decision") ?? null;
+      const nextStep = memories.find((memory) => memory.briefRole === "next_step") ?? null;
+      const risk = memories.find((memory) => memory.briefRole === "risk") ?? memories.find((memory) => memory.kind === "pitfall") ?? null;
+      const pendingProposals = (pendingByProject.get(project.id) ?? []).slice(0, 4).map((proposal) => ({
+        platform: proposal.actor.platform,
+        createdAt: proposal.createdAt,
+        summaries: [
+          ...proposal.items.map((item) => item.candidate.title),
+          ...proposal.updateItems.map(() => "\u8865\u5168\u5DF2\u6709\u8BB0\u5F55"),
+          ...proposal.relationItems.map(() => "\u53EF\u80FD\u6709\u5173\u7684\u8BB0\u5F55")
+        ].slice(0, 4)
+      }));
+      const pendingProposalCount = pendingByProject.get(project.id)?.length ?? 0;
+      const staleCitationCount = memories.reduce(
+        (total, memory) => total + memory.citations.filter((citation) => citation.stale).length,
+        0
+      );
+      const overview = conclusion?.summary ?? conclusion?.narrative?.conclusion ?? latest?.summary ?? latest?.narrative?.outcome ?? (memories.length > 0 ? `\u5DF2\u4FDD\u5B58 ${memories.length} \u6761\u9879\u76EE\u8BB0\u5FC6\u3002` : "\u5DF2\u6CE8\u518C\uFF0C\u7B49\u5F85\u5F62\u6210\u9996\u6761\u8BB0\u5FC6\u3002");
+      return {
+        projectId: project.id,
+        name: project.name,
+        primaryPath: project.primaryPath,
+        overview,
+        latestActivityAt: latest?.narrative?.occurredAt ?? latest?.updatedAt ?? null,
+        latestActivityTitle: latest ? buildMemoryDisplayTitle(latest) : null,
+        latestConclusion: conclusion ? desktopHubBriefItem(conclusion, "conclusion") : null,
+        nextStep: nextStep ? desktopHubBriefItem(nextStep, "next_step") : null,
+        risk: risk ? desktopHubBriefItem(risk, "risk") : null,
+        memoryCount: memories.length,
+        staleCitationCount,
+        pendingProposalCount,
+        pendingProposals,
+        needsAttention: pendingProposalCount > 0 || staleCitationCount > 0 || Boolean(risk),
+        storyPath: pathToFileURL2(this.store.knowledgeGraphPath(project.id)).href,
+        searchText: memories.flatMap((memory) => [
+          buildMemoryDisplayTitle(memory),
+          memory.title,
+          memory.summary ?? "",
+          memory.narrative?.outcome ?? "",
+          memory.narrative?.conclusion ?? "",
+          ...memory.narrative?.outputs.map((output) => output.label ?? output.sourcePath) ?? [],
+          ...memory.citations.map((citation) => citation.note ?? citation.sourcePath)
+        ]).join(" ")
+      };
+    });
+    const byRecent = [...projects].sort(
+      (left, right) => (right.latestActivityAt ?? "").localeCompare(left.latestActivityAt ?? "") || left.name.localeCompare(right.name, "zh-CN")
+    );
+    const hub = {
+      protocolVersion: 1,
+      generatedAt,
+      storageHome: this.dataDir,
+      summary: {
+        projectCount: projects.length,
+        memoryCount: projects.reduce((total, project) => total + project.memoryCount, 0),
+        pendingProposalCount: projects.reduce(
+          (total, project) => total + project.pendingProposalCount,
+          0
+        ),
+        attentionProjectCount: projects.filter((project) => project.needsAttention).length
+      },
+      recentProjects: byRecent.slice(0, 6),
+      attentionProjects: byRecent.filter((project) => project.needsAttention),
+      pendingProjects: byRecent.filter((project) => project.pendingProposalCount > 0),
+      projects: [...projects].sort((left, right) => left.name.localeCompare(right.name, "zh-CN"))
+    };
+    hub.platformProjects = buildDesktopPlatformInventory(
+      discoverDesktopPlatformProjects(),
+      this.store.listProjects(),
+      hub.projects
+    );
+    return hub;
+  }
+  registerDesktopPlatformProject(platform, projectPath) {
+    const resolvedPath = path6.resolve(projectPath);
+    const candidate = discoverDesktopPlatformProjects().find(
+      (project) => project.platform === platform && project.path === resolvedPath
+    );
+    if (!candidate) {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "The selected platform project is no longer available for registration.",
+        { platform, path: resolvedPath }
+      );
+    }
+    this.registerProject(candidate.path, candidate.name);
+    return this.buildDesktopHubSnapshot();
+  }
+  buildDesktopProjectView(projectId) {
+    const project = this.store.requireProject(projectId);
+    const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
+    const graph = this.buildGraph(projectId, null, 1, false);
+    const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
+    const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
+    return buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+  }
+  writeMemoryHub(regenerateProjectPages = true) {
+    const hub = this.buildMemoryHub(regenerateProjectPages);
+    const outputPath = this.store.writeMemoryHub(renderMemoryHubHtml(hub), resolveMemoryHubPath());
+    return {
+      format: "html",
+      outputPath,
+      generatedAt: hub.generatedAt,
+      projectCount: hub.summary.projectCount,
+      memoryCount: hub.summary.memoryCount,
+      pendingProposalCount: hub.summary.pendingProposalCount
+    };
+  }
   writeGraphHtml(projectId, graph, outputPath) {
     const project = this.store.requireProject(projectId);
     const generatedAt = (/* @__PURE__ */ new Date()).toISOString();
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
-    const html = renderGraphHtml(project.name, graph, generatedAt, guide);
+    const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
+    const html = renderGraphHtml(project.name, graph, generatedAt, guide, brief);
     const target = this.store.writeKnowledgeGraph(projectId, html, outputPath);
     return {
       format: "html",
@@ -4217,7 +5737,8 @@ var ProjectMemoryService = class {
       generatedAt,
       nodeCount: graph.nodes.length,
       relationCount: graph.relations.length,
-      relationSuggestionCount: guide.relationSuggestions.length
+      relationSuggestionCount: guide.relationSuggestions.length,
+      briefItemCount: brief.summary.memoryCount
     };
   }
   searchFiles(sourceProjectId, targetProjectId, query) {
@@ -4244,13 +5765,16 @@ var ProjectMemoryService = class {
       )
     };
   }
-  bindingSnippet() {
+  bindingSnippet(platform = "codex") {
+    const normalized = platform.trim().toLocaleLowerCase();
+    const instruction = normalized === "claude" || normalized === "claude-code" ? "Use the installed Talo Skill for substantial work in registered local projects. Detect the current project, recall task-relevant candidates, and get only recommended memories within the default token budget. Use story for the project timeline and hub for all registered projects. Propose durable updates with actor.platform set to claude, then resolve them through the shared review workflow." : normalized === "antigravity" ? "Before substantial work in a local workspace, use the global Talo Skill to detect the current project. If the project is registered, recall only task-relevant reviewed memories and get only the recommended memory IDs. If the project is not registered and the user did not explicitly ask about Talo, continue silently without registering or relinking it. Create reviewed proposals with actor.platform set to antigravity; never write memory files directly." : "Use the installed $project-memory Skill before substantial work: detect the current project, recall compact task-relevant candidates, and get only the recommended memories within the default token budget. Use story for the project timeline and hub for all registered projects. Before finishing durable work, create a reviewed proposal and resolve it through the shared review workflow. Treat linked projects as read-only references.";
     return {
-      beginMarker: "<!-- codex-project-memory:start -->",
-      endMarker: "<!-- codex-project-memory:end -->",
-      markdown: `<!-- codex-project-memory:start -->
-Use the installed $project-memory Skill before substantial work: detect the current project, recall compact task-relevant candidates, and get only the recommended memories within the default token budget. Use load only for explicit full inspection. Before finishing a tool-using task, resolve the memory proposal and include the required Project memory receipt. Use structured request_user_input choices when available. When request_user_input is unavailable, automatically commit all proposed memory and relation items and disclose the automatic fallback. Treat linked projects as read-only references.
-<!-- codex-project-memory:end -->`
+      platform: normalized,
+      beginMarker: "<!-- project-memory:start -->",
+      endMarker: "<!-- project-memory:end -->",
+      markdown: `<!-- project-memory:start -->
+${instruction}
+<!-- project-memory:end -->`
     };
   }
   exportProject(projectId) {
@@ -4259,43 +5783,44 @@ Use the installed $project-memory Skill before substantial work: detect the curr
   }
 };
 
-// src/store.ts
-import { randomUUID } from "crypto";
+// ../../packages/project-memory-core/src/store.ts
+import { createHash as createHash5, randomUUID } from "crypto";
 import {
   appendFileSync,
-  chmodSync,
-  existsSync as existsSync4,
+  chmodSync as chmodSync2,
+  existsSync as existsSync5,
   mkdirSync as mkdirSync2,
-  readdirSync as readdirSync2,
-  readFileSync as readFileSync4,
-  renameSync,
-  rmSync,
-  writeFileSync
+  readdirSync as readdirSync4,
+  readFileSync as readFileSync5,
+  renameSync as renameSync2,
+  rmSync as rmSync2,
+  statSync as statSync4,
+  writeFileSync as writeFileSync2
 } from "fs";
-import path6 from "path";
+import path7 from "path";
 var SCHEMA_VERSION = 1;
-var MEMORY_SCHEMA_VERSION = 2;
+var MEMORY_SCHEMA_VERSION = 6;
 function now() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function ensurePrivateDirectory(directory) {
   mkdirSync2(directory, { recursive: true, mode: 448 });
-  chmodSync(directory, 448);
+  chmodSync2(directory, 448);
 }
 function writePrivateFile(filePath, content, hardenDirectory = true) {
   if (hardenDirectory) {
-    ensurePrivateDirectory(path6.dirname(filePath));
+    ensurePrivateDirectory(path7.dirname(filePath));
   } else {
-    mkdirSync2(path6.dirname(filePath), { recursive: true, mode: 448 });
+    mkdirSync2(path7.dirname(filePath), { recursive: true, mode: 448 });
   }
   const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
   try {
-    writeFileSync(temporaryPath, content, { encoding: "utf8", mode: 384 });
-    chmodSync(temporaryPath, 384);
-    renameSync(temporaryPath, filePath);
-    chmodSync(filePath, 384);
+    writeFileSync2(temporaryPath, content, { encoding: "utf8", mode: 384 });
+    chmodSync2(temporaryPath, 384);
+    renameSync2(temporaryPath, filePath);
+    chmodSync2(filePath, 384);
   } finally {
-    rmSync(temporaryPath, { force: true });
+    rmSync2(temporaryPath, { force: true });
   }
 }
 function writeJson(filePath, value) {
@@ -4304,7 +5829,7 @@ function writeJson(filePath, value) {
 }
 function readJson(filePath) {
   try {
-    return JSON.parse(readFileSync4(filePath, "utf8"));
+    return JSON.parse(readFileSync5(filePath, "utf8"));
   } catch (error) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Unable to read project memory state.", {
       path: filePath,
@@ -4314,6 +5839,10 @@ function readJson(filePath) {
 }
 function headingTitle(title) {
   return title.replaceAll(/\s+/g, " ").trim();
+}
+function memoryIdentityKey(title, content) {
+  return `${title.trim().toLocaleLowerCase()}
+${content.trim()}`;
 }
 function renderMemoryDocument(projectId, memories) {
   const metadata = {
@@ -4326,6 +5855,12 @@ function renderMemoryDocument(projectId, memories) {
       title: memory.title,
       summary: memory.summary,
       topic: memory.topic,
+      briefRole: memory.briefRole,
+      workUnitId: memory.workUnitId,
+      runId: memory.runId,
+      phase: memory.phase,
+      sequence: memory.sequence,
+      narrative: memory.narrative,
       tags: memory.tags,
       sourceProjectId: memory.sourceProjectId,
       sourcePath: memory.sourcePath,
@@ -4340,6 +5875,8 @@ function renderMemoryDocument(projectId, memories) {
         sourceCommit: citation.sourceCommit,
         sourceFileHash: citation.sourceFileHash
       })),
+      submittedBy: memory.submittedBy ?? null,
+      sourceProposalId: memory.sourceProposalId ?? null,
       confidence: memory.confidence,
       status: "active",
       createdAt: memory.createdAt,
@@ -4356,16 +5893,16 @@ ${memory.content.trim()}
 ${JSON.stringify(metadata, null, 2)}
 ---
 
-# Project Memory
+# Talo
 
 ${sections.join("\n")}`;
 }
 function parseMemoryDocument(filePath, project) {
-  if (!existsSync4(filePath)) {
+  if (!existsSync5(filePath)) {
     return [];
   }
-  const text = readFileSync4(filePath, "utf8");
-  const frontMatter = text.match(/^---\n([\s\S]*?)\n---\n/);
+  const text2 = readFileSync5(filePath, "utf8");
+  const frontMatter = text2.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontMatter) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Project MEMORY.md has invalid front matter.", {
       path: filePath
@@ -4380,14 +5917,14 @@ function parseMemoryDocument(filePath, project) {
       cause: error instanceof Error ? error.message : String(error)
     });
   }
-  if (![1, MEMORY_SCHEMA_VERSION].includes(metadata.schemaVersion) || metadata.projectId !== project.id) {
+  if (![1, 2, 3, 4, 5, MEMORY_SCHEMA_VERSION].includes(metadata.schemaVersion) || metadata.projectId !== project.id) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Project MEMORY.md identity is invalid.", {
       path: filePath,
       projectId: project.id
     });
   }
   const bodyOffset = frontMatter[0].length;
-  const body = text.slice(bodyOffset);
+  const body = text2.slice(bodyOffset);
   const headings = /* @__PURE__ */ new Map();
   const memoryIds = new Set(metadata.memories.map((memory) => memory.id));
   const matches = [...body.matchAll(/^## \[([0-9a-f-]+)\](?: .*)?$/gim)].filter(
@@ -4405,8 +5942,8 @@ function parseMemoryDocument(filePath, project) {
     headings.set(id, { contentStart, sectionEnd });
   }
   return metadata.memories.map((memory) => {
-    const section = headings.get(memory.id);
-    if (!section) {
+    const section2 = headings.get(memory.id);
+    if (!section2) {
       throw new ProjectMemoryError(
         "STORAGE_ERROR",
         "Project MEMORY.md is missing a memory section.",
@@ -4420,8 +5957,16 @@ function parseMemoryDocument(filePath, project) {
       ...memory,
       summary: memory.summary ?? null,
       topic: memory.topic ?? null,
+      briefRole: memory.briefRole ?? null,
+      workUnitId: memory.workUnitId ?? null,
+      runId: memory.runId ?? null,
+      phase: memory.phase && MEMORY_PHASES.includes(memory.phase) ? memory.phase : null,
+      sequence: typeof memory.sequence === "number" && Number.isInteger(memory.sequence) ? memory.sequence : null,
+      narrative: memory.narrative ?? null,
+      submittedBy: memory.submittedBy ?? null,
+      sourceProposalId: memory.sourceProposalId ?? null,
       projectName: project.name,
-      content: body.slice(section.contentStart, section.sectionEnd).trim(),
+      content: body.slice(section2.contentStart, section2.sectionEnd).trim(),
       citations: (memory.citations ?? []).map((citation) => ({
         ...citation,
         sourceProjectName: "",
@@ -4454,6 +5999,44 @@ function relationKey(type, fromMemoryId, toMemoryId) {
   }
   return `${type}:${fromMemoryId}:${toMemoryId}`;
 }
+function memoryRevision(memory) {
+  const stableMemory = {
+    id: memory.id,
+    projectId: memory.projectId,
+    kind: memory.kind,
+    title: memory.title,
+    summary: memory.summary,
+    topic: memory.topic,
+    briefRole: memory.briefRole,
+    workUnitId: memory.workUnitId,
+    runId: memory.runId,
+    phase: memory.phase,
+    sequence: memory.sequence,
+    narrative: memory.narrative,
+    tags: memory.tags,
+    sourceProjectId: memory.sourceProjectId,
+    sourcePath: memory.sourcePath,
+    sourceCommit: memory.sourceCommit,
+    sourceFileHash: memory.sourceFileHash,
+    citations: memory.citations.map((citation) => ({
+      sourceProjectId: citation.sourceProjectId,
+      sourcePath: citation.sourcePath,
+      role: citation.role,
+      locator: citation.locator,
+      note: citation.note,
+      sourceCommit: citation.sourceCommit,
+      sourceFileHash: citation.sourceFileHash
+    })),
+    submittedBy: memory.submittedBy ?? null,
+    sourceProposalId: memory.sourceProposalId ?? null,
+    confidence: memory.confidence,
+    status: memory.status,
+    createdAt: memory.createdAt,
+    updatedAt: memory.updatedAt,
+    content: memory.content
+  };
+  return createHash5("sha256").update(JSON.stringify(stableMemory)).digest("hex");
+}
 function publicCitation(citation) {
   return {
     sourceProjectId: citation.sourceProjectId,
@@ -4463,11 +6046,31 @@ function publicCitation(citation) {
     ...citation.note ? { note: citation.note } : {}
   };
 }
+function publicNarrative(candidate) {
+  return {
+    occurredAt: candidate.occurredAt,
+    reason: candidate.reason,
+    action: candidate.action,
+    outcome: candidate.outcome,
+    conclusion: candidate.conclusion,
+    outputs: candidate.outputs.map((output) => ({
+      sourceProjectId: output.sourceProjectId,
+      sourcePath: output.sourcePath,
+      ...output.label ? { label: output.label } : {}
+    }))
+  };
+}
 function publicUpdateCandidate(candidate) {
   return {
     memoryId: candidate.memoryId,
     ...candidate.summary !== void 0 ? { summary: candidate.summary } : {},
     ...candidate.topic !== void 0 ? { topic: candidate.topic } : {},
+    ...candidate.briefRole !== void 0 ? { briefRole: candidate.briefRole } : {},
+    ...candidate.workUnitId !== void 0 ? { workUnitId: candidate.workUnitId } : {},
+    ...candidate.runId !== void 0 ? { runId: candidate.runId } : {},
+    ...candidate.phase !== void 0 ? { phase: candidate.phase } : {},
+    ...candidate.sequence !== void 0 ? { sequence: candidate.sequence } : {},
+    ...candidate.narrative !== void 0 ? { narrative: publicNarrative(candidate.narrative) } : {},
     ...candidate.citations !== void 0 ? { citations: candidate.citations.map(publicCitation) } : {}
   };
 }
@@ -4475,6 +6078,8 @@ function publicProposal(proposal) {
   return {
     id: proposal.id,
     projectId: proposal.projectId,
+    actor: proposal.actor ?? { platform: "legacy", adapterVersion: null },
+    baseRevision: proposal.baseRevision ?? null,
     status: proposal.status,
     createdAt: proposal.createdAt,
     reviewedAt: proposal.reviewedAt,
@@ -4488,6 +6093,12 @@ function publicProposal(proposal) {
         title: item.candidate.title,
         ...item.candidate.summary ? { summary: item.candidate.summary } : {},
         ...item.candidate.topic ? { topic: item.candidate.topic } : {},
+        ...item.candidate.briefRole ? { briefRole: item.candidate.briefRole } : {},
+        ...item.candidate.workUnitId ? { workUnitId: item.candidate.workUnitId } : {},
+        ...item.candidate.runId ? { runId: item.candidate.runId } : {},
+        ...item.candidate.phase ? { phase: item.candidate.phase } : {},
+        ...item.candidate.sequence !== null ? { sequence: item.candidate.sequence } : {},
+        ...item.candidate.narrative ? { narrative: publicNarrative(item.candidate.narrative) } : {},
         content: item.candidate.content,
         tags: item.candidate.tags,
         ...item.candidate.sourceProjectId ? { sourceProjectId: item.candidate.sourceProjectId } : {},
@@ -4523,16 +6134,19 @@ var MemoryStore = class {
   registryPath;
   linksPath;
   projectsRoot;
+  locksRoot;
   constructor(dataDir) {
     this.storageRoot = dataDir;
-    this.registryPath = path6.join(dataDir, "registry.json");
-    this.linksPath = path6.join(dataDir, "links.json");
-    this.projectsRoot = path6.join(dataDir, "projects");
+    this.registryPath = path7.join(dataDir, "registry.json");
+    this.linksPath = path7.join(dataDir, "links.json");
+    this.projectsRoot = path7.join(dataDir, "projects");
+    this.locksRoot = path7.join(dataDir, "locks");
     ensurePrivateDirectory(this.projectsRoot);
-    if (!existsSync4(this.registryPath)) {
+    ensurePrivateDirectory(this.locksRoot);
+    if (!existsSync5(this.registryPath)) {
       writeJson(this.registryPath, { schemaVersion: SCHEMA_VERSION, projects: [] });
     }
-    if (!existsSync4(this.linksPath)) {
+    if (!existsSync5(this.linksPath)) {
       writeJson(this.linksPath, { schemaVersion: SCHEMA_VERSION, links: [] });
     }
     this.readRegistry();
@@ -4540,37 +6154,93 @@ var MemoryStore = class {
   }
   close() {
   }
+  acquireProjectLock(projectId) {
+    const lockPath = path7.join(this.locksRoot, `${projectId}.lock`);
+    const acquire = () => {
+      try {
+        mkdirSync2(lockPath, { mode: 448 });
+        writePrivateFile(
+          path7.join(lockPath, "owner.json"),
+          `${JSON.stringify({ pid: process.pid, acquiredAt: now() }, null, 2)}
+`,
+          false
+        );
+      } catch (error) {
+        const code = error.code;
+        if (code !== "EEXIST") throw error;
+        const age = Date.now() - statSync4(lockPath).mtimeMs;
+        if (age > 5 * 60 * 1e3) {
+          rmSync2(lockPath, { recursive: true, force: true });
+          mkdirSync2(lockPath, { mode: 448 });
+          writePrivateFile(
+            path7.join(lockPath, "owner.json"),
+            `${JSON.stringify({ pid: process.pid, acquiredAt: now(), recovered: true }, null, 2)}
+`,
+            false
+          );
+          return;
+        }
+        throw new ProjectMemoryError(
+          "PROJECT_LOCKED",
+          "This project memory is being changed by another process.",
+          { projectId, lockPath }
+        );
+      }
+    };
+    acquire();
+    return () => rmSync2(lockPath, { recursive: true, force: true });
+  }
+  projectRevision(projectId) {
+    const hash2 = createHash5("sha256");
+    for (const filePath of [
+      this.memoryPath(projectId),
+      this.relationsPath(projectId),
+      this.linksPath
+    ]) {
+      hash2.update(path7.basename(filePath));
+      hash2.update(existsSync5(filePath) ? readFileSync5(filePath) : Buffer.from("<missing>"));
+    }
+    return hash2.digest("hex");
+  }
   projectDir(projectId) {
-    return path6.join(this.projectsRoot, projectId);
+    return path7.join(this.projectsRoot, projectId);
   }
   projectPath(projectId) {
-    return path6.join(this.projectDir(projectId), "project.json");
+    return path7.join(this.projectDir(projectId), "project.json");
   }
   memoryPath(projectId) {
-    return path6.join(this.projectDir(projectId), "MEMORY.md");
+    return path7.join(this.projectDir(projectId), "MEMORY.md");
   }
   writeKnowledgeGraph(projectId, content, outputPath) {
     this.requireProject(projectId);
-    const target = outputPath ? path6.resolve(outputPath) : path6.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    const target = outputPath ? path7.resolve(outputPath) : path7.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
     writePrivateFile(target, content, outputPath === void 0);
     return target;
   }
+  knowledgeGraphPath(projectId) {
+    this.requireProject(projectId);
+    return path7.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+  }
+  writeMemoryHub(content, outputPath) {
+    writePrivateFile(path7.resolve(outputPath), content);
+    return path7.resolve(outputPath);
+  }
   relationsPath(projectId) {
-    return path6.join(this.projectDir(projectId), "RELATIONS.json");
+    return path7.join(this.projectDir(projectId), "RELATIONS.json");
   }
   proposalsDir(projectId) {
-    return path6.join(this.projectDir(projectId), "proposals");
+    return path7.join(this.projectDir(projectId), "proposals");
   }
   proposalPath(projectId, proposalId) {
-    return path6.join(this.proposalsDir(projectId), `${proposalId}.json`);
+    return path7.join(this.proposalsDir(projectId), `${proposalId}.json`);
   }
   auditPath(projectId) {
-    return path6.join(this.projectDir(projectId), "audit.jsonl");
+    return path7.join(this.projectDir(projectId), "audit.jsonl");
   }
   readRelationsDocument(projectId) {
     this.requireProject(projectId);
     const relationsPath = this.relationsPath(projectId);
-    if (!existsSync4(relationsPath)) {
+    if (!existsSync5(relationsPath)) {
       return { schemaVersion: SCHEMA_VERSION, projectId, relations: [] };
     }
     const document = readJson(relationsPath);
@@ -4621,14 +6291,19 @@ var MemoryStore = class {
     }
     const event = { eventType, projectId, subjectId, details, createdAt: now() };
     const auditPath = this.auditPath(projectId);
-    ensurePrivateDirectory(path6.dirname(auditPath));
+    ensurePrivateDirectory(path7.dirname(auditPath));
     appendFileSync(auditPath, `${JSON.stringify(event)}
 `, { encoding: "utf8", mode: 384 });
-    chmodSync(auditPath, 384);
+    chmodSync2(auditPath, 384);
   }
   getProject(projectId) {
     const projectPath = this.projectPath(projectId);
-    return existsSync4(projectPath) ? readJson(projectPath) : null;
+    return existsSync5(projectPath) ? readJson(projectPath) : null;
+  }
+  listProjects() {
+    return this.readRegistry().projects.map((entry) => this.getProject(entry.id)).filter((project) => Boolean(project)).sort(
+      (left, right) => right.lastSeenAt.localeCompare(left.lastSeenAt) || left.name.localeCompare(right.name)
+    );
   }
   getProjectByPath(canonicalPath) {
     const entry = this.readRegistry().projects.find(
@@ -4645,71 +6320,76 @@ var MemoryStore = class {
     ).sort((left, right) => right.lastSeenAt.localeCompare(left.lastSeenAt));
   }
   registerProject(input) {
-    const existing = this.getProjectByPath(input.primaryPath);
-    if (existing) {
-      throw new ProjectMemoryError(
-        "PROJECT_ALREADY_REGISTERED",
-        "Project path is already registered.",
-        { projectId: existing.id }
-      );
-    }
-    const registry = this.readRegistry();
-    const timestamp = now();
-    if (input.relinkProjectId) {
-      const project2 = this.getProject(input.relinkProjectId);
-      const entry = registry.projects.find((candidate) => candidate.id === input.relinkProjectId);
-      if (!project2 || !entry) {
-        throw new ProjectMemoryError("PROJECT_NOT_REGISTERED", "Relink target does not exist.", {
-          projectId: input.relinkProjectId
-        });
+    const releaseLock = this.acquireProjectLock("registry");
+    try {
+      const existing = this.getProjectByPath(input.primaryPath);
+      if (existing) {
+        throw new ProjectMemoryError(
+          "PROJECT_ALREADY_REGISTERED",
+          "Project path is already registered.",
+          { projectId: existing.id }
+        );
       }
-      const updated = {
-        ...project2,
+      const registry = this.readRegistry();
+      const timestamp = now();
+      if (input.relinkProjectId) {
+        const project2 = this.getProject(input.relinkProjectId);
+        const entry = registry.projects.find((candidate) => candidate.id === input.relinkProjectId);
+        if (!project2 || !entry) {
+          throw new ProjectMemoryError("PROJECT_NOT_REGISTERED", "Relink target does not exist.", {
+            projectId: input.relinkProjectId
+          });
+        }
+        const updated = {
+          ...project2,
+          name: input.name,
+          primaryPath: input.primaryPath,
+          isGit: input.isGit,
+          gitCommonDir: input.gitCommonDir,
+          remoteUrl: input.remoteUrl,
+          headCommit: input.headCommit,
+          updatedAt: timestamp,
+          lastSeenAt: timestamp
+        };
+        entry.locations.push({
+          canonicalPath: input.primaryPath,
+          firstSeenAt: timestamp,
+          lastSeenAt: timestamp
+        });
+        writeJson(this.projectPath(project2.id), updated);
+        this.writeRegistry(registry);
+        this.audit("project_relinked", project2.id, project2.id, { path: input.primaryPath });
+        return updated;
+      }
+      const id = randomUUID();
+      const project = {
+        id,
         name: input.name,
         primaryPath: input.primaryPath,
         isGit: input.isGit,
         gitCommonDir: input.gitCommonDir,
         remoteUrl: input.remoteUrl,
         headCommit: input.headCommit,
+        createdAt: timestamp,
         updatedAt: timestamp,
         lastSeenAt: timestamp
       };
-      entry.locations.push({
-        canonicalPath: input.primaryPath,
-        firstSeenAt: timestamp,
-        lastSeenAt: timestamp
+      ensurePrivateDirectory(this.proposalsDir(id));
+      writeJson(this.projectPath(id), project);
+      writePrivateFile(this.memoryPath(id), renderMemoryDocument(id, []));
+      this.writeRelationsDocument({ schemaVersion: SCHEMA_VERSION, projectId: id, relations: [] });
+      registry.projects.push({
+        id,
+        locations: [
+          { canonicalPath: input.primaryPath, firstSeenAt: timestamp, lastSeenAt: timestamp }
+        ]
       });
-      writeJson(this.projectPath(project2.id), updated);
       this.writeRegistry(registry);
-      this.audit("project_relinked", project2.id, project2.id, { path: input.primaryPath });
-      return updated;
+      this.audit("project_registered", id, id, { path: input.primaryPath });
+      return project;
+    } finally {
+      releaseLock();
     }
-    const id = randomUUID();
-    const project = {
-      id,
-      name: input.name,
-      primaryPath: input.primaryPath,
-      isGit: input.isGit,
-      gitCommonDir: input.gitCommonDir,
-      remoteUrl: input.remoteUrl,
-      headCommit: input.headCommit,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      lastSeenAt: timestamp
-    };
-    ensurePrivateDirectory(this.proposalsDir(id));
-    writeJson(this.projectPath(id), project);
-    writePrivateFile(this.memoryPath(id), renderMemoryDocument(id, []));
-    this.writeRelationsDocument({ schemaVersion: SCHEMA_VERSION, projectId: id, relations: [] });
-    registry.projects.push({
-      id,
-      locations: [
-        { canonicalPath: input.primaryPath, firstSeenAt: timestamp, lastSeenAt: timestamp }
-      ]
-    });
-    this.writeRegistry(registry);
-    this.audit("project_registered", id, id, { path: input.primaryPath });
-    return project;
   }
   touchProject(projectId, pathValue, headCommit) {
     const project = this.requireProject(projectId);
@@ -4741,27 +6421,37 @@ var MemoryStore = class {
     this.writeRegistry(registry);
   }
   linkProjects(sourceProjectId, targetProjectId) {
-    if (sourceProjectId === targetProjectId) {
-      throw new ProjectMemoryError("INVALID_INPUT", "A project cannot link to itself.");
+    const releaseLock = this.acquireProjectLock("links");
+    try {
+      if (sourceProjectId === targetProjectId) {
+        throw new ProjectMemoryError("INVALID_INPUT", "A project cannot link to itself.");
+      }
+      this.requireProject(sourceProjectId);
+      this.requireProject(targetProjectId);
+      const links = this.readLinks();
+      if (!links.links.some(
+        (link) => link.sourceProjectId === sourceProjectId && link.targetProjectId === targetProjectId
+      )) {
+        links.links.push({ sourceProjectId, targetProjectId, access: "read", createdAt: now() });
+        this.writeLinks(links);
+      }
+      this.audit("project_linked", sourceProjectId, targetProjectId, { access: "read" });
+    } finally {
+      releaseLock();
     }
-    this.requireProject(sourceProjectId);
-    this.requireProject(targetProjectId);
-    const links = this.readLinks();
-    if (!links.links.some(
-      (link) => link.sourceProjectId === sourceProjectId && link.targetProjectId === targetProjectId
-    )) {
-      links.links.push({ sourceProjectId, targetProjectId, access: "read", createdAt: now() });
-      this.writeLinks(links);
-    }
-    this.audit("project_linked", sourceProjectId, targetProjectId, { access: "read" });
   }
   unlinkProjects(sourceProjectId, targetProjectId) {
-    const links = this.readLinks();
-    links.links = links.links.filter(
-      (link) => !(link.sourceProjectId === sourceProjectId && link.targetProjectId === targetProjectId)
-    );
-    this.writeLinks(links);
-    this.audit("project_unlinked", sourceProjectId, targetProjectId, {});
+    const releaseLock = this.acquireProjectLock("links");
+    try {
+      const links = this.readLinks();
+      links.links = links.links.filter(
+        (link) => !(link.sourceProjectId === sourceProjectId && link.targetProjectId === targetProjectId)
+      );
+      this.writeLinks(links);
+      this.audit("project_unlinked", sourceProjectId, targetProjectId, {});
+    } finally {
+      releaseLock();
+    }
   }
   listLinks(sourceProjectId) {
     this.requireProject(sourceProjectId);
@@ -4775,48 +6465,65 @@ var MemoryStore = class {
       (link) => link.sourceProjectId === sourceProjectId && link.targetProjectId === targetProjectId
     );
   }
-  createProposal(projectId, candidates, updates = [], relations = []) {
+  createProposal(projectId, candidates, updates = [], relations = [], actor = { platform: "codex", adapterVersion: null }) {
     this.requireProject(projectId);
-    const proposalId = randomUUID();
-    const proposal = {
-      id: proposalId,
-      projectId,
-      status: "pending",
-      createdAt: now(),
-      reviewedAt: null,
-      items: candidates.map((candidate) => ({
-        id: randomUUID(),
-        proposalId,
-        candidate,
-        status: "pending"
-      })),
-      updateItems: updates.map((candidate) => ({
-        id: randomUUID(),
-        proposalId,
-        candidate,
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      const proposalId = randomUUID();
+      const baseMemorySnapshots = {};
+      for (const update of updates) {
+        const memory = this.getMemory(update.memoryId);
+        if (memory) {
+          baseMemorySnapshots[memory.id] = memoryRevision(memory);
+        }
+      }
+      const proposal = {
+        id: proposalId,
+        projectId,
+        actor,
+        baseRevision: this.projectRevision(projectId),
         status: "pending",
-        rejectionReason: null
-      })),
-      relationItems: relations.map((candidate) => ({
-        id: randomUUID(),
-        proposalId,
-        candidate,
-        status: "pending",
-        rejectionReason: null
-      }))
-    };
-    writeJson(this.proposalPath(projectId, proposalId), proposal);
-    this.audit("memory_proposed", projectId, proposalId, {
-      itemCount: candidates.length,
-      updateItemCount: updates.length,
-      relationItemCount: relations.length
-    });
-    return publicProposal(proposal);
+        createdAt: now(),
+        reviewedAt: null,
+        items: candidates.map((candidate) => ({
+          id: randomUUID(),
+          proposalId,
+          candidate,
+          status: "pending"
+        })),
+        updateItems: updates.map((candidate) => ({
+          id: randomUUID(),
+          proposalId,
+          candidate,
+          status: "pending",
+          rejectionReason: null
+        })),
+        relationItems: relations.map((candidate) => ({
+          id: randomUUID(),
+          proposalId,
+          candidate,
+          status: "pending",
+          rejectionReason: null
+        })),
+        ...Object.keys(baseMemorySnapshots).length > 0 ? { baseMemorySnapshots } : {}
+      };
+      writeJson(this.proposalPath(projectId, proposalId), proposal);
+      this.audit("memory_proposed", projectId, proposalId, {
+        actor,
+        baseRevision: proposal.baseRevision,
+        itemCount: candidates.length,
+        updateItemCount: updates.length,
+        relationItemCount: relations.length
+      });
+      return publicProposal(proposal);
+    } finally {
+      releaseLock();
+    }
   }
   findProposalPath(proposalId) {
     for (const entry of this.readRegistry().projects) {
       const proposalPath = this.proposalPath(entry.id, proposalId);
-      if (existsSync4(proposalPath)) {
+      if (existsSync5(proposalPath)) {
         return proposalPath;
       }
     }
@@ -4833,232 +6540,501 @@ var MemoryStore = class {
     }
     return publicProposal(proposal);
   }
-  commitProposal(proposalId, acceptedItemIds, acceptedUpdateIds = [], acceptedRelationIds = []) {
+  getProposalSourceChecks(proposalId, acceptedItemIds, acceptedUpdateIds) {
     const proposalPath = this.findProposalPath(proposalId);
-    const proposal = proposalPath ? readJson(proposalPath) : null;
-    if (proposal?.status !== "pending" || !proposalPath) {
+    if (!proposalPath) return [];
+    const proposal = readJson(proposalPath);
+    const accepted = new Set(acceptedItemIds);
+    const acceptedUpdates = new Set(acceptedUpdateIds);
+    const checks = [];
+    const append = (itemId, citations) => {
+      for (const citation of citations) {
+        checks.push({
+          itemId,
+          sourceProjectId: citation.sourceProjectId,
+          sourcePath: citation.sourcePath,
+          sourceFileHash: citation.sourceFileHash
+        });
+      }
+    };
+    for (const item of proposal.items) {
+      if (!accepted.has(item.id)) continue;
+      if (item.candidate.sourceProjectId && item.candidate.sourcePath && item.candidate.sourceFileHash) {
+        checks.push({
+          itemId: item.id,
+          sourceProjectId: item.candidate.sourceProjectId,
+          sourcePath: item.candidate.sourcePath,
+          sourceFileHash: item.candidate.sourceFileHash
+        });
+      }
+      append(item.id, item.candidate.citations ?? []);
+    }
+    for (const item of proposal.updateItems ?? []) {
+      if (acceptedUpdates.has(item.id)) append(item.id, item.candidate.citations ?? []);
+    }
+    return [
+      ...new Map(
+        checks.map((check) => [
+          `${check.itemId}:${check.sourceProjectId}:${check.sourcePath}`,
+          check
+        ])
+      ).values()
+    ];
+  }
+  refreshProposalSources(proposalId, checks) {
+    const proposalPath = this.findProposalPath(proposalId);
+    const initialProposal = proposalPath ? readJson(proposalPath) : null;
+    if (initialProposal?.status !== "pending" || !proposalPath) {
       throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
         proposalId
       });
     }
-    const accepted = new Set(acceptedItemIds);
-    const acceptedUpdates = new Set(acceptedUpdateIds);
-    const acceptedRelations = new Set(acceptedRelationIds);
-    const validIds = new Set(proposal.items.map((item) => item.id));
-    const updateItems = proposal.updateItems ?? [];
-    const validUpdateIds = new Set(updateItems.map((item) => item.id));
-    const relationItems = proposal.relationItems ?? [];
-    const validRelationIds = new Set(relationItems.map((item) => item.id));
-    if (accepted.size + acceptedUpdates.size + acceptedRelations.size === 0 || [...accepted].some((id) => !validIds.has(id)) || [...acceptedUpdates].some((id) => !validUpdateIds.has(id)) || [...acceptedRelations].some((id) => !validRelationIds.has(id))) {
-      throw new ProjectMemoryError(
-        "INVALID_INPUT",
-        "Accepted memory, update, and relation item IDs must belong to the proposal.",
-        { proposalId }
-      );
-    }
-    const project = this.requireProject(proposal.projectId);
-    const memories = this.getContext(project.id, 1e3);
-    const reviewedAt = now();
-    const created = [];
-    const createdByRef = /* @__PURE__ */ new Map();
-    for (const item of proposal.items) {
-      if (!accepted.has(item.id)) {
-        item.status = "rejected";
-        continue;
-      }
-      const candidate = item.candidate;
-      const memory = {
-        id: randomUUID(),
-        projectId: project.id,
-        projectName: project.name,
-        kind: candidate.kind,
-        title: candidate.title,
-        summary: candidate.summary ?? null,
-        topic: candidate.topic ?? null,
-        content: candidate.content,
-        tags: candidate.tags,
-        sourceProjectId: candidate.sourceProjectId,
-        sourcePath: candidate.sourcePath,
-        sourceCommit: candidate.sourceCommit,
-        sourceFileHash: candidate.sourceFileHash,
-        citations: (candidate.citations ?? []).map((citation) => ({
-          ...citation,
-          sourceProjectName: "",
-          stale: false,
-          staleReason: null,
-          accessible: true,
-          fileUrl: null
-        })),
-        confidence: candidate.confidence,
-        status: "active",
-        createdAt: reviewedAt,
-        updatedAt: reviewedAt,
-        stale: false,
-        staleReason: null
-      };
-      memories.push(memory);
-      created.push(memory);
-      if (candidate.ref) createdByRef.set(candidate.ref, memory);
-      item.status = "accepted";
-    }
-    const updatedMemories = [];
-    const rejectedUpdateItems = [];
-    for (const item of updateItems) {
-      if (!acceptedUpdates.has(item.id)) {
-        item.status = "rejected";
-        item.rejectionReason = "not_accepted";
-        continue;
-      }
-      const memory = memories.find((candidate) => candidate.id === item.candidate.memoryId);
-      if (!memory || memory.projectId !== project.id) {
-        item.status = "rejected";
-        item.rejectionReason = "memory_unavailable";
-        rejectedUpdateItems.push({
-          id: item.id,
-          proposalId: item.proposalId,
-          candidate: publicUpdateCandidate(item.candidate),
-          status: "rejected",
-          rejectionReason: item.rejectionReason
+    const releaseLock = this.acquireProjectLock(initialProposal.projectId);
+    try {
+      const proposal = readJson(proposalPath);
+      if (proposal.status !== "pending") {
+        throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+          proposalId
         });
-        continue;
       }
-      if (item.candidate.summary !== void 0) memory.summary = item.candidate.summary;
-      if (item.candidate.topic !== void 0) memory.topic = item.candidate.topic;
-      if (item.candidate.citations !== void 0) {
-        memory.citations = item.candidate.citations.map((citation) => ({
-          ...citation,
-          sourceProjectName: "",
-          stale: false,
-          staleReason: null,
-          accessible: true,
-          fileUrl: null
-        }));
-      }
-      memory.updatedAt = reviewedAt;
-      updatedMemories.push(memory);
-      item.status = "accepted";
-      item.rejectionReason = null;
-    }
-    const relationDocument = this.readRelationsDocument(project.id);
-    const relationKeys = new Set(
-      relationDocument.relations.map(
-        (relation) => relationKey(relation.type, relation.fromMemoryId, relation.toMemoryId)
-      )
-    );
-    const createdRelations = [];
-    const rejectedRelationItems = [];
-    const resolveEndpoint = (endpoint) => {
-      if (endpoint.memoryId) return this.getMemory(endpoint.memoryId);
-      if (!("candidateRef" in endpoint) || !endpoint.candidateRef) return null;
-      return createdByRef.get(endpoint.candidateRef) ?? null;
-    };
-    for (const item of relationItems) {
-      if (!acceptedRelations.has(item.id)) {
-        item.status = "rejected";
-        item.rejectionReason = "not_accepted";
-        continue;
-      }
-      const fromMemory = resolveEndpoint(item.candidate.from);
-      const toMemory = resolveEndpoint(item.candidate.to);
-      let rejectionReason = null;
-      if (!fromMemory || !toMemory) {
-        rejectionReason = "endpoint_unavailable";
-      } else if (fromMemory.id === toMemory.id) {
-        rejectionReason = "self_relation";
-      } else if (fromMemory.projectId !== project.id && toMemory.projectId !== project.id) {
-        rejectionReason = "current_project_endpoint_required";
-      } else {
-        const foreignProjectIds = new Set(
-          [fromMemory.projectId, toMemory.projectId].filter((id) => id !== project.id)
-        );
-        if ([...foreignProjectIds].some((id) => !this.hasReadAccess(project.id, id))) {
-          rejectionReason = "project_link_required";
+      const sourceHashes = /* @__PURE__ */ new Map();
+      for (const check of checks) {
+        const item = proposal.items.find((candidate) => candidate.id === check.itemId) ?? (proposal.updateItems ?? []).find((candidate) => candidate.id === check.itemId);
+        if (!item) {
+          throw new ProjectMemoryError(
+            "INVALID_INPUT",
+            "Proposal source item does not belong to the proposal.",
+            { proposalId, itemId: check.itemId }
+          );
         }
+        const itemSources = sourceHashes.get(check.itemId) ?? /* @__PURE__ */ new Map();
+        itemSources.set(`${check.sourceProjectId}:${check.sourcePath}`, check.sourceFileHash);
+        sourceHashes.set(check.itemId, itemSources);
       }
-      const key = fromMemory && toMemory ? relationKey(item.candidate.type, fromMemory.id, toMemory.id) : null;
-      if (!rejectionReason && key && relationKeys.has(key)) {
-        rejectionReason = "duplicate_relation";
-      }
-      if (rejectionReason || !fromMemory || !toMemory || !key) {
-        item.status = "rejected";
-        item.rejectionReason = rejectionReason ?? "invalid_relation";
-        rejectedRelationItems.push({
-          id: item.id,
-          proposalId: item.proposalId,
-          candidate: item.candidate,
-          status: item.status,
-          rejectionReason: item.rejectionReason
+      const sourcePaths = /* @__PURE__ */ new Set();
+      const refreshCitations = (itemId, citations) => {
+        if (!citations) return citations;
+        const itemSources = sourceHashes.get(itemId);
+        return citations.map((citation) => {
+          const sourceHash = itemSources?.get(`${citation.sourceProjectId}:${citation.sourcePath}`);
+          if (!sourceHash) return citation;
+          sourcePaths.add(citation.sourcePath);
+          return { ...citation, sourceFileHash: sourceHash };
         });
-        continue;
-      }
-      const relation = {
-        id: randomUUID(),
-        ownerProjectId: project.id,
-        fromMemoryId: fromMemory.id,
-        fromProjectId: fromMemory.projectId,
-        toMemoryId: toMemory.id,
-        toProjectId: toMemory.projectId,
-        type: item.candidate.type,
-        rationale: item.candidate.rationale,
-        confidence: item.candidate.confidence,
-        sourceProposalId: proposalId,
-        status: "active",
-        createdAt: reviewedAt,
-        updatedAt: reviewedAt
       };
-      relationDocument.relations.push(relation);
-      relationKeys.add(key);
-      createdRelations.push(relation);
-      item.status = "accepted";
-      item.rejectionReason = null;
+      for (const item of proposal.items) {
+        const itemSources = sourceHashes.get(item.id);
+        if (!itemSources) continue;
+        if (item.candidate.sourceProjectId && item.candidate.sourcePath) {
+          const sourceHash = itemSources.get(
+            `${item.candidate.sourceProjectId}:${item.candidate.sourcePath}`
+          );
+          if (sourceHash) {
+            item.candidate.sourceFileHash = sourceHash;
+            sourcePaths.add(item.candidate.sourcePath);
+          }
+        }
+        item.candidate.citations = refreshCitations(item.id, item.candidate.citations) ?? [];
+      }
+      for (const item of proposal.updateItems ?? []) {
+        if (!sourceHashes.has(item.id)) continue;
+        item.candidate.citations = refreshCitations(item.id, item.candidate.citations);
+      }
+      if (sourcePaths.size > 0) {
+        writeJson(proposalPath, proposal);
+        this.audit("proposal_sources_refreshed", proposal.projectId, proposalId, {
+          sourcePaths: [...sourcePaths]
+        });
+      }
+      return { proposalId, sourcePaths: [...sourcePaths] };
+    } finally {
+      releaseLock();
     }
-    proposal.status = "accepted";
-    proposal.reviewedAt = reviewedAt;
-    writePrivateFile(this.memoryPath(project.id), renderMemoryDocument(project.id, memories));
-    this.writeRelationsDocument(relationDocument);
-    writeJson(proposalPath, proposal);
-    this.audit("memory_committed", project.id, proposalId, {
-      acceptedItemIds: [...accepted],
-      memoryIds: created.map((memory) => memory.id),
-      acceptedUpdateIds: [...acceptedUpdates],
-      updatedMemoryIds: updatedMemories.map((memory) => memory.id),
-      rejectedUpdateItemIds: rejectedUpdateItems.map((item) => item.id),
-      acceptedRelationIds: [...acceptedRelations],
-      relationIds: createdRelations.map((relation) => relation.id),
-      rejectedRelationItemIds: rejectedRelationItems.map((item) => item.id)
-    });
-    return {
-      memories: created,
-      updatedMemories,
-      relations: createdRelations,
-      rejectedUpdateItems,
-      rejectedRelationItems
-    };
+  }
+  commitProposal(proposalId, acceptedItemIds, acceptedUpdateIds = [], acceptedRelationIds = []) {
+    const proposalPath = this.findProposalPath(proposalId);
+    const initialProposal = proposalPath ? readJson(proposalPath) : null;
+    if (initialProposal?.status !== "pending" || !proposalPath) {
+      throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+        proposalId
+      });
+    }
+    const releaseLock = this.acquireProjectLock(initialProposal.projectId);
+    try {
+      const proposal = readJson(proposalPath);
+      if (proposal.status !== "pending") {
+        throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+          proposalId
+        });
+      }
+      const accepted = new Set(acceptedItemIds);
+      const acceptedUpdates = new Set(acceptedUpdateIds);
+      const acceptedRelations = new Set(acceptedRelationIds);
+      const validIds = new Set(proposal.items.map((item) => item.id));
+      const updateItems = proposal.updateItems ?? [];
+      const validUpdateIds = new Set(updateItems.map((item) => item.id));
+      const relationItems = proposal.relationItems ?? [];
+      const validRelationIds = new Set(relationItems.map((item) => item.id));
+      if (accepted.size + acceptedUpdates.size + acceptedRelations.size === 0 || [...accepted].some((id) => !validIds.has(id)) || [...acceptedUpdates].some((id) => !validUpdateIds.has(id)) || [...acceptedRelations].some((id) => !validRelationIds.has(id))) {
+        throw new ProjectMemoryError(
+          "INVALID_INPUT",
+          "Accepted memory, update, and relation item IDs must belong to the proposal.",
+          { proposalId }
+        );
+      }
+      const project = this.requireProject(proposal.projectId);
+      const memories = this.getContext(project.id, 1e3);
+      const existingKeys = new Set(
+        memories.map(
+          (memory) => `${memory.title.trim().toLocaleLowerCase()}
+${memory.content.trim()}`
+        )
+      );
+      for (const item of proposal.items) {
+        if (!accepted.has(item.id)) continue;
+        const key = `${item.candidate.title.trim().toLocaleLowerCase()}
+${item.candidate.content.trim()}`;
+        if (existingKeys.has(key)) {
+          throw new ProjectMemoryError(
+            "REVISION_CONFLICT",
+            "An accepted memory now duplicates an existing memory. Review the proposal again.",
+            { proposalId, itemId: item.id }
+          );
+        }
+        existingKeys.add(key);
+      }
+      const currentRevision = this.projectRevision(proposal.projectId);
+      const revisionChanged = Boolean(proposal.baseRevision) && proposal.baseRevision !== currentRevision;
+      if (revisionChanged) {
+        const baseMemorySnapshots = proposal.baseMemorySnapshots ?? {};
+        for (const item of updateItems) {
+          if (!acceptedUpdates.has(item.id)) continue;
+          const memory = this.getMemory(item.candidate.memoryId);
+          const expectedSnapshot = baseMemorySnapshots[item.candidate.memoryId];
+          const targetChanged = !memory || (expectedSnapshot ? memoryRevision(memory) !== expectedSnapshot : memory.updatedAt > proposal.createdAt);
+          if (targetChanged) {
+            throw new ProjectMemoryError(
+              "REVISION_CONFLICT",
+              "An update target changed after this proposal was created. Review the affected item before committing.",
+              {
+                proposalId,
+                itemId: item.id,
+                memoryId: item.candidate.memoryId,
+                reason: memory ? "update_target_changed" : "update_target_removed",
+                expectedRevision: proposal.baseRevision,
+                currentRevision
+              }
+            );
+          }
+          if (memory) {
+            baseMemorySnapshots[memory.id] = memoryRevision(memory);
+          }
+        }
+        const relationDocument2 = this.readRelationsDocument(project.id);
+        const relationKeys2 = new Set(
+          relationDocument2.relations.map(
+            (relation) => relationKey(relation.type, relation.fromMemoryId, relation.toMemoryId)
+          )
+        );
+        const existingRelationEndpoint = (endpoint) => {
+          if (!("memoryId" in endpoint) || !endpoint.memoryId) return null;
+          return this.getMemory(endpoint.memoryId);
+        };
+        for (const item of relationItems) {
+          if (!acceptedRelations.has(item.id)) continue;
+          const fromMemory = existingRelationEndpoint(item.candidate.from);
+          const toMemory = existingRelationEndpoint(item.candidate.to);
+          for (const [endpoint, memory] of [
+            [item.candidate.from, fromMemory],
+            [item.candidate.to, toMemory]
+          ]) {
+            if (!("memoryId" in endpoint)) continue;
+            if (!memory) {
+              throw new ProjectMemoryError(
+                "REVISION_CONFLICT",
+                "A relation endpoint was removed after this proposal was created. Review the relation before committing.",
+                {
+                  proposalId,
+                  itemId: item.id,
+                  memoryId: endpoint.memoryId,
+                  reason: "relation_endpoint_removed",
+                  expectedRevision: proposal.baseRevision,
+                  currentRevision
+                }
+              );
+            }
+            if (memory.projectId !== project.id && !this.hasReadAccess(project.id, memory.projectId)) {
+              throw new ProjectMemoryError(
+                "REVISION_CONFLICT",
+                "A relation endpoint is no longer accessible from this project. Review the relation before committing.",
+                {
+                  proposalId,
+                  itemId: item.id,
+                  memoryId: endpoint.memoryId,
+                  reason: "relation_endpoint_inaccessible",
+                  expectedRevision: proposal.baseRevision,
+                  currentRevision
+                }
+              );
+            }
+          }
+          if (fromMemory && toMemory) {
+            const key = relationKey(item.candidate.type, fromMemory.id, toMemory.id);
+            if (relationKeys2.has(key)) {
+              throw new ProjectMemoryError(
+                "REVISION_CONFLICT",
+                "An accepted relation now duplicates an existing relation. Review the proposal again.",
+                {
+                  proposalId,
+                  itemId: item.id,
+                  reason: "duplicate_relation",
+                  expectedRevision: proposal.baseRevision,
+                  currentRevision
+                }
+              );
+            }
+          }
+        }
+        const previousRevision = proposal.baseRevision;
+        proposal.baseRevision = currentRevision;
+        if (Object.keys(baseMemorySnapshots).length > 0) {
+          proposal.baseMemorySnapshots = baseMemorySnapshots;
+        }
+        writeJson(proposalPath, proposal);
+        this.audit("proposal_rebased", project.id, proposalId, {
+          previousRevision,
+          currentRevision
+        });
+      }
+      const reviewedAt = now();
+      const created = [];
+      const createdByRef = /* @__PURE__ */ new Map();
+      for (const item of proposal.items) {
+        if (!accepted.has(item.id)) {
+          item.status = "rejected";
+          continue;
+        }
+        const candidate = item.candidate;
+        const memory = {
+          id: randomUUID(),
+          projectId: project.id,
+          projectName: project.name,
+          kind: candidate.kind,
+          title: candidate.title,
+          summary: candidate.summary ?? null,
+          topic: candidate.topic ?? null,
+          briefRole: candidate.briefRole ?? null,
+          workUnitId: candidate.workUnitId ?? null,
+          runId: candidate.runId ?? null,
+          phase: candidate.phase ?? null,
+          sequence: candidate.sequence ?? null,
+          narrative: candidate.narrative ?? null,
+          content: candidate.content,
+          tags: candidate.tags,
+          sourceProjectId: candidate.sourceProjectId,
+          sourcePath: candidate.sourcePath,
+          sourceCommit: candidate.sourceCommit,
+          sourceFileHash: candidate.sourceFileHash,
+          citations: (candidate.citations ?? []).map((citation) => ({
+            ...citation,
+            sourceProjectName: "",
+            stale: false,
+            staleReason: null,
+            accessible: true,
+            fileUrl: null
+          })),
+          submittedBy: proposal.actor,
+          sourceProposalId: proposal.id,
+          confidence: candidate.confidence,
+          status: "active",
+          createdAt: reviewedAt,
+          updatedAt: reviewedAt,
+          stale: false,
+          staleReason: null
+        };
+        memories.push(memory);
+        created.push(memory);
+        if (candidate.ref) createdByRef.set(candidate.ref, memory);
+        item.status = "accepted";
+      }
+      const updatedMemories = [];
+      const rejectedUpdateItems = [];
+      for (const item of updateItems) {
+        if (!acceptedUpdates.has(item.id)) {
+          item.status = "rejected";
+          item.rejectionReason = "not_accepted";
+          continue;
+        }
+        const memory = memories.find((candidate) => candidate.id === item.candidate.memoryId);
+        if (!memory || memory.projectId !== project.id) {
+          item.status = "rejected";
+          item.rejectionReason = "memory_unavailable";
+          rejectedUpdateItems.push({
+            id: item.id,
+            proposalId: item.proposalId,
+            candidate: publicUpdateCandidate(item.candidate),
+            status: "rejected",
+            rejectionReason: item.rejectionReason
+          });
+          continue;
+        }
+        if (item.candidate.summary !== void 0) memory.summary = item.candidate.summary;
+        if (item.candidate.topic !== void 0) memory.topic = item.candidate.topic;
+        if (item.candidate.briefRole !== void 0) memory.briefRole = item.candidate.briefRole;
+        if (item.candidate.workUnitId !== void 0) memory.workUnitId = item.candidate.workUnitId;
+        if (item.candidate.runId !== void 0) memory.runId = item.candidate.runId;
+        if (item.candidate.phase !== void 0) memory.phase = item.candidate.phase;
+        if (item.candidate.sequence !== void 0) memory.sequence = item.candidate.sequence;
+        if (item.candidate.narrative !== void 0) memory.narrative = item.candidate.narrative;
+        if (item.candidate.citations !== void 0) {
+          memory.citations = item.candidate.citations.map((citation) => ({
+            ...citation,
+            sourceProjectName: "",
+            stale: false,
+            staleReason: null,
+            accessible: true,
+            fileUrl: null
+          }));
+        }
+        memory.updatedAt = reviewedAt;
+        updatedMemories.push(memory);
+        item.status = "accepted";
+        item.rejectionReason = null;
+      }
+      const relationDocument = this.readRelationsDocument(project.id);
+      const relationKeys = new Set(
+        relationDocument.relations.map(
+          (relation) => relationKey(relation.type, relation.fromMemoryId, relation.toMemoryId)
+        )
+      );
+      const createdRelations = [];
+      const rejectedRelationItems = [];
+      const resolveEndpoint = (endpoint) => {
+        if (endpoint.memoryId) return this.getMemory(endpoint.memoryId);
+        if (!("candidateRef" in endpoint) || !endpoint.candidateRef) return null;
+        return createdByRef.get(endpoint.candidateRef) ?? null;
+      };
+      for (const item of relationItems) {
+        if (!acceptedRelations.has(item.id)) {
+          item.status = "rejected";
+          item.rejectionReason = "not_accepted";
+          continue;
+        }
+        const fromMemory = resolveEndpoint(item.candidate.from);
+        const toMemory = resolveEndpoint(item.candidate.to);
+        let rejectionReason = null;
+        if (!fromMemory || !toMemory) {
+          rejectionReason = "endpoint_unavailable";
+        } else if (fromMemory.id === toMemory.id) {
+          rejectionReason = "self_relation";
+        } else if (fromMemory.projectId !== project.id && toMemory.projectId !== project.id) {
+          rejectionReason = "current_project_endpoint_required";
+        } else {
+          const foreignProjectIds = new Set(
+            [fromMemory.projectId, toMemory.projectId].filter((id) => id !== project.id)
+          );
+          if ([...foreignProjectIds].some((id) => !this.hasReadAccess(project.id, id))) {
+            rejectionReason = "project_link_required";
+          }
+        }
+        const key = fromMemory && toMemory ? relationKey(item.candidate.type, fromMemory.id, toMemory.id) : null;
+        if (!rejectionReason && key && relationKeys.has(key)) {
+          rejectionReason = "duplicate_relation";
+        }
+        if (rejectionReason || !fromMemory || !toMemory || !key) {
+          item.status = "rejected";
+          item.rejectionReason = rejectionReason ?? "invalid_relation";
+          rejectedRelationItems.push({
+            id: item.id,
+            proposalId: item.proposalId,
+            candidate: item.candidate,
+            status: item.status,
+            rejectionReason: item.rejectionReason
+          });
+          continue;
+        }
+        const relation = {
+          id: randomUUID(),
+          ownerProjectId: project.id,
+          fromMemoryId: fromMemory.id,
+          fromProjectId: fromMemory.projectId,
+          toMemoryId: toMemory.id,
+          toProjectId: toMemory.projectId,
+          type: item.candidate.type,
+          rationale: item.candidate.rationale,
+          confidence: item.candidate.confidence,
+          sourceProposalId: proposalId,
+          status: "active",
+          createdAt: reviewedAt,
+          updatedAt: reviewedAt
+        };
+        relationDocument.relations.push(relation);
+        relationKeys.add(key);
+        createdRelations.push(relation);
+        item.status = "accepted";
+        item.rejectionReason = null;
+      }
+      proposal.status = "accepted";
+      proposal.reviewedAt = reviewedAt;
+      writePrivateFile(this.memoryPath(project.id), renderMemoryDocument(project.id, memories));
+      this.writeRelationsDocument(relationDocument);
+      writeJson(proposalPath, proposal);
+      this.audit("memory_committed", project.id, proposalId, {
+        acceptedItemIds: [...accepted],
+        memoryIds: created.map((memory) => memory.id),
+        acceptedUpdateIds: [...acceptedUpdates],
+        updatedMemoryIds: updatedMemories.map((memory) => memory.id),
+        rejectedUpdateItemIds: rejectedUpdateItems.map((item) => item.id),
+        acceptedRelationIds: [...acceptedRelations],
+        relationIds: createdRelations.map((relation) => relation.id),
+        rejectedRelationItemIds: rejectedRelationItems.map((item) => item.id)
+      });
+      return {
+        memories: created,
+        updatedMemories,
+        relations: createdRelations,
+        rejectedUpdateItems,
+        rejectedRelationItems
+      };
+    } finally {
+      releaseLock();
+    }
   }
   rejectProposal(proposalId) {
     const proposalPath = this.findProposalPath(proposalId);
-    const proposal = proposalPath ? readJson(proposalPath) : null;
-    if (proposal?.status !== "pending" || !proposalPath) {
+    const initialProposal = proposalPath ? readJson(proposalPath) : null;
+    if (initialProposal?.status !== "pending" || !proposalPath) {
       throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
         proposalId
       });
     }
-    proposal.status = "rejected";
-    proposal.reviewedAt = now();
-    for (const item of proposal.items) {
-      item.status = "rejected";
+    const releaseLock = this.acquireProjectLock(initialProposal.projectId);
+    try {
+      const proposal = readJson(proposalPath);
+      if (proposal.status !== "pending") {
+        throw new ProjectMemoryError("PROPOSAL_NOT_PENDING", "Proposal is not pending.", {
+          proposalId
+        });
+      }
+      proposal.status = "rejected";
+      proposal.reviewedAt = now();
+      for (const item of proposal.items) {
+        item.status = "rejected";
+      }
+      for (const item of proposal.updateItems ?? []) {
+        item.status = "rejected";
+        item.rejectionReason = "proposal_rejected";
+      }
+      for (const item of proposal.relationItems ?? []) {
+        item.status = "rejected";
+        item.rejectionReason = "proposal_rejected";
+      }
+      writeJson(proposalPath, proposal);
+      this.audit("memory_rejected", proposal.projectId, proposalId, {});
+      return publicProposal(proposal);
+    } finally {
+      releaseLock();
     }
-    for (const item of proposal.updateItems ?? []) {
-      item.status = "rejected";
-      item.rejectionReason = "proposal_rejected";
-    }
-    for (const item of proposal.relationItems ?? []) {
-      item.status = "rejected";
-      item.rejectionReason = "proposal_rejected";
-    }
-    writeJson(proposalPath, proposal);
-    this.audit("memory_rejected", proposal.projectId, proposalId, {});
-    return publicProposal(proposal);
   }
   getMemory(memoryId) {
     for (const entry of this.readRegistry().projects) {
@@ -5071,7 +7047,48 @@ var MemoryStore = class {
   }
   getContext(projectId, limit = 30) {
     const project = this.requireProject(projectId);
-    return parseMemoryDocument(this.memoryPath(projectId), project).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, Math.min(Math.max(limit, 1), 1e3));
+    return this.recoverMemorySubmissionMetadata(
+      projectId,
+      parseMemoryDocument(this.memoryPath(projectId), project)
+    ).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)).slice(0, Math.min(Math.max(limit, 1), 1e3));
+  }
+  recoverMemorySubmissionMetadata(projectId, memories) {
+    const unresolved = memories.filter((memory) => !memory.submittedBy || !memory.sourceProposalId);
+    if (unresolved.length === 0) return memories;
+    const candidatesByKey = /* @__PURE__ */ new Map();
+    const directory = this.proposalsDir(projectId);
+    if (existsSync5(directory)) {
+      for (const file of readdirSync4(directory).filter((name) => name.endsWith(".json"))) {
+        const proposal = readJson(path7.join(directory, file));
+        for (const item of proposal.items) {
+          if (item.status !== "accepted") continue;
+          const key = memoryIdentityKey(item.candidate.title, item.candidate.content);
+          const matches = candidatesByKey.get(key) ?? [];
+          matches.push({
+            actor: proposal.actor ?? { platform: "legacy", adapterVersion: null },
+            sourceProposalId: proposal.id
+          });
+          candidatesByKey.set(key, matches);
+        }
+      }
+    }
+    return memories.map((memory) => {
+      if (memory.submittedBy && memory.sourceProposalId) return memory;
+      const matches = candidatesByKey.get(memoryIdentityKey(memory.title, memory.content)) ?? [];
+      if (matches.length !== 1) {
+        return {
+          ...memory,
+          submittedBy: memory.submittedBy ?? null,
+          sourceProposalId: memory.sourceProposalId ?? null
+        };
+      }
+      const match = matches[0];
+      return {
+        ...memory,
+        submittedBy: memory.submittedBy ?? match?.actor ?? null,
+        sourceProposalId: memory.sourceProposalId ?? match?.sourceProposalId ?? null
+      };
+    });
   }
   searchMemories(projectIds, query, limit = 30) {
     if (projectIds.length === 0) {
@@ -5094,38 +7111,48 @@ ${memory.content}`.toLocaleLowerCase();
   }
   forgetMemories(projectId, memoryIds) {
     this.requireProject(projectId);
-    const forgotten = new Set(memoryIds);
-    const memories = this.getContext(projectId, 1e3);
-    const retained = memories.filter((memory) => !forgotten.has(memory.id));
-    const removed = memories.filter((memory) => forgotten.has(memory.id)).map((memory) => memory.id);
-    writePrivateFile(this.memoryPath(projectId), renderMemoryDocument(projectId, retained));
-    const removedSet = new Set(removed);
-    for (const entry of this.readRegistry().projects) {
-      const document = this.readRelationsDocument(entry.id);
-      const removedRelations = document.relations.filter(
-        (relation) => removedSet.has(relation.fromMemoryId) || removedSet.has(relation.toMemoryId)
-      );
-      if (removedRelations.length === 0) continue;
-      document.relations = document.relations.filter(
-        (relation) => !removedSet.has(relation.fromMemoryId) && !removedSet.has(relation.toMemoryId)
-      );
-      this.writeRelationsDocument(document);
-      this.audit("relations_forgotten", entry.id, null, {
-        relationIds: removedRelations.map((relation) => relation.id),
-        causedByMemoryIds: removed
-      });
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      const forgotten = new Set(memoryIds);
+      const memories = this.getContext(projectId, 1e3);
+      const retained = memories.filter((memory) => !forgotten.has(memory.id));
+      const removed = memories.filter((memory) => forgotten.has(memory.id)).map((memory) => memory.id);
+      writePrivateFile(this.memoryPath(projectId), renderMemoryDocument(projectId, retained));
+      const removedSet = new Set(removed);
+      for (const entry of this.readRegistry().projects) {
+        const document = this.readRelationsDocument(entry.id);
+        const removedRelations = document.relations.filter(
+          (relation) => removedSet.has(relation.fromMemoryId) || removedSet.has(relation.toMemoryId)
+        );
+        if (removedRelations.length === 0) continue;
+        document.relations = document.relations.filter(
+          (relation) => !removedSet.has(relation.fromMemoryId) && !removedSet.has(relation.toMemoryId)
+        );
+        this.writeRelationsDocument(document);
+        this.audit("relations_forgotten", entry.id, null, {
+          relationIds: removedRelations.map((relation) => relation.id),
+          causedByMemoryIds: removed
+        });
+      }
+      this.audit("memory_forgotten", projectId, null, { memoryIds: removed });
+      return removed;
+    } finally {
+      releaseLock();
     }
-    this.audit("memory_forgotten", projectId, null, { memoryIds: removed });
-    return removed;
   }
   forgetRelations(projectId, relationIds) {
-    const document = this.readRelationsDocument(projectId);
-    const requested = new Set(relationIds);
-    const removed = document.relations.filter((relation) => requested.has(relation.id)).map((relation) => relation.id);
-    document.relations = document.relations.filter((relation) => !requested.has(relation.id));
-    this.writeRelationsDocument(document);
-    this.audit("relations_forgotten", projectId, null, { relationIds: removed });
-    return removed;
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      const document = this.readRelationsDocument(projectId);
+      const requested = new Set(relationIds);
+      const removed = document.relations.filter((relation) => requested.has(relation.id)).map((relation) => relation.id);
+      document.relations = document.relations.filter((relation) => !requested.has(relation.id));
+      this.writeRelationsDocument(document);
+      this.audit("relations_forgotten", projectId, null, { relationIds: removed });
+      return removed;
+    } finally {
+      releaseLock();
+    }
   }
   exportProject(projectId) {
     const project = this.requireProject(projectId);
@@ -5141,10 +7168,19 @@ ${memory.content}`.toLocaleLowerCase();
   countPendingProposals(projectId) {
     this.requireProject(projectId);
     const directory = this.proposalsDir(projectId);
-    if (!existsSync4(directory)) {
+    if (!existsSync5(directory)) {
       return 0;
     }
-    return readdirSync2(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path6.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+    return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path7.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+  }
+  listProposals(status) {
+    return this.listProjects().flatMap((project) => {
+      const directory = this.proposalsDir(project.id);
+      if (!existsSync5(directory)) return [];
+      return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path7.join(directory, file))));
+    }).filter((proposal) => !status || proposal.status === status).sort(
+      (left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)
+    );
   }
   doctor() {
     const errors = [];
@@ -5253,10 +7289,10 @@ ${memory.content}`.toLocaleLowerCase();
 
 // src/hook-stop.ts
 function turnHasToolUse(transcriptPath, turnId) {
-  if (!transcriptPath || !existsSync5(transcriptPath)) {
+  if (!transcriptPath || !existsSync6(transcriptPath)) {
     return false;
   }
-  for (const line of readFileSync5(transcriptPath, "utf8").split(/\r?\n/)) {
+  for (const line of readFileSync6(transcriptPath, "utf8").split(/\r?\n/)) {
     if (!line.trim()) continue;
     try {
       const event = JSON.parse(line);
@@ -5291,13 +7327,14 @@ function evaluateStopHook(input, service) {
   const project = detected.registeredProject;
   if (!project || !turnHasToolUse(input.transcript_path, input.turn_id)) return null;
   if (hasValidReceipt(input.last_assistant_message ?? "")) return null;
+  if (service.store.countPendingProposals(project.id) === 0) return null;
   return {
     decision: "block",
-    reason: "Before finishing this tool-using task in a registered project, run the $project-memory end-of-task workflow. If durable facts, enrichments, or high-confidence relationships exist, create a proposal and show every item in Chinese. When `request_user_input` is available, use it to offer \u4FDD\u5B58\u5168\u90E8, \u9009\u62E9\u4FDD\u5B58, or \u6682\u4E0D\u4FDD\u5B58 and resolve the proposal in the same turn. When it is unavailable, immediately commit all proposal memory, update, and relation item IDs. A pending proposal receipt is not sufficient. End with `Project memory: committed <n> items`, `Project memory: auto-committed <n> items - request_user_input unavailable`, or `Project memory: rejected proposal <proposal-id>`. If nothing is durable, end with `Project memory: no durable updates - <reason>`."
+    reason: "\u9879\u76EE\u8BB0\u5FC6\u4E2D\u8FD8\u6709\u5F85\u5BA1\u6838\u5185\u5BB9\uFF0C\u8BF7\u5148\u9009\u62E9\u4FDD\u5B58\u6216\u6682\u4E0D\u4FDD\u5B58\u3002"
   };
 }
 function main() {
-  const input = JSON.parse(readFileSync5(0, "utf8"));
+  const input = JSON.parse(readFileSync6(0, "utf8"));
   const dataDir = ensureDataDir(resolveDataDir());
   const service = new ProjectMemoryService(new MemoryStore(dataDir), dataDir);
   try {
@@ -5308,7 +7345,7 @@ function main() {
     service.store.close();
   }
 }
-if (process.argv[1] && import.meta.url === pathToFileURL2(process.argv[1]).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL3(process.argv[1]).href) {
   try {
     main();
   } catch {

@@ -75,11 +75,11 @@ export function evaluateStopHook(
   const project = detected.registeredProject;
   if (!project || !turnHasToolUse(input.transcript_path, input.turn_id)) return null;
   if (hasValidReceipt(input.last_assistant_message ?? "")) return null;
+  if (service.store.countPendingProposals(project.id) === 0) return null;
 
   return {
     decision: "block",
-    reason:
-      "Before finishing this tool-using task in a registered project, run the $project-memory end-of-task workflow. If durable facts, enrichments, or high-confidence relationships exist, create a proposal and show every item in Chinese. When `request_user_input` is available, use it to offer 保存全部, 选择保存, or 暂不保存 and resolve the proposal in the same turn. When it is unavailable, immediately commit all proposal memory, update, and relation item IDs. A pending proposal receipt is not sufficient. End with `Project memory: committed <n> items`, `Project memory: auto-committed <n> items - request_user_input unavailable`, or `Project memory: rejected proposal <proposal-id>`. If nothing is durable, end with `Project memory: no durable updates - <reason>`.",
+    reason: "项目记忆中还有待审核内容，请先选择保存或暂不保存。",
   };
 }
 

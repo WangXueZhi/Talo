@@ -1,0 +1,38 @@
+name: Windows Desktop Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  windows-nsis:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm --dir apps/desktop tauri build --bundles nsis
+      - run: node scripts/package-release.mjs
+      - name: Verify Windows x64 NSIS output
+        shell: pwsh
+        run: |
+          $sidecar = Get-Item apps/desktop/src-tauri/binaries/project-memory-node-x86_64-pc-windows-msvc.exe
+          $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          if ($sidecar.Length -eq 0) { throw "Bundled Windows Node runtime is empty." }
+          if ($installer.Count -ne 1 -or $installer[0].Length -eq 0) { throw "Expected one non-empty NSIS installer." }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: project-memory-windows-x64-nsis
+          path: |
+            release/project-memory-desktop-*-windows-x64-setup.exe
+            release/release-manifest-*.json
+            release/SHA256SUMS-*.txt
+          if-no-files-found: error

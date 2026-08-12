@@ -3,13 +3,14 @@ import path from "node:path";
 import { build } from "esbuild";
 
 const root = path.resolve(import.meta.dirname, "..");
+const coreRoot = path.resolve(root, "../../packages/project-memory-core");
 const outputDir = path.join(root, "dist", "browser");
 
 rmSync(outputDir, { recursive: true, force: true });
 mkdirSync(outputDir, { recursive: true });
 
 await build({
-  entryPoints: [path.join(root, "src", "browser", "main.tsx")],
+  entryPoints: [path.join(coreRoot, "src", "browser", "main.tsx")],
   bundle: true,
   format: "iife",
   platform: "browser",
@@ -23,7 +24,7 @@ await build({
 });
 
 await build({
-  entryPoints: [path.join(root, "src", "browser", "styles.css")],
+  entryPoints: [path.join(coreRoot, "src", "browser", "styles.css")],
   bundle: true,
   minify: true,
   sourcemap: false,

@@ -1,20 +1,21 @@
-# Public Plugin Submission
+# Public Adapter Submission
 
 English | [简体中文](submission.zh-CN.md)
 
 This document contains the reproducible review material for the initial public submission of
-Codex Project Memory as a skills-only plugin. It contains no MCP server and requires no account or
+Talo as a shared local core with a skills-only Codex adapter. It contains no MCP server and requires no account or
 network service at runtime.
 
 ## Listing Copy
 
-- **Name:** Codex Project Memory
+- **Name:** Talo
 - **Category:** Productivity
-- **Short description:** Private, token-aware memory with precise recall for Codex projects.
+- **Short description:** Share reviewed local project memory across AI agents.
 - **Long description:** Precisely recall reviewed project decisions, conclusions, workflows, and
   evidence without loading every memory into context. Retrieval stays local and within a clear
-  token budget, while review, source validation, one-way links, and the offline guide keep memory
-  traceable and controlled.
+  token budget. A plain-language project handoff shows current state, work history, evidence,
+  outputs, risks, and confirmed next steps before the relationship graph, while review, source validation,
+  and one-way links keep memory traceable and controlled.
 - **Website:** https://github.com/WangXueZhi/codex-project-memory
 - **Support:** https://github.com/WangXueZhi/codex-project-memory/issues
 - **Privacy:** https://github.com/WangXueZhi/codex-project-memory/blob/main/PRIVACY.md
@@ -46,7 +47,7 @@ Use an isolated `CODEX_PROJECT_MEMORY_HOME` so the tests do not affect existing 
 
 ### 1. Detect Without Silent Registration
 
-- **Prompt:** Use Codex Project Memory to detect this project. If it is not registered, show the
+- **Prompt:** Use Talo to detect this project. If it is not registered, show the
   detected root and Git details, but do not register it yet.
 - **Expected behavior:** The Skill runs `detect`, reports the result, and waits for explicit approval.
 - **Expected result:** The project remains unregistered and no memory directory is created for it.
@@ -79,13 +80,15 @@ Use an isolated `CODEX_PROJECT_MEMORY_HOME` so the tests do not affect existing 
   memory without truncation.
 - **Fixture:** Continue from positive test 3 and add several unrelated synthetic memories.
 
-### 5. Generate The Knowledge Guide
+### 5. Generate The Project Handoff
 
 - **Prompt:** Show me this project's knowledge graph and explain what I should read first.
-- **Expected behavior:** The Skill runs `guide`, Markdown graph output, and HTML graph output without
+- **Expected behavior:** The Skill runs `brief`, Markdown graph output, and HTML graph output without
   creating a relationship proposal.
-- **Expected result:** The response summarizes memory and evidence counts and returns a private
-  `KNOWLEDGE_GRAPH.html` path. The HTML opens in guide mode and makes no network request.
+- **Expected result:** The response starts with what the project is doing now, one risk, and a
+  confirmed or suggested next step, then returns a private `KNOWLEDGE_GRAPH.html` path. The HTML
+  opens on the project handoff and makes no network request. The complete-record timeline and
+  relationship trace remain secondary views.
 - **Fixture:** Continue from positive test 3.
 
 ### 6. Approve A One-Way Cross-Project Read
@@ -129,9 +132,9 @@ Use an isolated `CODEX_PROJECT_MEMORY_HOME` so the tests do not affect existing 
 Local, skills-only Codex plugin for private, token-aware project memory. It precisely recalls
 reviewed knowledge through compact candidates and budgeted deep reads, stores approved memories
 outside repositories as inspectable Markdown, validates local citations, reports stale evidence,
-supports explicit one-way project links, and provides a guide-first offline knowledge graph. It
-contains no MCP server, SQLite database, embeddings, telemetry, cloud service, or runtime network
-access.
+supports explicit one-way project links, and provides a plain-language offline project handoff
+with reviewed work records before its relationship trace. It contains no MCP server, SQLite database, embeddings, telemetry,
+cloud service, or runtime network access.
 
 ## Manual Portal Decisions
 

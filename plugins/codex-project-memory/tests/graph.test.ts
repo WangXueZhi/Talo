@@ -17,13 +17,15 @@ describe("memory knowledge graph", () => {
     const project = context.service.registerProject(makeProject(context.root, "graph-project"));
     const types: RelationType[] = [
       "related_to",
+      "observes",
+      "causes",
       "depends_on",
       "supports",
       "contradicts",
       "supersedes",
       "derived_from",
     ];
-    const candidates = Array.from({ length: 7 }, (_, index) => ({
+    const candidates = Array.from({ length: types.length + 1 }, (_, index) => ({
       ref: `memory-${index}`,
       kind: "decision" as const,
       title: `Memory ${index}`,
@@ -47,15 +49,73 @@ describe("memory knowledge graph", () => {
       proposal.relationItems.map((item) => item.id),
     );
 
-    expect(committed.memories).toHaveLength(7);
+    expect(committed.memories).toHaveLength(types.length + 1);
     expect(committed.relations.map((relation) => relation.type)).toEqual(types);
     expect(committed.rejectedRelationItems).toEqual([]);
     const relationPath = path.join(context.dataDir, "projects", project.id, "RELATIONS.json");
-    expect(JSON.parse(readFileSync(relationPath, "utf8")).relations).toHaveLength(6);
+    expect(JSON.parse(readFileSync(relationPath, "utf8")).relations).toHaveLength(types.length);
 
     const first = committed.memories[0];
     const related = context.service.listMemoryRelations(project.id, first?.id ?? "", "in");
     expect((related.relations as unknown[]).length).toBe(1);
+  });
+
+  test("requires relation coverage for every event in a multi-event work unit", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const project = context.service.registerProject(makeProject(context.root, "event-chain"));
+    const events = [
+      {
+        ref: "daily-observation",
+        kind: "workflow" as const,
+        title: "执行广告日观察",
+        content: "执行当天的广告观察任务。",
+        workUnitId: "amazon-daily-2026-08-09",
+        phase: "data_collection" as const,
+        sequence: 1,
+      },
+      {
+        ref: "missing-data",
+        kind: "pitfall" as const,
+        title: "发现观察数据缺失",
+        content: "缺失数据可能导致日报误判业务状态。",
+        workUnitId: "amazon-daily-2026-08-09",
+        phase: "risk" as const,
+        sequence: 2,
+      },
+      {
+        ref: "contract-driven",
+        kind: "decision" as const,
+        title: "每日观察改为契约驱动采集",
+        content: "使用数据契约约束观察数据采集。",
+        workUnitId: "amazon-daily-2026-08-09",
+        phase: "decision" as const,
+        sequence: 3,
+      },
+    ];
+
+    expect(() => context.service.proposeMemory(project.id, events)).toThrowError(
+      /participate in at least one proposed relation/,
+    );
+
+    const proposal = context.service.proposeMemory(project.id, events, [
+      {
+        from: { candidateRef: "daily-observation" },
+        to: { candidateRef: "missing-data" },
+        type: "observes",
+        rationale: "广告日观察执行过程中发现输入数据存在缺失。",
+        confidence: "verified",
+      },
+      {
+        from: { candidateRef: "missing-data" },
+        to: { candidateRef: "contract-driven" },
+        type: "causes",
+        rationale: "数据缺失和状态误判风险促成了契约驱动采集改造。",
+        confidence: "verified",
+      },
+    ]) as { relationItems: Array<{ id: string }> };
+
+    expect(proposal.relationItems).toHaveLength(2);
   });
 
   test("rejects self relations and rejects duplicate or unresolved accepted edges", () => {

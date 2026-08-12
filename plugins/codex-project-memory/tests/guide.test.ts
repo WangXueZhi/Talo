@@ -30,6 +30,7 @@ function memory(id: string, overrides: Partial<MemoryRecord> = {}): MemoryRecord
     title: `记忆 ${id}`,
     summary: `记忆 ${id} 摘要`,
     topic: "第一批货诊断",
+    briefRole: null,
     content: `记忆 ${id} 内容`,
     tags: [],
     sourceProjectId: null,

@@ -1,18 +1,18 @@
-# 公共插件提交材料
+# 公共适配器提交材料
 
 [English](submission.md) | 简体中文
 
-本文档用于 Codex Project Memory 首次公开提交审核。项目以纯 Skill 插件提交，不包含 MCP
+本文档用于 Talo 公开提交审核。Codex 适配器以纯 Skill 插件提交，不包含 MCP
 服务器，运行时不需要账号或网络服务。
 
 ## 上架文案
 
-- **名称：** Codex Project Memory
+- **名称：** Talo
 - **分类：** Productivity
-- **简短说明：** 为 Codex 项目提供私有、Token-aware 的精准记忆召回。
+- **简短说明：** 让多个本地 AI 共用经过审核的项目记忆。
 - **详细说明：** 不把全部记忆塞进上下文，而是按明确 token 预算精准找回审核过的项目决策、
-  结论、流程和证据。召回完全在本机完成；保存审核、来源校验、单向链接和离线知识导览让记忆
-  保持可追溯、可控制。
+  结论、流程和证据。通俗的项目首页会先展示当前结论、已完成工作、风险和已确认下一步，再让
+  用户按需追查关系；召回、保存审核、来源校验和单向链接都保持本地、可追溯、可控制。
 - **网站：** https://github.com/WangXueZhi/codex-project-memory
 - **支持：** https://github.com/WangXueZhi/codex-project-memory/issues
 - **隐私政策：** https://github.com/WangXueZhi/codex-project-memory/blob/main/PRIVACY.zh-CN.md
@@ -44,7 +44,7 @@ This project consumes the shared release rules from project A.
 
 ### 1. 检测项目但不静默注册
 
-- **提示：** 使用 Codex Project Memory 检测当前项目。如果项目还没注册，显示根目录和 Git
+- **提示：** 使用 Talo 检测当前项目。如果项目还没注册，显示根目录和 Git
   信息，但先不要注册。
 - **预期行为：** Skill 运行 `detect`，报告结果并等待明确批准。
 - **预期结果：** 项目保持未注册，不会为它创建记忆目录。
@@ -73,12 +73,13 @@ This project consumes the shared release rules from project A.
   并完整返回选中的记忆，不截断正文。
 - **测试数据：** 在正向测试 3 后继续，并添加几条无关的公开合成记忆。
 
-### 5. 生成知识导览
+### 5. 生成项目交接页
 
 - **提示：** 查看当前项目的知识图谱，并告诉我应该先读什么。
-- **预期行为：** Skill 依次运行 `guide`、Markdown 图谱和 HTML 图谱，不创建关系 proposal。
-- **预期结果：** 回复说明记忆和证据数量，并返回私人 `KNOWLEDGE_GRAPH.html` 路径。HTML
-  默认进入导览，而且不发出网络请求。
+- **预期行为：** Skill 依次运行 `brief`、Markdown 图谱和 HTML 图谱，不创建关系 proposal。
+- **预期结果：** 回复先说明项目当前在做什么、一个风险和一项已确认或建议的下一步，再返回私人
+  `KNOWLEDGE_GRAPH.html` 路径。HTML 默认进入项目交接页，完整记录和前因后果作为二级视图，页面不发出
+  网络请求。
 - **测试数据：** 在正向测试 3 后继续。
 
 ### 6. 批准单向跨项目读取
@@ -117,8 +118,9 @@ This project consumes the shared release rules from project A.
 
 本地、纯 Skill 的 Codex 私有 Token-aware 项目记忆插件。它通过紧凑候选和按预算深读精准
 找回审核过的知识，把正式记忆以可检查 Markdown 保存在项目仓库之外，可以校验本地来源、
-报告过期证据、建立明确的单向项目链接，并提供知识导览优先的离线知识图谱。插件不包含 MCP
-服务器、SQLite、embeddings、遥测、云端服务或运行时网络访问。
+报告过期证据、建立明确的单向项目链接，并提供包含工作过程、依据和产出的离线项目交接页，
+关系图只在需要追溯时使用。插件不包含 MCP 服务器、SQLite、embeddings、遥测、云端服务或
+运行时网络访问。
 
 ## 必须由发布者确认的项目
 

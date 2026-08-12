@@ -1,10 +1,10 @@
 {
   "name": "codex-project-memory",
-  "version": "0.10.0",
-  "description": "Private, token-aware project memory with precise local recall, review, citations, and an offline knowledge graph.",
+  "version": "0.14.0",
+  "description": "Talo shares reviewed local project context across AI agents with precise recall, unified review, timelines, and an offline project hub.",
   "type": "module",
   "private": true,
-  "homepage": "https://github.com/WangXueZhi/codex-project-memory#readme",
+  "homepage": "https://wangxuezhi.github.io/codex-project-memory/",
   "repository": {
     "type": "git",
     "url": "https://github.com/WangXueZhi/codex-project-memory.git",
@@ -22,8 +22,8 @@
     "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "format": "biome format --write .",
     "lint": "biome check .",
-    "start": "node ./dist/project-memory.mjs help",
-    "test": "pnpm build:browser && vitest run --exclude tests/integration/** --exclude tests/visual/**",
+    "start": "node ./dist/talo.mjs help",
+    "test": "pnpm build:browser && vitest run --exclude '**/tests/integration/**' --exclude '**/tests/visual/**'",
     "test:integration": "pnpm build:browser && vitest run tests/integration",
     "test:visual": "pnpm build && playwright test",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.browser.json"
@@ -35,7 +35,8 @@
     "ignore": "^7.0.5",
     "lucide-preact": "^1.24.0",
     "picomatch": "^4.0.3",
-    "preact": "^10.29.7"
+    "preact": "^10.29.7",
+    "project-memory-core": "workspace:*"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",

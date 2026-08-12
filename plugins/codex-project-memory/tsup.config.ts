@@ -2,7 +2,8 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: {
-    "project-memory": "src/cli.ts",
+    talo: "../../packages/project-memory-core/src/cli.ts",
+    "project-memory": "../../packages/project-memory-core/src/cli.ts",
     "hook-stop": "src/hook-stop.ts",
   },
   format: ["esm"],

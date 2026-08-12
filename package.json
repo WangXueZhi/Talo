@@ -1,8 +1,8 @@
 {
   "name": "codex-project-memory-workspace",
-  "version": "0.10.0",
+  "version": "0.14.0",
   "private": true,
-  "homepage": "https://github.com/WangXueZhi/codex-project-memory#readme",
+  "homepage": "https://wangxuezhi.github.io/codex-project-memory/",
   "repository": {
     "type": "git",
     "url": "https://github.com/WangXueZhi/codex-project-memory.git"
@@ -15,14 +15,19 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "build": "pnpm --dir plugins/codex-project-memory build",
-    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:integration && pnpm validate",
+    "build": "pnpm --dir packages/project-memory-core build && pnpm --dir plugins/codex-project-memory build && node scripts/build-adapters.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm test && pnpm build && pnpm test:integration && pnpm validate && pnpm desktop:check",
     "format": "pnpm --dir plugins/codex-project-memory format",
-    "lint": "pnpm --dir plugins/codex-project-memory lint",
+    "lint": "pnpm --dir packages/project-memory-core lint && pnpm --dir plugins/codex-project-memory lint",
     "test": "pnpm --dir plugins/codex-project-memory test",
     "test:integration": "pnpm --dir plugins/codex-project-memory test:integration",
     "test:visual": "pnpm --dir plugins/codex-project-memory test:visual",
-    "typecheck": "pnpm --dir plugins/codex-project-memory typecheck",
-    "validate": "node scripts/validate-project.mjs"
+    "desktop:dev": "pnpm --dir packages/project-memory-core build && pnpm --dir apps/desktop dev",
+    "desktop:build": "pnpm --dir packages/project-memory-core build && pnpm --dir apps/desktop tauri:build",
+    "desktop:check": "pnpm --dir apps/desktop check",
+    "reinstall:local": "node scripts/reinstall-local.mjs",
+    "typecheck": "pnpm --dir packages/project-memory-core typecheck && pnpm --dir plugins/codex-project-memory typecheck",
+    "validate": "node scripts/validate-project.mjs",
+    "release:package": "pnpm check && pnpm desktop:build && node scripts/package-release.mjs"
   }
 }

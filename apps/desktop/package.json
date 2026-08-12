@@ -1,0 +1,27 @@
+{
+  "name": "project-memory-desktop",
+  "version": "0.14.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm prepare:runtime && vite build",
+    "check": "pnpm prepare:runtime && tsc --noEmit && cargo test --manifest-path src-tauri/Cargo.toml && cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+    "dev": "tauri dev",
+    "prepare:runtime": "node scripts/prepare-runtime.mjs",
+    "tauri": "tauri",
+    "tauri:build": "tauri build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.9.1",
+    "lucide-preact": "^1.24.0",
+    "preact": "^10.29.7"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.9.6",
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.1.4",
+    "vitest": "^4.1.0"
+  }
+}

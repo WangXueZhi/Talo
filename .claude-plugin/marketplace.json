@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "project-memory",
+  "version": "0.14.0",
+  "description": "Shared local project memory adapters",
+  "owner": {
+    "name": "WangXueZhi"
+  },
+  "plugins": [
+    {
+      "name": "project-memory",
+      "source": "./adapters/claude-code",
+      "description": "Share reviewed local project history, precise recall, timelines, and the offline Talo hub across AI agents.",
+      "version": "0.14.0",
+      "author": {
+        "name": "WangXueZhi"
+      },
+      "category": "productivity"
+    }
+  ]
+}

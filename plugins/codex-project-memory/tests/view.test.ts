@@ -60,10 +60,12 @@ describe("readable knowledge graph views", () => {
     );
     const graph = context.service.buildGraph(project.id, null);
     const markdown = context.service.renderGraphMarkdown(project.id, graph);
-    expect(markdown).toContain("## 知识概况");
-    expect(markdown).toContain("## 建议探索");
+    expect(markdown).toContain("## 项目交接");
+    expect(markdown).toContain("## 从这里开始");
+    expect(markdown).toContain("## 风险与证据边界");
+    expect(markdown).toContain("## 下一步");
     expect(markdown).toContain("## 待审核关联线索");
-    expect(markdown).toContain("## 主题概览");
+    expect(markdown).toContain("## 共享主题");
     expect(markdown).toContain("reports/final.md");
     expect(markdown).toContain("The evidence boundary supports the qualified conclusion.");
 
@@ -80,6 +82,7 @@ describe("readable knowledge graph views", () => {
     expect(html).not.toContain("'unsafe-inline'");
     expect(html).toContain('id="graph-data"');
     expect(html).toContain('"guide"');
+    expect(html).toContain("&quot;brief&quot;");
     expect(result.relationSuggestionCount).toBeGreaterThanOrEqual(0);
     expect(html).toContain(
       "Evidence boundary &lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;",

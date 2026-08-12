@@ -31,3 +31,34 @@ jobs:
       - name: Verify bundled output is committed
         shell: bash
         run: git diff --exit-code -- plugins/codex-project-memory/dist
+
+  desktop:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            bundle: app
+          - os: windows-latest
+            bundle: nsis
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir packages/project-memory-core build
+      - run: pnpm --dir apps/desktop check
+      - run: pnpm --dir apps/desktop tauri build --bundles ${{ matrix.bundle }}
+      - name: Verify Windows x64 sidecar and NSIS installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $sidecar = Get-ChildItem apps/desktop/src-tauri/binaries/project-memory-node-x86_64-pc-windows-msvc.exe -ErrorAction Stop
+          $installer = Get-ChildItem apps/desktop/src-tauri/target/release/bundle/nsis/*.exe -ErrorAction Stop
+          if ($sidecar.Length -eq 0 -or $installer.Length -eq 0) { throw "Windows desktop artifacts are missing." }

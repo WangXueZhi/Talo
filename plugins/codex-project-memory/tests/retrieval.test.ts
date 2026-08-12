@@ -24,6 +24,7 @@ function memory(
     title,
     summary: null,
     topic: null,
+    briefRole: null,
     content,
     tags: [],
     sourceProjectId: null,
