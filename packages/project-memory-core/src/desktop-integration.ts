@@ -154,9 +154,11 @@ function runCommand(
   runner?: DesktopIntegrationOptions["commandRunner"],
 ): CommandResult {
   if (runner) return runner(command, args, env);
+  const requiresShell = process.platform === "win32" && /\.(?:cmd|bat)$/i.test(command);
   const result = spawnSync(command, args, {
     encoding: "utf8",
     env,
+    shell: requiresShell,
     timeout: 30_000,
     windowsHide: true,
   });

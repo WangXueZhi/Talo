@@ -52,15 +52,17 @@ describe("Skill CLI", () => {
     cleanups.push(() => rmSync(root, { recursive: true, force: true }));
     const pluginRoot = path.resolve(".");
     const binDir = path.join(root, "bin");
-    const codexPath = path.join(binDir, "codex");
+    const codexPath = path.join(binDir, process.platform === "win32" ? "codex.cmd" : "codex");
     const codexHome = path.join(root, "codex-home");
     const dataDir = path.join(root, "memory", "v1");
     mkdirSync(binDir, { recursive: true });
     writeFileSync(
       codexPath,
-      '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli test"; exit 0; fi\necho \'{"installed":[],"available":[]}\'\n',
+      process.platform === "win32"
+        ? '@echo off\r\nif "%~1"=="--version" (\r\n  echo codex-cli test\r\n  exit /b 0\r\n)\r\necho {"installed":[],"available":[]}\r\n'
+        : '#!/bin/sh\nif [ "$1" = "--version" ]; then echo "codex-cli test"; exit 0; fi\necho \'{"installed":[],"available":[]}\'\n',
     );
-    chmodSync(codexPath, 0o755);
+    if (process.platform !== "win32") chmodSync(codexPath, 0o755);
 
     const result = spawnSync(
       process.execPath,
