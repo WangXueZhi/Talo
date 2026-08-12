@@ -70,7 +70,16 @@ const binaryPath = path.join(binariesRoot, binaryName);
 if (process.platform === "darwin") {
   const architecture = target.startsWith("aarch64-") ? "arm64" : target.startsWith("x86_64-") ? "x86_64" : null;
   if (architecture) {
-    execFileSync("lipo", [process.execPath, "-thin", architecture, "-output", binaryPath]);
+    const architectures = execFileSync("lipo", ["-archs", process.execPath], {
+      encoding: "utf8",
+    })
+      .trim()
+      .split(/\s+/);
+    if (architectures.length > 1) {
+      execFileSync("lipo", [process.execPath, "-thin", architecture, "-output", binaryPath]);
+    } else {
+      copyFileSync(process.execPath, binaryPath);
+    }
   } else {
     copyFileSync(process.execPath, binaryPath);
   }
@@ -85,9 +94,16 @@ if (rootVersion !== desktopVersion) {
   throw new Error(`Desktop version ${desktopVersion} does not match workspace version ${rootVersion}.`);
 }
 
-execFileSync("pnpm", ["exec", "tauri", "icon", path.join(pluginRoot, "assets", "brand-mark.svg"), "--output", iconsRoot], {
-  cwd: desktopRoot,
-  stdio: "ignore",
-});
+execFileSync(
+  process.execPath,
+  [
+    path.join(desktopRoot, "node_modules", "@tauri-apps", "cli", "tauri.js"),
+    "icon",
+    path.join(pluginRoot, "assets", "brand-mark.svg"),
+    "--output",
+    iconsRoot,
+  ],
+  { cwd: desktopRoot, stdio: "ignore" },
+);
 
 process.stdout.write(`Prepared Talo desktop runtime for ${target}.\n`);

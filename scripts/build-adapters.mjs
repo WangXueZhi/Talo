@@ -74,6 +74,21 @@ const releaseDir = path.join(root, "release");
 mkdirSync(releaseDir, { recursive: true });
 const zipPath = path.join(releaseDir, `project-memory-agent-skill-${version}.zip`);
 rmSync(zipPath, { force: true });
-execFileSync("zip", ["-qr", zipPath, "project-memory", "bin", "assets", "rules", "README.md"], {
-  cwd: path.join(root, "adapters", "generic")
-});
+const genericRoot = path.join(root, "adapters", "generic");
+const archiveEntries = ["project-memory", "bin", "assets", "rules", "README.md"];
+if (process.platform === "win32") {
+  const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+  const sources = archiveEntries.map((entry) => quote(path.join(genericRoot, entry))).join(", ");
+  execFileSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      `Compress-Archive -Path @(${sources}) -DestinationPath ${quote(zipPath)} -Force`,
+    ],
+    { stdio: "inherit" },
+  );
+} else {
+  execFileSync("zip", ["-qr", zipPath, ...archiveEntries], { cwd: genericRoot });
+}

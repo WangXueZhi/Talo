@@ -35,6 +35,21 @@ function addArtifact(filePath, kind) {
 
 function zipDirectory(outputPath, cwd, entries) {
   rmSync(outputPath, { force: true });
+  if (process.platform === "win32") {
+    const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+    const sources = entries.map((entry) => quote(path.join(cwd, entry))).join(", ");
+    execFileSync(
+      "powershell.exe",
+      [
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        `Compress-Archive -Path @(${sources}) -DestinationPath ${quote(outputPath)} -Force`,
+      ],
+      { stdio: "inherit" },
+    );
+    return;
+  }
   execFileSync("zip", ["-qry", outputPath, ...entries], { cwd, stdio: "inherit" });
 }
 
