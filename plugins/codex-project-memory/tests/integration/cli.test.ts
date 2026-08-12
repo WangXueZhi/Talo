@@ -84,7 +84,9 @@ describe("Skill CLI", () => {
       action: "repaired",
       restartRequired: true,
     });
-    expect(readFileSync(path.join(codexHome, "config.toml"), "utf8")).toContain(dataDir);
+    const configuredDataDir =
+      process.platform === "win32" ? dataDir.replaceAll("\\", "\\\\") : dataDir;
+    expect(readFileSync(path.join(codexHome, "config.toml"), "utf8")).toContain(configuredDataDir);
   });
 
   test("requires explicit source refresh before committing stale evidence", () => {
