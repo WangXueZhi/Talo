@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
@@ -35,8 +35,16 @@ describe("Antigravity installed Skill", () => {
     const dataDir = path.join(root, "shared-memory");
     const configHome = path.join(root, "project-memory-config");
     const antigravityHome = path.join(root, "gemini");
+    const binDir = path.join(root, "bin");
+    const antigravityExecutable = path.join(
+      binDir,
+      process.platform === "win32" ? "Antigravity.exe" : "antigravity",
+    );
     mkdirSync(projectPath, { recursive: true });
+    mkdirSync(binDir, { recursive: true });
+    writeFileSync(antigravityExecutable, "antigravity");
     const env = {
+      PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ""}`,
       PROJECT_MEMORY_HOME: dataDir,
       PROJECT_MEMORY_CONFIG_HOME: configHome,
       PROJECT_MEMORY_ANTIGRAVITY_HOME: antigravityHome,
