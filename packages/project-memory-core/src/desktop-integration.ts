@@ -3,6 +3,7 @@ import {
   chmodSync,
   copyFileSync,
   existsSync,
+  readdirSync,
   readFileSync,
   renameSync,
   statSync,
@@ -179,6 +180,15 @@ function executableOnPath(
     for (const extension of extensions) {
       const candidate = path.join(directory, platform === "win32" ? `${name}${extension}` : name);
       if (existsSync(candidate)) return path.resolve(candidate);
+      if (platform === "win32") {
+        try {
+          const expectedName = path.basename(candidate).toLocaleLowerCase();
+          const matchedName = readdirSync(directory).find(
+            (entry) => entry.toLocaleLowerCase() === expectedName,
+          );
+          if (matchedName) return path.resolve(directory, matchedName);
+        } catch {}
+      }
     }
   }
   return null;

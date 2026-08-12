@@ -2260,6 +2260,7 @@ import {
   chmodSync as chmodSync4,
   copyFileSync as copyFileSync2,
   existsSync as existsSync5,
+  readdirSync as readdirSync4,
   readFileSync as readFileSync5,
   renameSync as renameSync4,
   statSync as statSync4,
@@ -3699,6 +3700,16 @@ function executableOnPath(name, env, platform) {
     for (const extension of extensions) {
       const candidate = path6.join(directory, platform === "win32" ? `${name}${extension}` : name);
       if (existsSync5(candidate)) return path6.resolve(candidate);
+      if (platform === "win32") {
+        try {
+          const expectedName = path6.basename(candidate).toLocaleLowerCase();
+          const matchedName = readdirSync4(directory).find(
+            (entry) => entry.toLocaleLowerCase() === expectedName
+          );
+          if (matchedName) return path6.resolve(directory, matchedName);
+        } catch {
+        }
+      }
     }
   }
   return null;
@@ -5650,7 +5661,7 @@ import {
   closeSync,
   existsSync as existsSync7,
   openSync,
-  readdirSync as readdirSync4,
+  readdirSync as readdirSync5,
   readFileSync as readFileSync6,
   readSync,
   statSync as statSync5
@@ -5678,7 +5689,7 @@ function listFiles(root, depth = 0, result = []) {
   if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync7(root)) return result;
   let entries;
   try {
-    entries = readdirSync4(root, { encoding: "utf8", withFileTypes: true });
+    entries = readdirSync5(root, { encoding: "utf8", withFileTypes: true });
   } catch {
     return result;
   }
@@ -5748,7 +5759,7 @@ function scanAntigravityProjects(options) {
   const candidates = /* @__PURE__ */ new Map();
   let entries;
   try {
-    entries = readdirSync4(configRoot2, { encoding: "utf8", withFileTypes: true });
+    entries = readdirSync5(configRoot2, { encoding: "utf8", withFileTypes: true });
   } catch {
     return [];
   }
@@ -7792,7 +7803,7 @@ import {
   chmodSync as chmodSync6,
   existsSync as existsSync9,
   mkdirSync as mkdirSync5,
-  readdirSync as readdirSync5,
+  readdirSync as readdirSync6,
   readFileSync as readFileSync8,
   renameSync as renameSync6,
   rmSync as rmSync4,
@@ -9060,7 +9071,7 @@ ${item.candidate.content.trim()}`;
     const candidatesByKey = /* @__PURE__ */ new Map();
     const directory = this.proposalsDir(projectId);
     if (existsSync9(directory)) {
-      for (const file of readdirSync5(directory).filter((name) => name.endsWith(".json"))) {
+      for (const file of readdirSync6(directory).filter((name) => name.endsWith(".json"))) {
         const proposal = readJson(path11.join(directory, file));
         for (const item of proposal.items) {
           if (item.status !== "accepted") continue;
@@ -9173,13 +9184,13 @@ ${memory.content}`.toLocaleLowerCase();
     if (!existsSync9(directory)) {
       return 0;
     }
-    return readdirSync5(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path11.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+    return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path11.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
   }
   listProposals(status) {
     return this.listProjects().flatMap((project) => {
       const directory = this.proposalsDir(project.id);
       if (!existsSync9(directory)) return [];
-      return readdirSync5(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path11.join(directory, file))));
+      return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path11.join(directory, file))));
     }).filter((proposal) => !status || proposal.status === status).sort(
       (left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)
     );
