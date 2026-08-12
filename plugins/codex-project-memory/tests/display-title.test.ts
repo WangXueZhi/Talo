@@ -41,7 +41,7 @@ describe("plain-language memory titles", () => {
     for (const title of [
       "构建指纹 dec40e26 版本已部署",
       "deploy-dec40e26 → db50eb0c-068f-4228-bc44-e00fde4c8178",
-      "/Users/zhi/Documents/project/report.md",
+      "/Users/example/Documents/project/report.md",
       "服务运行在端口 39001",
       "模块 depends_on 旧实现",
     ]) {

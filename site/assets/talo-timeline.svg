@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 820" role="img" aria-labelledby="title desc">
+  <title id="title">Talo project timeline</title>
+  <desc id="desc">A sanitized example project timeline showing reviewed decisions, evidence, and next steps.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f8fcfd"/><stop offset="1" stop-color="#e8f5f7"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#123647" flood-opacity=".12"/></filter>
+  </defs>
+  <rect width="1440" height="820" rx="32" fill="url(#bg)"/>
+  <rect x="30" y="28" width="1380" height="764" rx="26" fill="#ffffff" stroke="#bfd8de" filter="url(#shadow)"/>
+  <rect x="30" y="28" width="1380" height="72" rx="26" fill="#edf7f9"/>
+  <circle cx="70" cy="64" r="10" fill="#ff6b67"/><circle cx="102" cy="64" r="10" fill="#ffc84a"/><circle cx="134" cy="64" r="10" fill="#2fc47e"/>
+  <text x="178" y="73" fill="#152337" font-family="ui-sans-serif,system-ui" font-size="24" font-weight="700">Talo · Atlas Notes</text>
+  <rect x="62" y="130" width="244" height="622" rx="22" fill="#f4f9fa" stroke="#d4e5e8"/>
+  <rect x="86" y="158" width="52" height="52" rx="14" fill="#07131f"/><text x="104" y="196" fill="#eaffff" font-family="ui-sans-serif,system-ui" font-size="34" font-weight="800">T</text>
+  <text x="154" y="181" fill="#152337" font-family="ui-sans-serif,system-ui" font-size="22" font-weight="750">Atlas Notes</text><text x="154" y="207" fill="#718295" font-family="ui-sans-serif,system-ui" font-size="14">Reviewed project memory</text>
+  <rect x="82" y="250" width="202" height="48" rx="14" fill="#dff2f5"/><text x="111" y="281" fill="#087b91" font-family="ui-sans-serif,system-ui" font-size="17" font-weight="700">Project timeline</text>
+  <text x="111" y="345" fill="#6b7b8c" font-family="ui-sans-serif,system-ui" font-size="17">Cause &amp; effect</text><text x="111" y="405" fill="#6b7b8c" font-family="ui-sans-serif,system-ui" font-size="17">Reading details</text><text x="111" y="465" fill="#6b7b8c" font-family="ui-sans-serif,system-ui" font-size="17">Evidence</text>
+  <text x="84" y="712" fill="#8293a2" font-family="ui-sans-serif,system-ui" font-size="14">Local storage · No telemetry</text>
+  <text x="354" y="162" fill="#0b8ba1" font-family="ui-sans-serif,system-ui" font-size="16" font-weight="800" letter-spacing="2">PROJECT STORY</text>
+  <text x="354" y="214" fill="#142238" font-family="ui-sans-serif,system-ui" font-size="38" font-weight="800">Understand how the project reached today</text>
+  <text x="354" y="252" fill="#65788b" font-family="ui-sans-serif,system-ui" font-size="18">Current conclusions, completed work, risks, evidence, and confirmed next steps.</text>
+  <g font-family="ui-sans-serif,system-ui"><rect x="354" y="292" width="238" height="84" rx="16" fill="#f7fbfc" stroke="#d2e3e7"/><text x="378" y="325" fill="#758797" font-size="14">CURRENT CONCLUSIONS</text><text x="378" y="358" fill="#0a91a8" font-size="28" font-weight="800">4</text><rect x="610" y="292" width="238" height="84" rx="16" fill="#f7fbfc" stroke="#d2e3e7"/><text x="634" y="325" fill="#758797" font-size="14">COMPLETED WORK</text><text x="634" y="358" fill="#0a91a8" font-size="28" font-weight="800">7</text><rect x="866" y="292" width="238" height="84" rx="16" fill="#f7fbfc" stroke="#d2e3e7"/><text x="890" y="325" fill="#758797" font-size="14">RISKS</text><text x="890" y="358" fill="#c77a00" font-size="28" font-weight="800">2</text><rect x="1122" y="292" width="238" height="84" rx="16" fill="#f7fbfc" stroke="#d2e3e7"/><text x="1146" y="325" fill="#758797" font-size="14">NEXT STEPS</text><text x="1146" y="358" fill="#0a91a8" font-size="28" font-weight="800">1</text></g>
+  <line x1="382" y1="422" x2="382" y2="704" stroke="#25bfd4" stroke-width="3"/>
+  <circle cx="382" cy="460" r="8" fill="#25bfd4"/><circle cx="382" cy="594" r="8" fill="#25bfd4"/>
+  <text x="416" y="444" fill="#7a8b98" font-family="ui-monospace,monospace" font-size="14">AUG 12 · DECISION CHAIN</text>
+  <rect x="416" y="465" width="900" height="102" rx="18" fill="#ffffff" stroke="#cfe1e5"/>
+  <rect x="438" y="487" width="8" height="58" rx="4" fill="#12a883"/><text x="466" y="507" fill="#0b8d74" font-family="ui-sans-serif,system-ui" font-size="14" font-weight="700">REVIEWED · DECISION</text><text x="466" y="537" fill="#18273a" font-family="ui-sans-serif,system-ui" font-size="21" font-weight="750">Keep one project-neutral core for every agent adapter</text><text x="1020" y="527" fill="#738596" font-family="ui-sans-serif,system-ui" font-size="14">3 sources · 2 relations →</text>
+  <text x="416" y="612" fill="#7a8b98" font-family="ui-monospace,monospace" font-size="14">AUG 11 · VERIFIED WORK</text>
+  <rect x="416" y="632" width="900" height="102" rx="18" fill="#ffffff" stroke="#cfe1e5"/>
+  <rect x="438" y="654" width="8" height="58" rx="4" fill="#2c86e8"/><text x="466" y="674" fill="#2c6fab" font-family="ui-sans-serif,system-ui" font-size="14" font-weight="700">REVIEWED · WORKFLOW</text><text x="466" y="704" fill="#18273a" font-family="ui-sans-serif,system-ui" font-size="21" font-weight="750">Cross-platform checks and local integration verification passed</text><text x="1020" y="694" fill="#738596" font-family="ui-sans-serif,system-ui" font-size="14">4 outputs · verified →</text>
+</svg>

@@ -1,4 +1,9 @@
 * text=auto eol=lf
 
 plugins/codex-project-memory/dist/** linguist-generated=true
+packages/project-memory-core/dist/** linguist-generated=true
+adapters/**/bin/** linguist-generated=true
+adapters/**/bin/browser/graph-app.js -whitespace
+packages/project-memory-core/dist/browser/graph-app.js -whitespace
+plugins/codex-project-memory/dist/browser/graph-app.js -whitespace
 pnpm-lock.yaml linguist-generated=true

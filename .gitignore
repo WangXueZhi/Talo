@@ -12,3 +12,5 @@ blob-report/
 plugins/codex-project-memory/test-results/
 plugins/codex-project-memory/.env*
 plugins/codex-project-memory/tmp/
+/release/
+/ScreenShot_*.png

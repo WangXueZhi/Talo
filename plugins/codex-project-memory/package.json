@@ -4,7 +4,7 @@
   "description": "Talo shares reviewed local project context across AI agents with precise recall, unified review, timelines, and an offline project hub.",
   "type": "module",
   "private": true,
-  "homepage": "https://github.com/WangXueZhi/codex-project-memory#readme",
+  "homepage": "https://wangxuezhi.github.io/codex-project-memory/",
   "repository": {
     "type": "git",
     "url": "https://github.com/WangXueZhi/codex-project-memory.git",
