@@ -424,7 +424,7 @@ describe("desktop integration management", () => {
       "--json",
     ]);
     expect(readFileSync(path.join(paths.homeDir, ".codex", "config.toml"), "utf8")).toContain(
-      path.join(paths.homeDir, ".project-memory", "v1"),
+      JSON.stringify(path.join(paths.homeDir, ".project-memory", "v1")),
     );
     expect(fake.calls).toContainEqual([
       "plugin",

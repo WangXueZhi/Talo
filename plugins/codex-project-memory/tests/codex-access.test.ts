@@ -59,10 +59,8 @@ describe("Codex Talo sandbox access", () => {
     );
     expect(ensureCodexMemoryAccess(paths).changed).toBe(true);
     expect(ensureCodexMemoryAccess(paths).changed).toBe(false);
-    const matches = readFileSync(paths.configPath, "utf8").match(
-      new RegExp(paths.dataRoot.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"),
-    );
-    expect(matches).toHaveLength(1);
+    const config = readFileSync(paths.configPath, "utf8");
+    expect(config.split(JSON.stringify(paths.dataRoot))).toHaveLength(2);
   });
 
   test("repairs a stale managed launcher after the desktop app is renamed", () => {

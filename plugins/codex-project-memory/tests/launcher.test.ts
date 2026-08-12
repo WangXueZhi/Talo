@@ -89,7 +89,9 @@ describe("Talo launchers", () => {
     expect(readFileSync(executable, "utf8")).toContain(
       '"$APP_ROOT/Contents/Resources/project-memory.mjs" open',
     );
-    expect(statSync(executable).mode & 0o777).toBe(0o700);
+    if (process.platform !== "win32") {
+      expect(statSync(executable).mode & 0o777).toBe(0o700);
+    }
 
     writeFileSync(cliPath, "console.log('v2');\n", "utf8");
     installShortcut({
