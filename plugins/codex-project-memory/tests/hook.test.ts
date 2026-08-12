@@ -23,7 +23,7 @@ function hookInput(cwd: string, transcriptPath: string, message: string): StopHo
 }
 
 describe("memory review stop hook", () => {
-  test("blocks silent completion and accepts explicit review receipts", () => {
+  test("only blocks when a proposal is actually pending", () => {
     const context = createTestContext();
     cleanups.push(context.cleanup);
     const projectPath = makeProject(context.root, "registered-project");
@@ -42,7 +42,7 @@ describe("memory review stop hook", () => {
 
     expect(
       evaluateStopHook(hookInput(projectPath, transcriptPath, "Done."), context.service),
-    ).toMatchObject({ decision: "block" });
+    ).toBeNull();
     expect(
       evaluateStopHook(
         hookInput(
@@ -80,6 +80,12 @@ describe("memory review stop hook", () => {
       ],
     ) as { id: string; items: unknown[]; relationItems: unknown[] };
     const totalItems = proposal.items.length + proposal.relationItems.length;
+    expect(
+      evaluateStopHook(hookInput(projectPath, transcriptPath, "Done."), context.service),
+    ).toEqual({
+      decision: "block",
+      reason: "项目记忆中还有待审核内容，请先选择保存或暂不保存。",
+    });
     expect(
       evaluateStopHook(
         hookInput(

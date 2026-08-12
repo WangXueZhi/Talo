@@ -2,21 +2,21 @@
 
 English | [简体中文](architecture.zh-CN.md)
 
-This document explains how the plugin works internally. The short version is:
+This document explains the platform-neutral v0.14 architecture. The short version is:
 
-1. The **Skill** tells Codex when to recall memory within a token budget and how to ask about saving it.
-2. The **CLI** reads and writes the local files and enforces access rules.
-3. The **Stop Hook** checks that a finished task did not leave a save proposal unresolved.
-4. The **offline browser** turns saved memories into a guide, graph, and reading view.
+1. **project-memory-core** owns identity, storage, recall, citations, timelines, relations, review, and HTML.
+2. One **universal Skill** defines the same workflow for every local AI agent.
+3. **Thin adapters** only invoke the core CLI from Codex, Claude Code, Antigravity, or other agents.
+4. The offline **Memory Hub** opens all registered projects without asking an AI.
+5. The Codex **Stop Hook** appears only when a real proposal is pending.
 
 All four parts run locally. They do not need a database server, MCP server, or cloud service.
 
 ## Components
 
-The repository is a Codex marketplace containing one self-contained plugin. The Skill describes
-the workflow in plain instructions for Codex. The CLI performs predictable file operations and
-security checks. The Stop Hook runs when a tool-using task is about to finish and makes sure the
-memory save decision was handled. No MCP server is required.
+The repository contains `packages/project-memory-core`, one canonical Skill, a Codex plugin, and
+generated Claude Code, Antigravity, and generic adapters. Only the core parses or modifies storage.
+No MCP server is required.
 
 ## Project Identity
 
@@ -27,13 +27,17 @@ shown as a possible match; the plugin never merges it with an existing project w
 
 ## Storage
 
-All plugin state lives outside registered projects under `CODEX_HOME/project-memory/v1`. A global
+New state defaults outside registered projects under `~/.project-memory/v1`. A sole legacy
+`~/.codex/project-memory/v1` remains active in place; dual homes require explicit selection. A global
 `registry.json` records project locations and `links.json` records directional read access. Each
 project has a private directory containing `project.json`, approved `MEMORY.md`, pending or reviewed
 proposal JSON files, reviewed `RELATIONS.json` graph edges, and an append-only `audit.jsonl`.
 
 Approved memory content is stored in Markdown with a small structured JSON header. Memory document
-v2 adds optional summaries, topics, and multiple validated citations; v1 remains readable and is
+v2 added optional summaries, topics, and multiple validated citations. Memory document v3 adds the
+optional reviewed `briefRole` used by the project home page. Memory document v4 adds an optional,
+reviewed work narrative (`occurredAt`, reason, action, outcome, conclusion) and outputs that must
+refer to the same memory's validated citations. v1-v3 remain readable and are
 rewritten only after an accepted memory or enrichment commit. Writes use a
 private temporary file followed by a single replacement operation, so an interrupted write is less
 likely to leave half a file. Directories use mode `0700` and state files use mode `0600` on systems
@@ -42,9 +46,37 @@ that support POSIX permissions, which means only the current user can access the
 Memory proposals and active memory remain intentionally separate. The Skill's `propose` command
 writes a pending proposal file. When structured user input is available, `commit` or `reject`
 follows the user's choice. Proposals can create memories, enrich an existing local memory's
-summary/topic/citations, and create relationships. When structured input is unavailable, the Skill
+summary/topic/brief role/citations, and create relationships. When structured input is unavailable, the Skill
 commits every proposal item as an explicit automatic fallback. Search reads the Markdown files
 directly and does not maintain a database index.
+
+## Global Platform Integrations
+
+Codex's `workspace-write` sandbox normally writes only inside the active workspace, while Project
+Memory keeps shared state in the user directory. When the user explicitly installs the Codex
+integration, Project Memory Desktop atomically adds only the active memory data directory to
+`sandbox_workspace_write.writable_roots` in `~/.codex/config.toml` and preserves a backup before the
+first change. Existing arrays are merged idempotently, and unsupported TOML shapes fail closed
+instead of overwriting user configuration. Marketplace-only installs can run
+`integration repair codex` for the same setup.
+
+Codex Desktop may supply a managed permission profile that overrides user-level `writable_roots`.
+The repair therefore also installs a stable `~/.project-memory/bin/project-memory` launcher and a
+dedicated rules file. Only bounded memory operations such as detection, recall, reads, proposals,
+review, and graph generation are eligible for sandbox escalation; deletion, migration, and
+integration management remain separately approval-gated. Current tasks can continue through the
+launcher instead of stopping when a managed profile masks the normal writable root.
+
+Project registration and platform installation are separate. `integration install antigravity` is
+an explicit, one-time global setup. It installs a self-contained user-level Skill and maintains one
+marked activation block in the user's global `GEMINI.md`. Registration still changes only the
+shared `registry.json`; it never writes rule files into a registered project.
+
+At substantial-task startup, Antigravity detects the current path. Registered projects proceed to
+task-relevant `recall` and recommended `get` reads; unregistered projects continue silently without
+automatic registration or relinking. A manifest under `~/.project-memory/integrations` records
+managed file hashes. Updates replace only unchanged managed files, and removal refuses to delete
+user-modified files.
 
 ## Token-Aware Retrieval
 
@@ -72,13 +104,23 @@ unchanged for compatibility and explicit full inspection.
 Each approved memory is a graph node. A node is simply one saved memory. An edge is a reviewed
 relationship between two memories. These edges are stored in the owning project's
 `RELATIONS.json`; missing relation files are treated as empty for backward compatibility. Supported
-edge types are related, depends on, supports, contradicts, supersedes, and derived from. Related and
+edge types are related, observes, causes, depends on, supports, contradicts, supersedes, and derived from. Related and
 contradicts work in both directions; the other types have a clear from/to direction.
+
+When one proposal contains multiple non-reference events in the same work unit, every event must
+participate in a candidate relation. This prevents a task from preserving only the final change and
+losing the sequence from execution or observation, to finding, to cause, to decision or change.
+`observes` points from the task or observation to the finding; `causes` points from the problem or
+finding to the result it prompted. These relations remain reviewable proposal items.
 
 Relationship candidates share the memory proposal lifecycle. They may refer to existing memory IDs
 or stable candidate refs in the same proposal. They follow interactive selection when available and
 the save-all fallback otherwise.
-Normal memory loading and text search remain unchanged. The read-only `guide` analysis reports
+Normal memory loading and text search remain unchanged. The read-only `brief` view produces a
+project handoff: current state, where to start, recent work, and a complete work timeline. It also classifies
+memories into current conclusions, completed work, risks, confirmed next steps, and references.
+Explicit reviewed roles take priority; legacy memories use deterministic type-based display
+fallbacks that never write back automatically. `guide` continues to report
 topics, groups that are connected by reviewed relationships, memories with no relationships,
 evidence coverage, stale sources,
 highlights, suggested questions, and deterministic relationship clues. Clues are same-project
@@ -95,11 +137,14 @@ reading order. JavaScript and CSS are embedded in the generated file. A Content 
 (CSP) allows only the embedded code whose hash matches the generated page. The page has no CDN,
 network request, server, or runtime plugin-resource dependency.
 
-The browser starts in a guide-first research workspace with project metrics, recommended reading,
-topic paths, evidence status, gaps, suggested questions, and pending relation clues. The optional
-dark graph uses point-shaped, topic-colored memory nodes, typed neon formal relations, subdued
-dashed clue edges, a compact topic rail, and a collapsible inspector. Motion is limited to
-low-frequency focus pulses and can be paused; reduced-motion preferences disable it. User drag
+The browser starts on a project handoff with coverage, where to start, recent work, current state,
+and a complete timeline. Reviewed work records read as date, action, reason, evidence, outputs, and
+what the result means now; older records explicitly identify missing detail. Technical citation details
+are collapsed by default. The optional cause-and-effect trace uses point-shaped, topic-colored memory
+nodes, typed neon formal relations, subdued dashed clue edges, a compact topic rail, and a collapsible inspector. Motion is limited to
+low-frequency focus pulses and can be paused; reduced-motion preferences disable it. Relationship
+details are rendered as complete natural-language sentences instead of incoming/outgoing-edge
+terminology. User drag
 positions persist until the graph is explicitly laid out again or the static snapshot is reloaded.
 
 Source citations are not stored as relation records. The HTML renderer derives optional evidence,

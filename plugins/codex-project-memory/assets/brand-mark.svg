@@ -1,25 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
-  <title id="title">Codex Project Memory brand mark</title>
-  <desc id="desc">A minimal memory card connected to three knowledge nodes.</desc>
-  <rect width="1024" height="1024" fill="#07111a"/>
-  <g fill="none" stroke="#36cfe3" stroke-width="28" stroke-linecap="round">
-    <path d="M512 512V210"/>
-    <path d="M512 512L236 744"/>
-    <path d="M512 512L788 744"/>
-  </g>
-  <g fill="#dffcff" stroke="#07111a" stroke-width="24">
-    <circle cx="512" cy="210" r="62"/>
-    <circle cx="236" cy="744" r="62"/>
-    <circle cx="788" cy="744" r="62"/>
-  </g>
-  <g fill="#20bfd5">
-    <circle cx="512" cy="210" r="22"/>
-    <circle cx="236" cy="744" r="22"/>
-    <circle cx="788" cy="744" r="22"/>
-  </g>
-  <path d="M512 326L698 512L512 698L326 512Z" fill="#102630" stroke="#e8fdff" stroke-width="38" stroke-linejoin="round"/>
-  <g fill="none" stroke-linecap="round">
-    <path d="M428 482H596" stroke="#36cfe3" stroke-width="34"/>
-    <path d="M428 554H548" stroke="#2ed7a0" stroke-width="28"/>
-  </g>
+  <title id="title">Talo brand mark</title>
+  <desc id="desc">A T-shaped memory page with a folded cyan corner.</desc>
+  <rect width="1024" height="1024" rx="215" fill="#07131f"/>
+  <path d="M248 192H776C798 192 816 210 816 232V296C816 318 798 336 776 336H640V792C640 814 622 832 600 832H424C402 832 384 814 384 792V336H248C226 336 208 318 208 296V232C208 210 226 192 248 192Z" fill="#eafcff"/>
+  <path d="M512 832H600C622 832 640 814 640 792V704L512 832Z" fill="#22c7df"/>
 </svg>

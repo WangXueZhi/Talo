@@ -1,7 +1,7 @@
 {
   "name": "codex-project-memory",
-  "version": "0.10.0+codex.20260720085510",
-  "description": "Private, token-aware project memory with precise local recall, reviewable saves, source citations, and an offline knowledge graph.",
+  "version": "0.14.0+codex.20260808004353",
+  "description": "Talo keeps reviewed local project context available across AI agents with precise recall, unified review, and offline timelines.",
   "author": {
     "name": "WangXueZhi",
     "url": "https://github.com/WangXueZhi"
@@ -20,9 +20,9 @@
   ],
   "skills": "./skills/",
   "interface": {
-    "displayName": "Codex Project Memory",
-    "shortDescription": "Private, token-aware memory with precise recall for Codex projects.",
-    "longDescription": "Precisely recall reviewed project decisions, conclusions, workflows, and evidence without loading every memory into context. Retrieval stays local and works within a clear token budget, while source validation, explicit save review, one-way project links, and the offline knowledge guide keep memory traceable and controlled.",
+    "displayName": "Talo",
+    "shortDescription": "Never start over when you switch AI agents.",
+    "longDescription": "Talo keeps one private, reviewed project history available across Codex and other local AI agents. Recall only task-relevant knowledge within a clear token budget, inspect every registered project offline, and understand why work happened, its evidence, outputs, conclusions, and next steps.",
     "developerName": "WangXueZhi",
     "category": "Productivity",
     "capabilities": [
@@ -36,7 +36,7 @@
     "defaultPrompt": [
       "Recall only the project memories relevant to this task within the default token budget.",
       "Propose durable memories from the work we just finished.",
-      "Guide me through this project's saved knowledge and evidence."
+      "Open the shared Talo hub and show all registered projects without loading their memory into this task."
     ],
     "brandColor": "#22D3EE",
     "composerIcon": "./assets/icon.png",

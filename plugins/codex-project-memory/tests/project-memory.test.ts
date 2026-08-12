@@ -54,6 +54,75 @@ describe("project identity", () => {
 });
 
 describe("review-first memory lifecycle", () => {
+  test("requires complete narratives for reviewed work records and validates output citations", () => {
+    const context = createTestContext();
+    try {
+      const projectPath = makeProject(context.root, "narrative-project");
+      initGitRepo(projectPath);
+      writeProjectFile(projectPath, "reports/result.md", "verified result");
+      const project = context.service.registerProject(projectPath);
+      expect(() =>
+        context.service.proposeMemory(project.id, [
+          {
+            kind: "status",
+            title: "未补全的工作记录",
+            content: "有结论的工作必须可以交接。",
+            briefRole: "progress",
+          },
+        ]),
+      ).toThrow(/narrative/i);
+      expect(() =>
+        context.service.proposeMemory(project.id, [
+          {
+            kind: "status",
+            title: "错误产出引用",
+            content: "输出必须来自已验证的来源。",
+            briefRole: "progress",
+            citations: [{ sourcePath: "reports/result.md", role: "report" }],
+            narrative: {
+              occurredAt: "2026-07-20T09:00:00.000Z",
+              reason: "需要保存工作结果",
+              action: "生成报告",
+              outcome: "报告已生成",
+              conclusion: "结果可供交接",
+              outputs: [{ sourcePath: "reports/missing.md" }],
+            },
+          },
+        ]),
+      ).toThrow(/verified citation/i);
+    } finally {
+      context.cleanup();
+    }
+  });
+
+  test("rejects narratives whose occurrence time is in the future", () => {
+    const context = createTestContext();
+    try {
+      const projectPath = makeProject(context.root, "future-narrative-project");
+      initGitRepo(projectPath);
+      const project = context.service.registerProject(projectPath);
+
+      expect(() =>
+        context.service.proposeMemory(project.id, [
+          {
+            kind: "status",
+            title: "未来发生时间",
+            content: "项目记忆不能记录尚未发生的工作。",
+            briefRole: "progress",
+            narrative: {
+              occurredAt: "2099-01-01T00:00:00.000Z",
+              reason: "验证发生时间",
+              action: "提交项目记忆",
+              outcome: "被服务层拦截",
+              conclusion: "未来事件不能作为已完成工作保存",
+            },
+          },
+        ]),
+      ).toThrow(/future/i);
+    } finally {
+      context.cleanup();
+    }
+  });
   test("recalls only authorized linked memories and never audits query text", () => {
     const context = createTestContext();
     cleanups.push(context.cleanup);
@@ -176,6 +245,7 @@ describe("review-first memory lifecycle", () => {
           memoryId: memory?.id ?? "",
           summary: "Readable summary",
           topic: "Release",
+          briefRole: "conclusion",
           citations: [{ sourcePath: "reports/final.md", role: "report" }],
         },
         {
@@ -198,6 +268,7 @@ describe("review-first memory lifecycle", () => {
       content: "Original durable content.",
       summary: "Readable summary",
       topic: "Release",
+      briefRole: "conclusion",
     });
     expect(result.updatedMemories[0]?.citations).toHaveLength(1);
     expect(
@@ -212,7 +283,7 @@ describe("review-first memory lifecycle", () => {
     ]);
   });
 
-  test("reads legacy memory v1 and writes v2 only after an accepted update", () => {
+  test("reads legacy memory v1 and writes v6 only after an accepted update", () => {
     const context = createTestContext();
     cleanups.push(context.cleanup);
     const projectPath = makeProject(context.root, "legacy-project");
@@ -247,7 +318,10 @@ describe("review-first memory lifecycle", () => {
     expect(context.service.getContext(project.id)[0]).toMatchObject({
       summary: null,
       topic: null,
+      briefRole: null,
       citations: [],
+      submittedBy: null,
+      sourceProposalId: null,
     });
     expect(
       context.service.recallMemory(project.id, "Legacy content", false).candidates[0]?.summary,
@@ -258,10 +332,192 @@ describe("review-first memory lifecycle", () => {
       project.id,
       [],
       [],
-      [{ memoryId, summary: "Legacy summary", topic: "Legacy" }],
+      [{ memoryId, summary: "Legacy summary", topic: "Legacy", briefRole: "reference" }],
     ) as { id: string; updateItems: Array<{ id: string }> };
     context.service.commitMemory(proposal.id, [], [], [proposal.updateItems[0]?.id ?? ""]);
+    expect(readFileSync(memoryPath, "utf8")).toContain('"schemaVersion": 6');
+    expect(context.service.getContext(project.id)[0]?.briefRole).toBe("reference");
+  });
+
+  test("reads memory v2 without rewriting or inventing a reviewed brief role", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const projectPath = makeProject(context.root, "v2-project");
+    const project = context.service.registerProject(projectPath);
+    const memoryId = randomUUID();
+    const memoryPath = path.join(context.dataDir, "projects", project.id, "MEMORY.md");
+    const metadata = {
+      schemaVersion: 2,
+      projectId: project.id,
+      memories: [
+        {
+          id: memoryId,
+          projectId: project.id,
+          kind: "pitfall",
+          title: "V2 evidence boundary",
+          summary: "Legacy v2 summary",
+          topic: "Diagnosis",
+          tags: [],
+          sourceProjectId: null,
+          sourcePath: null,
+          sourceCommit: null,
+          sourceFileHash: null,
+          citations: [],
+          confidence: "verified",
+          status: "active",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
+      ],
+    };
+    writeFileSync(
+      memoryPath,
+      `---\n${JSON.stringify(metadata, null, 2)}\n---\n\n# Project Memory\n\n## [${memoryId}] V2 evidence boundary\n\nLegacy v2 content.\n`,
+    );
+
+    expect(context.service.getContext(project.id)[0]).toMatchObject({
+      summary: "Legacy v2 summary",
+      topic: "Diagnosis",
+      briefRole: null,
+    });
     expect(readFileSync(memoryPath, "utf8")).toContain('"schemaVersion": 2');
+  });
+
+  test("reads schema v4 with missing event metadata as null", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const project = context.service.registerProject(makeProject(context.root, "v4-project"));
+    const memoryId = randomUUID();
+    const memoryPath = path.join(context.dataDir, "projects", project.id, "MEMORY.md");
+    const metadata = {
+      schemaVersion: 4,
+      projectId: project.id,
+      memories: [
+        {
+          id: memoryId,
+          projectId: project.id,
+          kind: "status",
+          title: "Schema four memory",
+          summary: "Existing content remains unchanged",
+          topic: "Compatibility",
+          briefRole: "progress",
+          narrative: null,
+          tags: [],
+          sourceProjectId: null,
+          sourcePath: null,
+          sourceCommit: null,
+          sourceFileHash: null,
+          citations: [],
+          confidence: "verified",
+          status: "active",
+          createdAt: "2026-07-29T00:00:00.000Z",
+          updatedAt: "2026-07-29T00:00:00.000Z",
+        },
+      ],
+    };
+    writeFileSync(
+      memoryPath,
+      `---\n${JSON.stringify(metadata, null, 2)}\n---\n\n# Project Memory\n\n## [${memoryId}] Schema four memory\n\nOriginal schema four content.\n`,
+    );
+    expect(context.service.getContext(project.id)[0]).toMatchObject({
+      title: "Schema four memory",
+      content: "Original schema four content.",
+      workUnitId: null,
+      runId: null,
+      phase: null,
+      sequence: null,
+    });
+    expect(readFileSync(memoryPath, "utf8")).toContain('"schemaVersion": 4');
+  });
+
+  test("writes schema v6 event metadata through reviewed proposals", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const project = context.service.registerProject(makeProject(context.root, "event-metadata"));
+    const proposal = context.service.proposeMemory(project.id, [
+      {
+        kind: "status",
+        title: "Weekly review data collected",
+        content: "Three source reports were collected.",
+        workUnitId: "amazon-weekly-2026-07-29",
+        runId: "run-2026-07-29",
+        phase: "data_collection",
+        sequence: 1,
+      },
+    ]) as { id: string; items: Array<{ id: string }> };
+    const memory = context.service.commitMemory(proposal.id, [proposal.items[0]?.id ?? ""])
+      .memories[0];
+    expect(memory).toMatchObject({
+      workUnitId: "amazon-weekly-2026-07-29",
+      runId: "run-2026-07-29",
+      phase: "data_collection",
+      sequence: 1,
+    });
+    const memoryPath = path.join(context.dataDir, "projects", project.id, "MEMORY.md");
+    expect(readFileSync(memoryPath, "utf8")).toContain('"schemaVersion": 6');
+  });
+
+  test("stores the original submitter and recovers it from an accepted proposal", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const project = context.service.registerProject(makeProject(context.root, "submitter-project"));
+    const proposal = context.service.proposeMemory(
+      project.id,
+      [
+        {
+          kind: "decision",
+          title: "Contract-driven collection",
+          content: "Daily observation follows a reviewed data contract.",
+        },
+      ],
+      [],
+      [],
+      { platform: "antigravity", adapterVersion: "2026.8.9" },
+    ) as { id: string; items: Array<{ id: string }> };
+    const memory = context.service.commitMemory(proposal.id, [proposal.items[0]?.id ?? ""])
+      .memories[0];
+    expect(memory).toMatchObject({
+      submittedBy: { platform: "antigravity", adapterVersion: "2026.8.9" },
+      sourceProposalId: proposal.id,
+    });
+
+    const memoryPath = path.join(context.dataDir, "projects", project.id, "MEMORY.md");
+    const document = readFileSync(memoryPath, "utf8");
+    const frontMatter = document.match(/^---\n([\s\S]*?)\n---\n/);
+    expect(frontMatter).not.toBeNull();
+    const metadata = JSON.parse(frontMatter?.[1] ?? "{}") as {
+      schemaVersion: number;
+      memories: Array<Record<string, unknown>>;
+    };
+    metadata.schemaVersion = 5;
+    delete metadata.memories[0]?.submittedBy;
+    delete metadata.memories[0]?.sourceProposalId;
+    writeFileSync(
+      memoryPath,
+      document.replace(frontMatter?.[0] ?? "", `---\n${JSON.stringify(metadata, null, 2)}\n---\n`),
+    );
+
+    expect(context.service.getContext(project.id)[0]).toMatchObject({
+      submittedBy: { platform: "antigravity", adapterVersion: "2026.8.9" },
+      sourceProposalId: proposal.id,
+    });
+  });
+
+  test("normalizes Claude Code submitters to the canonical claude platform", () => {
+    const context = createTestContext();
+    cleanups.push(context.cleanup);
+    const project = context.service.registerProject(makeProject(context.root, "claude-submitter"));
+    const proposal = context.service.proposeMemory(
+      project.id,
+      [{ kind: "decision", title: "Claude integration", content: "Use the shared local adapter." }],
+      [],
+      [],
+      { platform: "claude-code", adapterVersion: "2.1.219" },
+    ) as { id: string; actor: { platform: string }; items: Array<{ id: string }> };
+    expect(proposal.actor.platform).toBe("claude");
+    const memory = context.service.commitMemory(proposal.id, [proposal.items[0]?.id ?? ""])
+      .memories[0];
+    expect(memory?.submittedBy?.platform).toBe("claude");
   });
 
   test("keeps proposals out of search until accepted and marks changed sources stale", () => {
@@ -391,7 +647,7 @@ describe("review-first memory lifecycle", () => {
     expect(context.service.store.doctor()).toMatchObject({
       ok: true,
       storageFormat: "markdown-json",
-      memorySchemaVersion: 2,
+      memorySchemaVersion: 6,
       counts: { projects: 1, memories: 1, pendingProposals: 0 },
     });
   });
