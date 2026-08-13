@@ -105,12 +105,19 @@ if (releaseScope !== "portable") {
       process.platform === "win32" &&
       bundle.toLocaleLowerCase().includes(`${path.sep}nsis${path.sep}`) &&
       bundle.toLocaleLowerCase().endsWith(".exe");
+    const isMacDmg = process.platform === "darwin" && bundle.toLocaleLowerCase().endsWith(".dmg");
+    const architecture = process.arch === "arm64" ? "aarch64" : process.arch;
     const targetName = isWindowsNsis
       ? `talo-desktop-${version}-windows-x64-setup.exe`
-      : path.basename(bundle);
+      : isMacDmg
+        ? `talo-desktop-${version}-macos-${architecture}.dmg`
+        : path.basename(bundle);
     const target = path.join(releaseDir, targetName);
     copyFileSync(bundle, target);
-    addArtifact(target, isWindowsNsis ? "windows-x64-nsis" : "desktop-installer");
+    addArtifact(
+      target,
+      isWindowsNsis ? "windows-x64-nsis" : isMacDmg ? "macos-dmg" : "desktop-installer",
+    );
   }
 }
 
@@ -124,6 +131,23 @@ if (
   )
 ) {
   throw new Error("No desktop installer was found under the Tauri release bundle directory.");
+}
+
+if (
+  releaseScope === "desktop" &&
+  process.platform === "darwin" &&
+  (!artifacts.some((artifact) => artifact.kind === "macos-dmg") ||
+    !artifacts.some((artifact) => artifact.kind === "macos-app"))
+) {
+  throw new Error("The macOS release must include both a DMG installer and an app ZIP.");
+}
+
+if (
+  releaseScope === "desktop" &&
+  process.platform === "win32" &&
+  !artifacts.some((artifact) => artifact.kind === "windows-x64-nsis")
+) {
+  throw new Error("The Windows release must include the x64 NSIS installer.");
 }
 
 artifacts.sort((left, right) => left.file.localeCompare(right.file));

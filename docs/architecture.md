@@ -199,7 +199,7 @@ Tagged releases use `.github/workflows/release.yml`:
 4. generate per-platform manifests and SHA-256 files;
 5. attach all artifacts to one GitHub Release.
 
-Release artifacts use the public Talo brand, for example `talo-agent-skill-0.14.0.zip`. Internal
+Release artifacts use the public Talo brand, for example `talo-agent-skill-0.14.1.zip`. Internal
 identifiers remain compatible where renaming would break existing installations.
 
 ## Compatibility Boundary
