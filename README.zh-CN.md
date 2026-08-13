@@ -12,14 +12,14 @@
 </p>
 
 <p align="center">
-  <a href="https://wangxuezhi.github.io/codex-project-memory/">产品官网</a> ·
+  <a href="https://wangxuezhi.github.io/Talo/">产品官网</a> ·
   <a href="README.md">English</a> ·
-  <a href="https://github.com/WangXueZhi/codex-project-memory/releases">下载</a> ·
+  <a href="https://github.com/WangXueZhi/Talo/releases">下载</a> ·
   <a href="docs/architecture.zh-CN.md">架构说明</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/WangXueZhi/codex-project-memory/actions/workflows/ci.yml"><img src="https://github.com/WangXueZhi/codex-project-memory/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml"><img src="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-1f6f78.svg" alt="Apache-2.0 许可"></a>
   <img src="https://img.shields.io/badge/本地优先-是-14967f.svg" alt="本地优先">
   <img src="https://img.shields.io/badge/运行时联网-无-172238.svg" alt="运行时不联网">
@@ -49,8 +49,8 @@ Agent 共同使用。
 需要 Node.js 22.13+ 和 pnpm 10.30.2。
 
 ```bash
-git clone https://github.com/WangXueZhi/codex-project-memory.git
-cd codex-project-memory
+git clone https://github.com/WangXueZhi/Talo.git
+cd Talo
 pnpm install --frozen-lockfile
 pnpm build
 ```
@@ -67,7 +67,7 @@ pnpm build
 Codex marketplace 安装命令：
 
 ```bash
-codex plugin marketplace add WangXueZhi/codex-project-memory --ref main
+codex plugin marketplace add WangXueZhi/Talo --ref main
 codex plugin add codex-project-memory@codex-project-memory
 ```
 
@@ -136,7 +136,7 @@ pnpm desktop:build
 ```
 
 安装包和通用 Agent Skill 压缩包发布在
-[GitHub Releases](https://github.com/WangXueZhi/codex-project-memory/releases)。
+[GitHub Releases](https://github.com/WangXueZhi/Talo/releases)。
 
 ## 命令速查
 
@@ -153,6 +153,9 @@ integration / home             管理平台集成与存储目录
 Adapter Protocol v1 与原有 project-memory 命令保持兼容。迁移期间同时提供 `talo` 和
 `project-memory` 两个启动器。
 
+对外产品与仓库名称统一为 **Talo**。Codex 插件 ID `codex-project-memory`、Skill 名称
+`project-memory`、旧 CLI 别名和现有存储路径继续保留，确保已有安装无需迁移即可升级。
+
 ## 开发验证
 
 ```bash
@@ -162,6 +165,7 @@ pnpm test:visual
 
 - [中文架构说明](docs/architecture.zh-CN.md)
 - [提交与审核说明](docs/submission.zh-CN.md)
+- [首次发布清单](docs/releasing.zh-CN.md)
 - [安全说明](SECURITY.md)
 - [隐私说明](PRIVACY.md)
 - [支持](SUPPORT.zh-CN.md)

@@ -6,26 +6,33 @@ All notable changes to this project are documented in this file.
 
 ## Unreleased
 
+- No unreleased changes.
+
+## 0.14.0 - 2026-08-13
+
+First public Talo release.
+
+- Renamed the public product and repository to **Talo** while preserving the
+  `codex-project-memory` plugin ID, `project-memory` Skill and CLI alias, storage paths, and Adapter
+  Protocol v1 compatibility.
 - Added end-to-end Claude Code support across the CLI, Desktop integration management, bundled
   user-scope marketplace, session-based project discovery, platform filters, and submitter metadata.
-- Codex access repair now installs a stable Project Memory launcher and narrowly scoped rules, so
-  current tasks can continue when a Desktop-managed permission profile masks `writable_roots`.
+- Added a bilingual product website, redesigned English and Chinese READMEs, a documented
+  architecture, GitHub Pages deployment, and tagged cross-platform GitHub Release automation.
 - Added a local reinstall workflow that rebuilds the desktop app, atomically replaces the installed
-  application, and updates the Codex and Antigravity integrations after changes.
+  application, and updates Codex, Claude Code, and Antigravity integrations after changes.
 - Added directed `observes` and `causes` relations for reviewed event chains from task or
   observation, to finding, to resulting change.
-- Multi-event non-reference work units in one proposal must now give every event at least one
-  candidate relation, preventing final changes from being saved without their causes.
-- Updated the Project Memory Skill so Codex, Antigravity, Claude Code, and generic agents assign a
-  shared work unit, sequence, stable refs, and verify relation coverage before proposing.
-
-## 0.14.0 - 2026-08-06
+- Multi-event non-reference work units must give every event at least one candidate relation,
+  preventing final changes from being saved without their causes.
+- Codex access repair installs a stable compatibility launcher and narrowly scoped rules so current
+  tasks can continue when a Desktop-managed permission profile masks `writable_roots`.
 
 - Added `integration install|status|remove antigravity` for one-time Codex-managed installation,
   inspection, and safe removal of Antigravity's self-contained global Skill and activation rule.
 - Registered projects now use the same shared memory automatically in Antigravity while
   unregistered projects continue silently and receive no project-level rule files.
-- Added the native Project Memory Desktop app for installing, updating, migrating, repairing, and
+- Added the native Talo Desktop app for installing, updating, migrating, repairing, and
   removing Codex and Antigravity integrations.
 - Codex integration setup now adds only the active memory directory to writable roots and preserves
   a configuration backup. Marketplace-only installs can use `integration repair codex` without

@@ -1,13 +1,13 @@
 {
   "name": "codex-project-memory",
-  "version": "0.14.0+codex.20260808004353",
+  "version": "0.14.0",
   "description": "Talo keeps reviewed local project context available across AI agents with precise recall, unified review, and offline timelines.",
   "author": {
     "name": "WangXueZhi",
     "url": "https://github.com/WangXueZhi"
   },
-  "homepage": "https://wangxuezhi.github.io/codex-project-memory/",
-  "repository": "https://github.com/WangXueZhi/codex-project-memory",
+  "homepage": "https://wangxuezhi.github.io/Talo/",
+  "repository": "https://github.com/WangXueZhi/Talo",
   "license": "Apache-2.0",
   "keywords": [
     "memory",
@@ -30,9 +30,9 @@
       "Read",
       "Write"
     ],
-    "websiteURL": "https://wangxuezhi.github.io/codex-project-memory/",
-    "privacyPolicyURL": "https://github.com/WangXueZhi/codex-project-memory/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/WangXueZhi/codex-project-memory/blob/main/TERMS.md",
+    "websiteURL": "https://wangxuezhi.github.io/Talo/",
+    "privacyPolicyURL": "https://github.com/WangXueZhi/Talo/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/WangXueZhi/Talo/blob/main/TERMS.md",
     "defaultPrompt": [
       "Recall only the project memories relevant to this task within the default token budget.",
       "Propose durable memories from the work we just finished.",

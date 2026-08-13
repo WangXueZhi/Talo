@@ -2,19 +2,19 @@
 
 [English](TERMS.md) | 简体中文
 
-生效日期：2026 年 7 月 15 日
+生效日期：2026 年 8 月 13 日
 
-本条款适用于 WangXueZhi 发布的 Codex Project Memory 插件。安装或使用插件即表示用户同意
-本条款。
+本条款适用于 WangXueZhi 发布的 Talo，包括兼容插件 `codex-project-memory`。安装或使用
+Talo 即表示用户同意本条款。
 
 ## 许可证
 
-本插件是采用 Apache License 2.0 的开源软件。用户使用、复制、修改和分发软件的权利以
+Talo 是采用 Apache License 2.0 的开源软件。用户使用、复制、修改和分发软件的权利以
 [LICENSE](LICENSE) 为准。
 
 ## 预期用途
 
-本插件用于为用户有权访问的本地项目维护私人、项目级记忆。用户只能让插件访问自己有权读取
+Talo 用于为用户有权访问的本地项目维护私人、项目级记忆。用户只能让 Talo 访问自己有权读取
 的文件和项目。
 
 用户需要负责：
@@ -53,5 +53,5 @@
 
 ## 联系方式
 
-条款问题可以通过 [GitHub Issues](https://github.com/WangXueZhi/codex-project-memory/issues)
+条款问题可以通过 [GitHub Issues](https://github.com/WangXueZhi/Talo/issues)
 提交，请勿包含私人项目数据或凭据。

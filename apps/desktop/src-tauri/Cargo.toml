@@ -4,7 +4,7 @@ version = "0.14.0"
 description = "Native desktop access to Talo"
 authors = ["WangXueZhi"]
 license = "Apache-2.0"
-repository = "https://github.com/WangXueZhi/codex-project-memory"
+repository = "https://github.com/WangXueZhi/Talo"
 edition = "2021"
 
 [[bin]]

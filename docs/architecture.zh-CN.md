@@ -1,148 +1,216 @@
-# 架构说明
+# Talo 架构说明
 
 [English](architecture.md) | 简体中文
 
-这份文档说明 v0.14 的通用本地架构。先用简单的话概括：
+Talo 是一个面向 AI 辅助软件工作的本地优先项目记忆系统。它把一份经过审核、可追溯的项目
+历史保存在仓库之外，并通过薄适配器让 Codex、Claude Code、Antigravity 和其他本地 Agent
+使用同一份记忆。
 
-1. **project-memory-core** 统一负责项目识别、存储、召回、来源校验、时间线、关系、审核和 HTML。
-2. **通用 Skill** 规定所有本地 AI 使用同一套开始、召回、保存和审核流程。
-3. **薄适配器** 只在 Codex、Claude Code、Antigravity 或其他 Agent 中调用核心 CLI。
-4. **记忆中心** 把全部已注册项目整理成无需询问 AI 就能打开的离线首页。
-5. **Codex Stop Hook** 只在真实待审核 proposal 存在时显示一句中文提醒。
+整体架构刻意保持简单：一个核心、一份私有存储、一套审核模型、多个平台适配器。Talo 不提供
+托管服务，记忆功能在运行时也不依赖数据库、MCP Server、embedding 服务、分析脚本或 CDN。
 
-这四个部分都在本机运行，不需要数据库服务器、MCP 服务器或云端服务。
+## 系统上下文
 
-## 组件
+```mermaid
+flowchart LR
+  U["开发者"] --> A["本地 AI Agent"]
+  U --> D["Talo Desktop / 离线 Hub"]
+  A --> X["平台适配器"]
+  X --> C["Talo 核心 CLI"]
+  D --> C
+  C --> S["私有 Talo Home"]
+  C --> P["已注册项目文件\n只读证据"]
+  S --> H["审核通过的记忆"]
+  S --> Q["待审核 Proposal"]
+  S --> R["审核通过的关系"]
+  S --> G["离线 HTML 视图"]
+```
 
-仓库分为 `packages/project-memory-core`、通用 `skills/project-memory`、Codex 插件和跨平台
-适配目录。核心是唯一可以解析和修改记忆格式的组件；所有适配器只调用 CLI。不需要 MCP 服务器。
+项目仓库只保存产品源码和受控生成的适配器产物。用户的真实记忆数据不会放进本仓库。
 
-## 项目标识
+## 架构分层
 
-注册从真实且规范化的项目路径开始。对于 Git 仓库，插件还会记录 worktree 共享目录、远程
-地址和当前提交。这些信息可以帮助插件在项目移动或通过其他 worktree 打开后重新识别它。
-相似路径只会显示为可能匹配，未经用户确认不会自动合并。
+| 层级 | 职责 | 权威位置 |
+| --- | --- | --- |
+| 产品界面 | Desktop、离线 Hub、CLI 输出、公开官网 | `apps/desktop`、`site` |
+| 平台适配器 | 从不同 Agent 启动同一套工作流 | `plugins`、`adapters` |
+| 通用 Skill | 定义召回、审核、证据和交接行为 | `skills/project-memory` |
+| 核心领域 | 身份、存储、召回、审核、关系、安全、HTML | `packages/project-memory-core` |
+| 私有状态 | 注册表、正式记忆、Proposal、审计、离线视图 | `~/.project-memory/v1` |
 
-## 存储
+只有核心层可以读写 Talo 存储。适配器只负责打包和调用核心，不各自实现不同的记忆语义。
 
-新安装默认位于 `~/.project-memory/v1`，不写入已注册项目。只有旧目录存在时继续原地使用
-`~/.codex/project-memory/v1`。两个目录同时存在时必须显式选择。全局 `registry.json`
-记录项目位置，`links.json` 记录单向读取授权。每个项目目录包含 `project.json`、审核通过的
-`MEMORY.md`、proposal JSON、`RELATIONS.json` 和追加式 `audit.jsonl`。
+## 仓库结构
 
-记忆文档 v2 支持摘要、主题和多个已校验来源；v3 新增可审核的 `briefRole`，用于确定记忆在
-首页的位置；v4 新增可审核的工作叙事：发生时间、原因、动作、产出、当前结论，以及只能指向
-同一记忆已验证来源的产出文件。v1-v3 仍可读取，只有在记忆或补全实际提交时才升级。写入时先生成私人临时
-文件，再一次性替换旧文件，减少中断后留下半个文件的风险。
-在支持 POSIX 权限的系统上，目录使用 `0700`，状态文件使用 `0600`，也就是只允许当前
-用户访问。
+```text
+Talo/
+├── packages/project-memory-core/   平台无关领域逻辑与 CLI
+├── plugins/codex-project-memory/   Codex 插件兼容包
+├── skills/project-memory/          跨 Agent 的权威 Skill
+├── adapters/
+│   ├── claude-code/                Claude Code 集成包
+│   ├── antigravity/                Antigravity 集成包
+│   └── generic/                    通用本地 Agent 包
+├── apps/desktop/                   Tauri 桌面应用
+├── site/                           无构建依赖的 GitHub Pages 官网
+├── scripts/                        构建、校验、重装、发布打包
+└── .github/workflows/              CI、Pages 与 Tag Release 自动化
+```
 
-proposal 和正式记忆严格分离。所有平台可以创建 proposal，但只有统一审核后才写入正式
-记忆。无法继续交互的平台把 proposal 留在共享待审核列表。提交时重新检查 revision、来源、
-权限和重复内容，并用项目锁、临时文件和原子替换避免并发覆盖。
+适配器中的构建产物会受控提交。CI 会重新构建并检查产物与源码一致。
 
-## 全局平台集成
+## 核心领域模型
 
-Codex 的 `workspace-write` 沙箱默认只允许写当前工作区，而 Project Memory 的共享数据位于
-用户目录。Project Memory Desktop 在用户明确点击安装 Codex 集成时，会原子更新
-`~/.codex/config.toml` 的 `sandbox_workspace_write.writable_roots`，只加入当前实际使用的
-Project Memory 数据目录，并在首次修改前保留备份。已有数组会增量合并，重复执行保持幂等；
-无法安全解析的配置会停止并提示冲突，不会覆盖用户配置。直接从 marketplace 安装的用户可用
-`integration repair codex` 执行同一套修复。
+### 项目标识
 
-Codex Desktop 可能为任务下发托管权限配置并覆盖用户级 `writable_roots`。因此修复流程还会安装
-`~/.project-memory/bin/project-memory` 稳定启动器和独立规则文件，只允许检测、召回、读取、提案、
-审核和图谱等 Project Memory 命令走沙箱升级执行；删除、迁移和集成管理仍需单独批准。这样当前
-任务无需因为托管权限覆盖而中断，新任务仍优先使用普通可写目录权限。
+Talo 从规范化后的真实路径开始识别项目。对于 Git 项目，还会记录公共 Git 目录、远程地址和
+观测到的提交。这些信息用于识别 worktree 和移动后的项目，但不会静默合并两个注册记录；重新
+绑定必须得到明确批准。
 
-项目注册与平台安装相互独立。`integration install antigravity` 是一次性、显式授权的全局安装：
-它把自包含 Skill 写入 Antigravity 用户目录，并只在用户的全局 `GEMINI.md` 中维护一个带标记
-的自动检测块。项目注册仍然只修改共享 `registry.json`，不会向项目写入规则文件。
+### 记忆与证据
 
-Antigravity 在重要任务开始时先检测当前路径。已注册项目进入 `recall` 和推荐记忆的 `get`；
-未注册项目静默继续，不自动注册或重连。安装清单保存在 `~/.project-memory/integrations`，记录
-受管文件摘要。升级只覆盖摘要仍匹配的受管文件，卸载遇到用户修改时拒绝删除。
+审核通过的记忆是可长期复用的项目事实，例如决策、架构规则、流程、约定、风险或重要状态。
+记忆可以包含摘要、主题、审核角色、事件过程、已验证产出和最多十二条引用。
 
-## 记忆中心
+引用只能指向当前项目文件，或已明确授权的关联项目文件。Talo 保存来源提交与 SHA-256 哈希，
+读取时重新校验。来源变化、丢失或权限失效时会标记为过期，而不是继续静默信任。
 
-`hub` 生成 `~/.project-memory/MEMORY_HUB.html`；`open` 刷新项目页面和全局首页后打开；
-`shortcut install` 安装桌面入口，不创建后台进程或端口。项目内部默认按实际发生时间解释
-原因、动作、依据、产出、结论和下一步，关系图只作为“前因后果”核验工具。
+### Proposal 与审核
 
-## Token-aware 精准召回
+Agent 不能直接写入正式记忆。
 
-重要任务启动时分为两个只读阶段。`recall` 在内存中排序当前项目记忆，只返回紧凑候选，不
-返回完整正文和完整引用。它对标题、摘要、主题、标签、正文和引用元数据进行加权 BM25 式
-字面检索；中文连续文本会生成短语和重叠双字片段，英文、数字和路径会生成规范化词元。
-置信度、过期状态、链接项目范围和已审核一层关系提供有上限的确定性系数。待审核关联线索
-不会参与召回。
+```mermaid
+sequenceDiagram
+  participant Agent
+  participant Core as 核心
+  participant Inbox as 审核箱
+  participant User as 用户
+  participant Store as 存储
 
-随后 `get` 只读取推荐 ID，返回完整正文和精简引用。默认预算为：`recall` 约 800 个估算
-token，`get` 约 1700 个估算 token；每个命令固定为 JSON 外壳预留 10%。整条记忆放不下时
-会被省略，不截断正文。估算采用与模型无关的中日韩字符/非中日韩字符近似值，不代表账单
-token，也不是具体模型 tokenizer 的精确结果。
+  Agent->>Core: 提议记忆、引用和关系
+  Core->>Inbox: 写入待审核 Proposal
+  User->>Inbox: 选择保存或拒绝
+  Inbox->>Core: 提交审核结果
+  Core->>Core: 复查版本、证据、权限和重复内容
+  Core->>Store: 原子写入记忆、关系和审计
+  Core->>Store: 重新生成离线项目视图
+```
 
-两个命令都直接读取 `MEMORY.md` 和 `RELATIONS.json`，不建立持久化索引、不访问网络，也
-不会把查询写入 proposal 或审计日志。链接项目只有在单向只读授权仍然有效时才会进入候选。
-原有 `load` 和 `search` 保持兼容，用于明确的全量检查和旧工作流。
+待审核 Proposal 不是正式记忆，也不会提前成为图谱节点。
 
-## 知识图谱
+### 关系与工作历史
 
-每条审核通过的记忆是一个节点，也就是图谱中的一个知识点。两条记忆之间经过审核的联系叫做
-边，保存在项目的 `RELATIONS.json` 中；缺少该文件视为空图。关系类型包括“相关、注意到、
-原因、依赖、支持、矛盾、替代、来源于”。其中“相关”和“矛盾”两个方向都成立，其余关系都有明确的
-起点和终点。
+审核通过的关系保存记忆之间的原因和上下文，包括 `observes`、`causes`、`depends_on`、
+`supports`、`supersedes`、`derived_from`、`contradicts` 和 `related_to`。事件链可以保留
+“任务或观察 → 发现 → 决策或实现”的完整路径。
 
-同一工作单元一次提交多个非资料事件时，每个事件都必须通过候选关系连接，避免只保存最终改动而
-丢失“执行或观察 → 发现 → 原因 → 决策或改动”的过程。`observes` 从任务或观察指向发现，
-`causes` 从问题或发现指向其促成的结果。关系仍需与记忆候选一起审核，不会绕过用户确认。
+默认阅读界面是项目交接和按时间排列的工作历史。图谱是二级追溯视图，不是主要数据模型。
 
-关系候选与记忆 proposal 共用审核生命周期，可引用已有记忆 ID 或同一 proposal 中的稳定
-candidate ref。
+## 召回架构
 
-普通加载和文本搜索不受图谱影响。只读 `brief` 会生成项目交接：现在最需要知道什么、从哪里
-开始、最近发生的工作和完整历程，同时把记忆整理为当前结论、已完成工作、风险、
-已确认下一步和背景资料。审核过的 `briefRole` 优先；旧记忆按类型自动归类，但只影响展示，
-不会写回文件。原有 `guide` 继续整理主题、通过正式关系连在一起的记忆组、
-没有任何关系的孤立记忆、证据覆盖、失效来源、重点记忆、建议问题和关联线索。线索仅根据
-已审核元数据中的共享来源、
-相同主题和稀有共享标签生成；公共来源、公共标签和已有正式边会被排除。线索不会写入、计入
-正式关系或参与遍历，除非用户明确选择并通过原有审核流程。
+Talo 直接读取审核后的 Markdown 与关系文件，不使用 embedding，也不维护持久化搜索索引。
 
-邻居、最短路径和限定深度的图查询均需显式执行，可输出 JSON、Mermaid、Markdown 或
-私有离线 HTML。HTML 使用 Preact 构建界面，使用 Cytoscape 绘制图谱，两者都在构建时
-打包。FCoSE 负责把相关记忆自然聚成一组，Dagre 负责按从上到下的顺序排列，方便阅读。
-JavaScript 和 CSS 直接放进生成的文件；内容安全策略（CSP）只允许页面运行哈希匹配的内嵌
-代码。页面不使用 CDN、服务器或运行时网络请求。
+重要任务的默认启动流程是：
 
-浏览器默认显示项目交接：资料主要覆盖什么、从哪里开始、最近发生了什么、当前状态和完整工作
-历程。新工作记录按日期、做了什么、为什么做、依据与数据、产出了什么、现在意味着什么阅读；
-旧记录会明确提示尚未补全。文件路径等技术信息默认折叠。深色图谱保留为二级“前因后果”核验
-视图；关系详情使用完整中文句子，不再要求用户理解入边和出边。动画可暂停，并遵循 reduced-motion 设置。
+1. `detect` 识别当前项目，不静默注册；
+2. `recall` 在约 800 个估算 token 内返回紧凑候选；
+3. Agent 只把推荐 ID 传给 `get`；
+4. `get` 在约 1700 个估算 token 内返回完整的已选记忆。
 
-来源文件不是正式关系。HTML 只在用户展开当前记忆时派生证据、报告、流程和参考节点；这些
-节点不会进入关系计数、遍历、存储或导出数据。
+排序是确定性的，会考虑项目范围、文本相关度、新鲜度、置信度和一层审核关系。这里的 token 是
+与模型无关的上下文规划估算，不是账单 token。
 
-跨项目关系归当前项目所有，至少要连接一条当前项目记忆。只有现有单向项目链接仍允许读取
-外部记忆时，这条关系才会显示。删除项目链接后，关系会暂停显示，但不会被删除。
+## 存储与隔离
 
-## 任务结束检查
+新安装默认使用 `~/.project-memory/v1`。如果只存在旧目录
+`~/.codex/project-memory/v1`，可以继续原地使用；两个 Home 同时存在时必须显式选择。
 
-Stop Hook 在已注册项目的工具任务结束时运行。pending proposal 不是有效结束状态。Hook
-要求交互式提交/拒绝回执、自动保存回执或明确的无更新回执。它使用与 Skill CLI 相同的文件
-存储代码，不依赖 MCP。
+```text
+~/.project-memory/v1/
+├── registry.json
+├── links.json
+├── integrations/
+└── projects/<project-id>/
+    ├── project.json
+    ├── MEMORY.md
+    ├── RELATIONS.json
+    ├── audit.jsonl
+    ├── proposals/
+    └── views/
+```
 
-## 跨项目只读
+写入使用项目锁、revision 校验、私有临时文件和原子替换。支持 POSIX 权限的系统使用 `0700`
+目录与 `0600` 状态文件。
 
-项目 B 到项目 A 的链接只允许 B 搜索 A 的记忆和读取允许的文本文件，不包含反向权限。所有
-文件请求都会规范化路径、限制在目标根目录内、检查内置和用户拒绝规则，并拒绝符号链接逃逸。
+项目 B 指向项目 A 的单向链接，只允许 B 读取 A 中允许的记忆和文本文件，不包含反向权限。
+所有文件读取都会规范化路径、限制在授权根目录内、检查拒绝规则，并防止符号链接逃逸。
 
-## 过期检查
+## 平台集成
 
-每条记忆最多可引用十二个当前项目或已授权项目的来源。插件保存来源提交版本和 SHA-256
-哈希，读取时逐一重新计算；变化、不可用或失去授权的来源会分别报告。
+### Codex
+
+Codex 插件提供 Skill、CLI、审核 Hook 和浏览器资源。Desktop 安装器或
+`integration repair codex` 只会把当前 Talo Home 加入 Codex 可写目录，并为托管沙箱场景
+安装稳定且权限范围受限的 launcher。
+
+### Claude Code 与 Antigravity
+
+两者都安装由构建流程生成的自包含 Skill，并调用同一个核心 CLI。安装是用户级、显式操作。
+注册项目不会向项目目录写入 `AGENTS.md`、`GEMINI.md` 或其他激活文件。
+
+### 通用本地 Agent
+
+通用 Agent Skill 包含权威 Skill、已构建 CLI、离线浏览器资源和简短规则片段。没有本地文件与
+进程权限的纯网页 AI 只能读取显式导出的 brief 或 story，不能访问实时记忆库。
+
+## Desktop 与离线视图
+
+Talo Desktop 是调用本地核心命令的 Tauri 外壳，用于管理集成、查看项目、审核 Proposal 和
+打开全局 Hub。内置 Node sidecar 运行的就是各适配器使用的同一份构建后 CLI。
+
+项目视图与全局视图均生成为自包含 HTML。Preact、Cytoscape、布局算法、CSS 和图标都在构建
+时打包；严格 CSP 只允许生成的内嵌资源，页面不访问服务器或 CDN。
+
+## 官网与正式发布架构
+
+`site/` 中的公开官网与私有 Hub 完全分离。GitHub Pages 只托管静态产品介绍，不能访问或托管
+用户记忆。
+
+Tag Release 使用 `.github/workflows/release.yml`：
+
+1. 校验 `vX.Y.Z` Tag 与 `package.json` 版本一致；
+2. 在 Linux 构建通用 Agent Skill 和 Codex 插件包；
+3. 在原生 runner 构建 macOS 应用和 Windows NSIS 安装包；
+4. 生成各平台 manifest 与 SHA-256 文件；
+5. 把全部产物上传到同一个 GitHub Release。
+
+发布文件使用 Talo 品牌，例如 `talo-agent-skill-0.14.0.zip`。会影响已有安装的内部标识继续作为
+兼容层保留。
+
+## 兼容边界
+
+对外产品和仓库名称是 **Talo**。以下标识为兼容已有安装而保留：
+
+- Codex 插件与 marketplace ID：`codex-project-memory`
+- 通用 Skill 目录与 frontmatter 名称：`project-memory`
+- 旧 CLI 别名：`project-memory`
+- 核心 package 与 Desktop 二进制标识：`project-memory-*`
+- 现有记忆环境变量和存储路径
+
+新增用户可见文案应使用 Talo。只有在具备迁移逻辑、升级测试和 Release Note 时，才可以修改
+兼容标识。
+
+## 安全不变量
+
+- 记忆操作不需要运行时网络请求。
+- 不静默注册、重新绑定或跨项目授权。
+- 没有审核结果的 Proposal 不会成为正式记忆。
+- 来源哈希或权限变化后，不继续信任旧引用。
+- 适配器不拥有独立存储，也不绕过核心修改数据。
+- 默认不会把私有记忆提交到已注册仓库。
+- 删除、迁移和集成管理命令继续独立要求批准。
 
 ## 非目标
 
-本项目不提供云同步、团队共享记忆、静态加密、图形化编辑管理、embeddings、自动关系激活、
-自动 Git 修改或后台记忆抽取。
+Talo 不提供云同步、多人协作、托管账号、静态加密、语义 embedding、后台自动抽取、自动 Git
+修改，也不会把私有记忆库托管到网页上。

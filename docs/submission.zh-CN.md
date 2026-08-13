@@ -13,10 +13,11 @@
 - **详细说明：** 不把全部记忆塞进上下文，而是按明确 token 预算精准找回审核过的项目决策、
   结论、流程和证据。通俗的项目首页会先展示当前结论、已完成工作、风险和已确认下一步，再让
   用户按需追查关系；召回、保存审核、来源校验和单向链接都保持本地、可追溯、可控制。
-- **网站：** https://github.com/WangXueZhi/codex-project-memory
-- **支持：** https://github.com/WangXueZhi/codex-project-memory/issues
-- **隐私政策：** https://github.com/WangXueZhi/codex-project-memory/blob/main/PRIVACY.zh-CN.md
-- **使用条款：** https://github.com/WangXueZhi/codex-project-memory/blob/main/TERMS.zh-CN.md
+- **网站：** https://wangxuezhi.github.io/Talo/
+- **仓库：** https://github.com/WangXueZhi/Talo
+- **支持：** https://github.com/WangXueZhi/Talo/issues
+- **隐私政策：** https://github.com/WangXueZhi/Talo/blob/main/PRIVACY.zh-CN.md
+- **使用条款：** https://github.com/WangXueZhi/Talo/blob/main/TERMS.zh-CN.md
 
 ## 审核测试数据
 

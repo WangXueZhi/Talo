@@ -21,9 +21,9 @@
 请勿在公开安全报告中包含真实凭据、私有源码或项目记忆状态文件。请通过 GitHub 私有安全
 公告提交漏洞：
 
-https://github.com/WangXueZhi/codex-project-memory/security/advisories/new
+https://github.com/WangXueZhi/Talo/security/advisories/new
 
 ## 删除数据
 
-使用 `forget` 删除指定记忆，使用 `forget-relations` 删除指定关系。若需删除全部插件数据，
+使用 `forget` 删除指定记忆，使用 `forget-relations` 删除指定关系。若需删除全部 Talo 数据，
 请先停止 Codex，再删除配置的项目记忆数据目录。需要恢复时，请在删除前备份。

@@ -72,7 +72,7 @@ writeFileSync(claudePluginManifestPath, `${JSON.stringify(claudePluginManifest, 
 
 const releaseDir = path.join(root, "release");
 mkdirSync(releaseDir, { recursive: true });
-const zipPath = path.join(releaseDir, `project-memory-agent-skill-${version}.zip`);
+const zipPath = path.join(releaseDir, `talo-agent-skill-${version}.zip`);
 rmSync(zipPath, { force: true });
 const genericRoot = path.join(root, "adapters", "generic");
 const archiveEntries = ["project-memory", "bin", "assets", "rules", "README.md"];

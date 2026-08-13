@@ -6,25 +6,31 @@
 
 ## 未发布
 
+- 暂无未发布变更。
+
+## 0.14.0 - 2026-08-13
+
+Talo 第一次公开正式发布。
+
+- 对外产品与仓库统一命名为 **Talo**，同时保留 `codex-project-memory` 插件 ID、
+  `project-memory` Skill 与 CLI 别名、存储路径和 Adapter Protocol v1 兼容性。
 - 新增 Claude Code 端到端支持，包括 CLI、Desktop 用户级 marketplace 管理、会话项目发现、
   平台筛选和提交者元数据。
-- Codex 权限修复现在同时安装稳定 Project Memory 启动器和窄范围规则；Desktop 托管权限覆盖
-  `writable_roots` 时，当前任务可继续执行记忆命令，不再只能等待新任务生效。
-- 新增本地重装工作流，代码改动完成后会重建桌面应用、原子覆盖现有应用并更新 Codex 与
-  Antigravity 集成。
+- 新增中英文产品官网、重新设计的双语 README、完整架构说明、GitHub Pages 部署和基于 Tag 的
+  跨平台 GitHub Release 自动化。
+- 新增本地重装工作流，代码改动完成后会重建桌面应用、原子覆盖现有应用并更新 Codex、
+  Claude Code 与 Antigravity 集成。
 - 新增“注意到”和“原因”两种有方向的正式关系，用于保存“任务或观察 → 发现 → 改动”的事件链。
-- 同一 proposal 中属于同一工作单元的多个非资料事件现在必须全部参与至少一条候选关系，避免只
-  保存最终改动而丢失前因。
-- Project Memory Skill 现在要求 Codex、Antigravity、Claude Code 和通用 Agent 为同一任务
-  设置统一工作单元、顺序和稳定引用，并在提交前检查关系覆盖。
-
-## 0.14.0 - 2026-08-06
+- 同一 proposal 中属于同一工作单元的多个非资料事件必须全部参与至少一条候选关系，避免只保存
+  最终改动而丢失前因。
+- Codex 权限修复会安装稳定兼容启动器和窄范围规则；Desktop 托管权限覆盖 `writable_roots`
+  时，当前任务仍可继续执行记忆命令。
 
 - 新增 `integration install|status|remove antigravity`，可从 Codex 一次性安装、检查和安全卸载
   Antigravity 的全局自包含 Skill 与自动检测规则。
 - 已注册项目在 Antigravity 中自动使用同一份共享记忆；未注册项目静默跳过，项目目录不写入
   `AGENTS.md`、`GEMINI.md` 或其他规则文件。
-- 新增 Project Memory Desktop 原生应用，统一管理 Codex 与 Antigravity 的安装、更新、迁移、
+- 新增 Talo Desktop 原生应用，统一管理 Codex 与 Antigravity 的安装、更新、迁移、
   权限修复和卸载。
 - Codex 集成安装时自动把实际记忆目录加入最小 `writable_roots`，保留配置备份；marketplace
   单独安装可用 `integration repair codex` 一键修复，不再要求用户手工排查沙箱。

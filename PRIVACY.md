@@ -2,10 +2,11 @@
 
 English | [简体中文](PRIVACY.zh-CN.md)
 
-Effective date: July 15, 2026
+Effective date: August 13, 2026
 
-This policy explains how the Codex Project Memory plugin handles data. It covers the plugin itself,
-not Codex, ChatGPT, GitHub, your operating system, or other services you choose to use with it.
+This policy explains how Talo handles data, including its `codex-project-memory` compatibility
+plugin. It covers Talo itself, not Codex, ChatGPT, GitHub, your operating system, or other services
+you choose to use with it.
 
 ## What The Plugin Processes
 
@@ -21,11 +22,14 @@ The plugin does not require your name, email address, payment information, or an
 
 ## Where Data Is Stored
 
-Plugin data is stored locally under:
+New Talo installations store data locally under:
 
 ```text
-${CODEX_HOME:-~/.codex}/project-memory/v1/
+~/.project-memory/v1/
 ```
+
+A sole legacy installation may continue using `~/.codex/project-memory/v1`. If both homes exist,
+Talo requires an explicit selection and does not merge them silently.
 
 You can select another local directory with `CODEX_PROJECT_MEMORY_HOME`. Memory files are not
 written into registered project directories.
@@ -71,7 +75,7 @@ Back up the directory before deletion if you may need to restore it.
 The plugin uses private local permissions where the operating system supports them, validates file
 paths, rejects symbolic-link escapes, limits file reads, and replaces state files atomically.
 Security issues should be reported through the project's
-[private security advisory page](https://github.com/WangXueZhi/codex-project-memory/security/advisories/new).
+[private security advisory page](https://github.com/WangXueZhi/Talo/security/advisories/new).
 
 ## Changes To This Policy
 
@@ -80,5 +84,5 @@ Material changes will be recorded in the repository and reflected by updating th
 ## Contact
 
 For privacy questions, open a public issue without sensitive information at
-[GitHub Issues](https://github.com/WangXueZhi/codex-project-memory/issues). Use a private security
+[GitHub Issues](https://github.com/WangXueZhi/Talo/issues). Use a private security
 advisory for reports that contain sensitive details.

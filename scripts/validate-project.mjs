@@ -16,6 +16,28 @@ function readJson(relativePath) {
 }
 
 const plugin = readJson("plugins/codex-project-memory/.codex-plugin/plugin.json");
+const publicFiles = [
+  "package.json",
+  "README.md",
+  "README.zh-CN.md",
+  "SECURITY.md",
+  "SECURITY.zh-CN.md",
+  "SUPPORT.md",
+  "SUPPORT.zh-CN.md",
+  "PRIVACY.md",
+  "PRIVACY.zh-CN.md",
+  "TERMS.md",
+  "TERMS.zh-CN.md",
+  "site/index.html",
+  "docs/submission.md",
+  "docs/submission.zh-CN.md",
+];
+for (const filePath of publicFiles) {
+  const source = readFileSync(path.join(root, filePath), "utf8");
+  if (/WangXueZhi\/codex-project-memory|wangxuezhi\.github\.io\/codex-project-memory/i.test(source)) {
+    fail(`${filePath} contains the retired public repository URL`);
+  }
+}
 const versionedFiles = [
   ["packages/project-memory-core/package.json", readJson("packages/project-memory-core/package.json").version],
   ["plugins/codex-project-memory/package.json", readJson("plugins/codex-project-memory/package.json").version],
@@ -101,7 +123,7 @@ for (const adapter of ["claude-code", "antigravity", "generic"]) {
     fail(`${adapter} self-contained Skill browser stylesheet is missing`);
   }
 }
-if (!existsSync(path.join(root, "release", `project-memory-agent-skill-${workspace.version}.zip`))) {
+if (!existsSync(path.join(root, "release", `talo-agent-skill-${workspace.version}.zip`))) {
   fail("generic Agent Skill release archive is missing");
 }
 

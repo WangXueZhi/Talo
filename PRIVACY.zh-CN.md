@@ -2,10 +2,10 @@
 
 [English](PRIVACY.md) | 简体中文
 
-生效日期：2026 年 7 月 15 日
+生效日期：2026 年 8 月 13 日
 
-本政策说明 Codex Project Memory 插件怎样处理数据。它只适用于插件本身，不适用于 Codex、
-ChatGPT、GitHub、操作系统或用户选择配合使用的其他服务。
+本政策说明 Talo 如何处理数据，包括兼容插件 `codex-project-memory`。它只适用于 Talo 本身，
+不适用于 Codex、ChatGPT、GitHub、操作系统或用户选择配合使用的其他服务。
 
 ## 插件会处理什么数据
 
@@ -21,11 +21,14 @@ ChatGPT、GitHub、操作系统或用户选择配合使用的其他服务。
 
 ## 数据保存在哪里
 
-插件数据保存在本机：
+Talo 新安装的数据保存在本机：
 
 ```text
-${CODEX_HOME:-~/.codex}/project-memory/v1/
+~/.project-memory/v1/
 ```
+
+只有旧目录时，可以继续使用 `~/.codex/project-memory/v1`。两个 Home 同时存在时，Talo 要求
+显式选择，不会静默合并。
 
 用户可以通过 `CODEX_PROJECT_MEMORY_HOME` 选择其他本地目录。记忆文件不会写入已注册项目
 目录。
@@ -67,7 +70,7 @@ Codex 或其他宿主程序可能按照自己的隐私条款处理用户提示�
 
 操作系统支持时，插件会使用私人文件权限。插件还会检查路径、拒绝符号链接逃逸、限制文件读取
 量，并通过一次性替换写入状态文件。安全问题请通过项目的
-[私有安全公告页面](https://github.com/WangXueZhi/codex-project-memory/security/advisories/new)报告。
+[私有安全公告页面](https://github.com/WangXueZhi/Talo/security/advisories/new)报告。
 
 ## 政策变更
 
@@ -76,5 +79,5 @@ Codex 或其他宿主程序可能按照自己的隐私条款处理用户提示�
 ## 联系方式
 
 隐私问题可以在不包含敏感信息的前提下提交到
-[GitHub Issues](https://github.com/WangXueZhi/codex-project-memory/issues)。包含敏感细节的
+[GitHub Issues](https://github.com/WangXueZhi/Talo/issues)。包含敏感细节的
 报告请使用私有安全公告。
