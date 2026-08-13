@@ -38,7 +38,7 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            bundle: app
+            bundle: app,dmg
           - os: windows-latest
             bundle: nsis
     runs-on: ${{ matrix.os }}
@@ -55,6 +55,12 @@ jobs:
       - run: pnpm --dir packages/project-memory-core build
       - run: pnpm --dir apps/desktop check
       - run: pnpm --dir apps/desktop tauri build --bundles ${{ matrix.bundle }}
+      - name: Verify macOS app and DMG
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          test -d apps/desktop/src-tauri/target/release/bundle/macos/Talo.app
+          test -n "$(find apps/desktop/src-tauri/target/release/bundle/dmg -maxdepth 1 -name '*.dmg' -print -quit)"
       - name: Verify Windows x64 sidecar and NSIS installer
         if: runner.os == 'Windows'
         shell: pwsh
