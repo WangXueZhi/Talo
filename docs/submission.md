@@ -16,10 +16,11 @@ network service at runtime.
   token budget. A plain-language project handoff shows current state, work history, evidence,
   outputs, risks, and confirmed next steps before the relationship graph, while review, source validation,
   and one-way links keep memory traceable and controlled.
-- **Website:** https://github.com/WangXueZhi/codex-project-memory
-- **Support:** https://github.com/WangXueZhi/codex-project-memory/issues
-- **Privacy:** https://github.com/WangXueZhi/codex-project-memory/blob/main/PRIVACY.md
-- **Terms:** https://github.com/WangXueZhi/codex-project-memory/blob/main/TERMS.md
+- **Website:** https://wangxuezhi.github.io/Talo/
+- **Repository:** https://github.com/WangXueZhi/Talo
+- **Support:** https://github.com/WangXueZhi/Talo/issues
+- **Privacy:** https://github.com/WangXueZhi/Talo/blob/main/PRIVACY.md
+- **Terms:** https://github.com/WangXueZhi/Talo/blob/main/TERMS.md
 
 ## Reviewer Fixture
 

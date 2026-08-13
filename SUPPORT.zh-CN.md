@@ -5,7 +5,7 @@
 ## 获取帮助
 
 安装问题、缺陷报告、文档问题和功能建议请提交到
-[GitHub Issues](https://github.com/WangXueZhi/codex-project-memory/issues)。
+[GitHub Issues](https://github.com/WangXueZhi/Talo/issues)。
 
 提交前请：
 
@@ -20,7 +20,7 @@
 ## 安全报告
 
 不要公开提交漏洞或敏感数据。请使用
-[私有安全公告页面](https://github.com/WangXueZhi/codex-project-memory/security/advisories/new)，
+[私有安全公告页面](https://github.com/WangXueZhi/Talo/security/advisories/new)，
 并遵循 [SECURITY.zh-CN.md](SECURITY.zh-CN.md)。
 
 ## 支持范围

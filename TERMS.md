@@ -2,20 +2,20 @@
 
 English | [简体中文](TERMS.zh-CN.md)
 
-Effective date: July 15, 2026
+Effective date: August 13, 2026
 
-These terms apply to the Codex Project Memory plugin distributed by WangXueZhi. By installing or
-using the plugin, you agree to these terms.
+These terms apply to Talo, including its `codex-project-memory` compatibility plugin, as distributed
+by WangXueZhi. By installing or using Talo, you agree to these terms.
 
 ## License
 
-The plugin is open-source software licensed under the Apache License 2.0. The
+Talo is open-source software licensed under the Apache License 2.0. The
 [LICENSE](LICENSE) file controls your rights to use, copy, modify, and distribute the software.
 
 ## Intended Use
 
-The plugin is intended to maintain private, project-specific memory for authorized local projects.
-You may use it only with files and projects that you are allowed to access.
+Talo is intended to maintain private, project-specific memory for authorized local projects. You
+may use it only with files and projects that you are allowed to access.
 
 You are responsible for:
 
@@ -60,5 +60,5 @@ repository and reflected by updating the effective date.
 ## Contact
 
 Questions about these terms can be submitted through
-[GitHub Issues](https://github.com/WangXueZhi/codex-project-memory/issues) without including private
+[GitHub Issues](https://github.com/WangXueZhi/Talo/issues) without including private
 project data or credentials.

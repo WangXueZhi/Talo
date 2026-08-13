@@ -1,14 +1,14 @@
 {
-  "name": "codex-project-memory-workspace",
+  "name": "talo-workspace",
   "version": "0.14.0",
   "private": true,
-  "homepage": "https://wangxuezhi.github.io/codex-project-memory/",
+  "homepage": "https://wangxuezhi.github.io/Talo/",
   "repository": {
     "type": "git",
-    "url": "https://github.com/WangXueZhi/codex-project-memory.git"
+    "url": "https://github.com/WangXueZhi/Talo.git"
   },
   "bugs": {
-    "url": "https://github.com/WangXueZhi/codex-project-memory/issues"
+    "url": "https://github.com/WangXueZhi/Talo/issues"
   },
   "packageManager": "pnpm@10.30.2",
   "engines": {

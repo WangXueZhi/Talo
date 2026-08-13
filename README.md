@@ -12,14 +12,14 @@
 </p>
 
 <p align="center">
-  <a href="https://wangxuezhi.github.io/codex-project-memory/">Website</a> ·
+  <a href="https://wangxuezhi.github.io/Talo/">Website</a> ·
   <a href="README.zh-CN.md">简体中文</a> ·
-  <a href="https://github.com/WangXueZhi/codex-project-memory/releases">Releases</a> ·
+  <a href="https://github.com/WangXueZhi/Talo/releases">Releases</a> ·
   <a href="docs/architecture.md">Architecture</a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/WangXueZhi/codex-project-memory/actions/workflows/ci.yml"><img src="https://github.com/WangXueZhi/codex-project-memory/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml"><img src="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-1f6f78.svg" alt="Apache-2.0 license"></a>
   <img src="https://img.shields.io/badge/local-first-yes-14967f.svg" alt="Local first">
   <img src="https://img.shields.io/badge/runtime-network-none-172238.svg" alt="No runtime network">
@@ -49,8 +49,8 @@ into one reviewed project history that every supported local agent can use.
 Node.js 22.13+ and pnpm 10.30.2 are required.
 
 ```bash
-git clone https://github.com/WangXueZhi/codex-project-memory.git
-cd codex-project-memory
+git clone https://github.com/WangXueZhi/Talo.git
+cd Talo
 pnpm install --frozen-lockfile
 pnpm build
 ```
@@ -67,7 +67,7 @@ pnpm build
 Codex marketplace installation:
 
 ```bash
-codex plugin marketplace add WangXueZhi/codex-project-memory --ref main
+codex plugin marketplace add WangXueZhi/Talo --ref main
 codex plugin add codex-project-memory@codex-project-memory
 ```
 
@@ -141,7 +141,7 @@ pnpm desktop:build
 ```
 
 Release installers and portable Agent Skill archives are published on the
-[GitHub Releases page](https://github.com/WangXueZhi/codex-project-memory/releases).
+[GitHub Releases page](https://github.com/WangXueZhi/Talo/releases).
 
 ## Command map
 
@@ -158,6 +158,10 @@ integration / home             manage platforms and storage
 Adapter Protocol v1 remains backward compatible with the original project-memory commands. Both
 `talo` and `project-memory` launchers are included during the transition.
 
+The public product and repository are named **Talo**. The Codex plugin ID
+`codex-project-memory`, Skill name `project-memory`, legacy CLI alias, and existing storage paths
+remain unchanged so current installations keep working.
+
 ## Development
 
 ```bash
@@ -167,6 +171,7 @@ pnpm test:visual
 
 - [Architecture](docs/architecture.md)
 - [Submission and review notes](docs/submission.md)
+- [First release checklist](docs/releasing.md)
 - [Security](SECURITY.md)
 - [Privacy](PRIVACY.md)
 - [Support](SUPPORT.md)
