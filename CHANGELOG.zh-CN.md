@@ -8,6 +8,13 @@
 
 - 暂无未发布变更。
 
+## 0.14.1 - 2026-08-13
+
+- GitHub Tag Release 新增标准 macOS DMG 安装包，同时保留便携式 `.app.zip` 下载。
+- DMG 文件统一命名为 `talo-desktop-<版本>-macos-<架构>.dmg`，两种 macOS 格式都会写入
+  Release Manifest 和 SHA-256 校验文件。
+- 平台发布缺少 macOS DMG/应用 ZIP 组合或 Windows NSIS 安装包时，打包流程会直接失败。
+
 ## 0.14.0 - 2026-08-13
 
 Talo 第一次公开正式发布。

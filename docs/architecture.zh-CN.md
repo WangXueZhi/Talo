@@ -184,7 +184,7 @@ Tag Release 使用 `.github/workflows/release.yml`：
 4. 生成各平台 manifest 与 SHA-256 文件；
 5. 把全部产物上传到同一个 GitHub Release。
 
-发布文件使用 Talo 品牌，例如 `talo-agent-skill-0.14.0.zip`。会影响已有安装的内部标识继续作为
+发布文件使用 Talo 品牌，例如 `talo-agent-skill-0.14.1.zip`。会影响已有安装的内部标识继续作为
 兼容层保留。
 
 ## 兼容边界

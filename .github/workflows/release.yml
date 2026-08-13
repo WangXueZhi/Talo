@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to publish, for example v0.14.0
+        description: Existing tag to publish, for example v0.14.1
         required: true
         type: string
 
@@ -76,9 +76,10 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            bundle: app
+            bundle: app,dmg
             artifact: talo-macos
             files: |
+              release/talo-desktop-*-macos-*.dmg
               release/talo-desktop-*-macos-*.zip
               release/talo-release-manifest-*-darwin-*.json
               release/SHA256SUMS-*-darwin-*.txt

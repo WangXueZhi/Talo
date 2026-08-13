@@ -2,7 +2,8 @@
 
 [简体中文](releasing.zh-CN.md)
 
-This checklist covers Talo's first public release and later tagged releases.
+This checklist covers Talo's first public release and later tagged releases. The current release is
+`v0.14.1`.
 
 ## Release identity
 
@@ -30,16 +31,17 @@ This checklist covers Talo's first public release and later tagged releases.
 ```bash
 git checkout main
 git pull --ff-only origin main
-git tag -a v0.14.0 -m "Talo 0.14.0"
-git push origin v0.14.0
+git tag -a v0.14.1 -m "Talo 0.14.1"
+git push origin v0.14.1
 ```
 
 The tag starts `.github/workflows/release.yml`. It verifies the tag/version match and uploads:
 
-- `talo-agent-skill-0.14.0.zip`
-- `talo-codex-plugin-0.14.0.zip`
-- `talo-desktop-0.14.0-macos-*.zip`
-- `talo-desktop-0.14.0-windows-x64-setup.exe`
+- `talo-agent-skill-0.14.1.zip`
+- `talo-codex-plugin-0.14.1.zip`
+- `talo-desktop-0.14.1-macos-*.dmg`
+- `talo-desktop-0.14.1-macos-*.zip`
+- `talo-desktop-0.14.1-windows-x64-setup.exe`
 - per-platform release manifests and SHA-256 files
 
 Do not upload local `release/` contents manually unless the tagged workflow is unavailable and the

@@ -8,6 +8,15 @@ All notable changes to this project are documented in this file.
 
 - No unreleased changes.
 
+## 0.14.1 - 2026-08-13
+
+- Added a standard macOS DMG installer to tagged GitHub Releases while retaining the portable
+  `.app.zip` download.
+- Normalized the public DMG name to `talo-desktop-<version>-macos-<architecture>.dmg` and included
+  both macOS formats in the release manifest and SHA-256 file.
+- Made platform release packaging fail if the expected macOS DMG/app ZIP pair or Windows NSIS
+  installer is missing.
+
 ## 0.14.0 - 2026-08-13
 
 First public Talo release.
