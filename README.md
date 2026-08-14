@@ -21,8 +21,8 @@
 <p align="center">
   <a href="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml"><img src="https://github.com/WangXueZhi/Talo/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-1f6f78.svg" alt="Apache-2.0 license"></a>
-  <img src="https://img.shields.io/badge/local-first-yes-14967f.svg" alt="Local first">
-  <img src="https://img.shields.io/badge/runtime-network-none-172238.svg" alt="No runtime network">
+  <img src="https://img.shields.io/badge/local--first-yes-14967f.svg" alt="Local first">
+  <img src="https://img.shields.io/badge/runtime--network-none-172238.svg" alt="No runtime network">
 </p>
 
 ![Talo project timeline](site/assets/talo-timeline.svg)
