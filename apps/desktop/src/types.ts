@@ -5,6 +5,17 @@ import type { MemoryHub, ProposalRecord } from "../../../packages/project-memory
 export type { DesktopPlatformInventory, GraphViewData, MemoryHub, ProposalRecord };
 
 export type AgentPlatform = "codex" | "claude" | "antigravity";
+export interface DesktopAppUpdate {
+  available: boolean;
+  currentVersion: string;
+  version: string;
+  notes: string;
+  pubDate: string | null;
+  downloadUrl: string | null;
+  sha256: string | null;
+  fileName: string | null;
+}
+
 export type ProductState = "not_found" | "found" | "config_only";
 export type IntegrationState =
   | "absent"

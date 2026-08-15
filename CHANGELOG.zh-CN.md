@@ -8,6 +8,12 @@
 
 - 暂无未发布变更。
 
+## 0.14.2 - 2026-08-15
+
+- 新增桌面端辅助更新检查，并校验可信 Release 地址和 SHA-256 完整性。
+- 修复从 Windows verbatim 路径工作目录启动时的 Node `EISDIR` 错误；现在会规范化运行时路径并固定内置 Node 的工作目录。
+- 隐藏 Windows 后台 CLI 控制台窗口，并新增 Windows 路径回归测试。
+
 ## 0.14.1 - 2026-08-13
 
 - GitHub Tag Release 新增标准 macOS DMG 安装包，同时保留便携式 `.app.zip` 下载。

@@ -929,8 +929,11 @@ export class ProjectMemoryService {
     const platform = ["claude", "claude-code"].includes(rawPlatform.toLocaleLowerCase())
       ? "claude"
       : rawPlatform;
-    if (!platform || platform.length > 80) {
-      throw new ProjectMemoryError("INVALID_INPUT", "Proposal actor platform is invalid.");
+    if (!platform || platform.length > 80 || platform.toLocaleLowerCase() === "generic") {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "Proposal submissions must identify a specific agent; generic is not a valid source.",
+      );
     }
     if (actor.adapterVersion !== null && actor.adapterVersion.length > 120) {
       throw new ProjectMemoryError("INVALID_INPUT", "Proposal adapter version is invalid.");

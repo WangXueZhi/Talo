@@ -21,9 +21,13 @@ import { GraphApp } from "../../../packages/project-memory-core/src/browser/main
 import { TaloMark } from "../../../packages/project-memory-core/src/browser/talo-mark.tsx";
 import {
   getCachedHub,
+  checkForUpdate as checkForUpdateApi,
+  downloadUpdate,
+  getAppVersion,
   getProjectView,
   installIntegration,
   openDownloadPage,
+  openUpdateInstaller,
   registerPlatformProject as registerPlatformProjectApi,
   refreshHub,
   repairIntegration,
@@ -32,6 +36,7 @@ import {
 } from "./api";
 import type {
   AgentPlatform,
+  DesktopAppUpdate,
   DesktopIntegrationStatus,
   GraphViewData,
   MemoryHub,
@@ -195,17 +200,61 @@ function IntegrationsView({ onboarding, onDone, t }: { onboarding: boolean; onDo
   </section>;
 }
 
+function UpdateCard({
+  update,
+  checking,
+  downloading,
+  error,
+  notice,
+  onCheck,
+  onInstall,
+  t,
+}: {
+  update: DesktopAppUpdate | null;
+  checking: boolean;
+  downloading: boolean;
+  error: string | null;
+  notice: string | null;
+  onCheck: () => void;
+  onInstall: () => void;
+  t: ReturnType<typeof usePreferences>["t"];
+}) {
+  return <article class="settings-card update-card">
+    <div class="update-card-heading"><div><span class="settings-label">{update?.available ? t("update.title") : t("settings.updates")}</span><small>{update?.available ? t("update.available", { current: update.currentVersion, version: update.version }) : t("settings.updatesDescription")}</small></div><button class="secondary-button" disabled={checking || downloading} onClick={onCheck}>{checking ? <LoaderCircle class="spin" size={16} /> : <RefreshCw size={16} />}{checking ? t("update.checking") : t("update.check")}</button></div>
+    {update?.available && <>
+      <div class="update-notes"><strong>{t("update.notes")}</strong><p>{update.notes || "—"}</p></div>
+      <button class="primary-button" disabled={downloading} onClick={onInstall}>{downloading ? <LoaderCircle class="spin" size={16} /> : <Download size={16} />}{downloading ? t("update.downloading") : t("update.download")}</button>
+    </>}
+    {!checking && !update?.available && notice && <div class="success-note"><CheckCircle2 size={16} />{notice}</div>}
+    {error && <div class="error-banner"><ShieldAlert size={16} /><span>{t("update.failed", { error })}</span></div>}
+  </article>;
+}
+
 function SettingsPanel({
   languagePreference,
   themePreference,
   onLanguageChange,
   onThemeChange,
+  update,
+  checking,
+  downloading,
+  updateError,
+  updateNotice,
+  onCheckUpdate,
+  onInstallUpdate,
   t,
 }: {
   languagePreference: LanguagePreference;
   themePreference: ThemePreference;
   onLanguageChange: (value: LanguagePreference) => void;
   onThemeChange: (value: ThemePreference) => void;
+  update: DesktopAppUpdate | null;
+  checking: boolean;
+  downloading: boolean;
+  updateError: string | null;
+  updateNotice: string | null;
+  onCheckUpdate: () => void;
+  onInstallUpdate: () => void;
   t: ReturnType<typeof usePreferences>["t"];
 }) {
   return <section class="settings-panel">
@@ -213,6 +262,7 @@ function SettingsPanel({
     <div class="settings-grid">
       <label class="settings-card"><span class="settings-label">{t("settings.language")}</span><small>{t("settings.languageDescription")}</small><select value={languagePreference} onChange={(event) => onLanguageChange(event.currentTarget.value as LanguagePreference)}><option value="system">{t("settings.language.system")}</option><option value="zh-CN">{t("settings.language.zhCN")}</option><option value="en-US">{t("settings.language.enUS")}</option></select></label>
       <label class="settings-card"><span class="settings-label">{t("settings.theme")}</span><small>{t("settings.themeDescription")}</small><select value={themePreference} onChange={(event) => onThemeChange(event.currentTarget.value as ThemePreference)}><option value="system">{t("settings.theme.system")}</option><option value="light">{t("settings.theme.light")}</option><option value="dark">{t("settings.theme.dark")}</option></select></label>
+      <UpdateCard update={update} checking={checking} downloading={downloading} error={updateError} notice={updateNotice} onCheck={onCheckUpdate} onInstall={onInstallUpdate} t={t} />
     </div>
   </section>;
 }
@@ -324,6 +374,11 @@ function App() {
   const [project, setProject] = useState<GraphViewData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [update, setUpdate] = useState<DesktopAppUpdate | null>(null);
+  const [checkingUpdate, setCheckingUpdate] = useState(false);
+  const [downloadingUpdate, setDownloadingUpdate] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [updateNotice, setUpdateNotice] = useState<string | null>(null);
 
   const loadHub = async (force: boolean) => {
     setLoading(true); setError(null);
@@ -335,6 +390,62 @@ function App() {
     } catch (reason) { setError(message(reason)); } finally { setLoading(false); }
   };
   useEffect(() => { void loadHub(false); }, []);
+
+  const checkUpdate = async (showResult = false) => {
+    if (checkingUpdate || downloadingUpdate) return;
+    setCheckingUpdate(true);
+    setUpdateError(null);
+    setUpdateNotice(null);
+    try {
+      const result = await checkForUpdateApi();
+      setUpdate(result);
+      if (showResult && !result.available) setUpdateNotice(t("update.current", { version: result.currentVersion }));
+    } catch (reason) {
+      if (showResult) setUpdateError(message(reason));
+    } finally {
+      setCheckingUpdate(false);
+    }
+  };
+
+  const installUpdate = async () => {
+    if (!update?.available || !update.downloadUrl || !update.sha256 || !update.fileName) return;
+    setDownloadingUpdate(true);
+    setUpdateError(null);
+    setUpdateNotice(null);
+    try {
+      const downloaded = await downloadUpdate(update.downloadUrl, update.sha256, update.fileName);
+      await openUpdateInstaller(downloaded.fileName);
+      setUpdateNotice(t("update.opened"));
+    } catch (reason) {
+      setUpdateError(message(reason));
+    } finally {
+      setDownloadingUpdate(false);
+    }
+  };
+
+  useEffect(() => {
+    void checkUpdate(false);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const version = await getAppVersion();
+        const previousVersion = localStorage.getItem("talo:last-app-version");
+        localStorage.setItem("talo:last-app-version", version);
+        if (!previousVersion || previousVersion === version || cancelled) return;
+        const statuses = await scanIntegrations();
+        for (const status of statuses) {
+          if (cancelled || status.managedBy !== "desktop" || status.integrationState !== "outdated") continue;
+          await installIntegration(status.platform, false);
+        }
+      } catch {
+        return;
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   const openProject = async (projectId: string) => {
     setLoading(true); setError(null); setProject(null); setRoute({ name: "project", projectId });
@@ -356,10 +467,11 @@ function App() {
   return <div class="desktop-shell">
     <aside class="sidebar"><div class="brand"><div class="brand-mark"><TaloMark size={25} title="Talo" /></div><div><strong>Talo</strong><span>{t("brand.tagline")}</span></div></div><nav><button class={route.name === "hub" ? "active" : ""} onClick={() => setRoute({ name: "hub" })}><Home size={18} />{t("nav.memory")}</button><button class={route.name === "reviews" ? "active" : ""} onClick={() => setRoute({ name: "reviews" })}><ClipboardCheck size={18} />{t("nav.reviews")}{(hub?.summary.pendingProposalCount ?? 0) > 0 && <span class="nav-count">{hub?.summary.pendingProposalCount}</span>}</button><button class={route.name === "integrations" ? "active" : ""} onClick={() => { setOnboarding(false); setRoute({ name: "integrations" }); }}><Settings size={18} />{t("nav.settings")}</button></nav><footer>{t("nav.localPrivate")}</footer></aside>
     <main class={`desktop-content${route.name === "project" ? " project-content" : ""}`}>
+      {update?.available && <div class="update-banner"><div><strong>{t("update.title")}</strong><span>{t("update.available", { current: update.currentVersion, version: update.version })}</span></div><button class="primary-button" disabled={downloadingUpdate} onClick={() => void installUpdate()}>{downloadingUpdate ? <LoaderCircle class="spin" size={16} /> : <Download size={16} />}{downloadingUpdate ? t("update.downloading") : t("update.download")}</button></div>}
       {error && route.name !== "integrations" && <div class="error-banner global-error"><ShieldAlert size={18} />{error}</div>}
       {route.name === "hub" && <HubView hub={hub} loading={loading} onRefresh={() => void loadHub(true)} onProject={(id) => void openProject(id)} onRegister={registerPlatformProject} onReview={() => setRoute({ name: "reviews" })} locale={language} t={t} />}
       {route.name === "reviews" && <ReviewView hub={hub} onHubChange={setHub} t={t} />}
-      {route.name === "integrations" && <><SettingsPanel languagePreference={languagePreference} themePreference={themePreference} onLanguageChange={setLanguagePreference} onThemeChange={setThemePreference} t={t} /><IntegrationsView onboarding={onboarding} onDone={finishOnboarding} t={t} /></>}
+      {route.name === "integrations" && <><SettingsPanel languagePreference={languagePreference} themePreference={themePreference} onLanguageChange={setLanguagePreference} onThemeChange={setThemePreference} update={update} checking={checkingUpdate} downloading={downloadingUpdate} updateError={updateError} updateNotice={updateNotice} onCheckUpdate={() => void checkUpdate(true)} onInstallUpdate={() => void installUpdate()} t={t} /><IntegrationsView onboarding={onboarding} onDone={finishOnboarding} t={t} /></>}
       {route.name === "project" && <section class="project-view"><button class="back-button" onClick={() => setRoute({ name: "hub" })}><ArrowLeft size={17} />{t("project.back")}</button>{project ? <GraphApp data={project} locale={language} /> : <div class="loading-panel"><LoaderCircle class="spin" />{t("project.loading")}</div>}</section>}
     </main>
   </div>;

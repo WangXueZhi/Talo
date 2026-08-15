@@ -41,6 +41,7 @@ Tag 会启动 `.github/workflows/release.yml`。工作流校验 Tag 与版本号
 - `talo-desktop-0.14.1-macos-*.zip`
 - `talo-desktop-0.14.1-windows-x64-setup.exe`
 - 各平台 release manifest 与 SHA-256 文件
+- `talo-update.json`（桌面应用启动检查使用的统一更新清单）
 
 除非 Tag 工作流不可用，并且已经从同一源码提交重新构建和验证，否则不要手工上传本地
 `release/` 目录中的文件。
@@ -52,3 +53,7 @@ Tag 会启动 `.github/workflows/release.yml`。工作流校验 Tag 与版本号
 3. 验证 `talo --help`、Desktop 启动、项目识别、召回、Proposal 审核和离线 Hub。
 4. 验证 README、官网、仓库 About URL、隐私、条款、安全和支持链接。
 5. Release Note 中明确说明兼容标识和本地数据边界。
+
+桌面应用不会静默替换自身。启动或设置页检查到新版本后，用户可以下载当前平台的 DMG/EXE；
+下载完成后应用会校验清单中的 SHA-256 并打开安装器。SHA-256 只用于发现下载损坏，不等同于
+操作系统代码签名。应用重新启动后，只会自动同步原本由桌面端托管且已经安装的平台集成。

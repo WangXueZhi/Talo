@@ -54,6 +54,32 @@ describe("project identity", () => {
 });
 
 describe("review-first memory lifecycle", () => {
+  test("rejects generic as the source of a new proposal", () => {
+    const context = createTestContext();
+    try {
+      const projectPath = makeProject(context.root, "generic-actor-project");
+      const project = context.service.registerProject(projectPath);
+
+      expect(() =>
+        context.service.proposeMemory(
+          project.id,
+          [
+            {
+              kind: "status",
+              title: "来源未明确",
+              content: "新提案必须记录具体提交 Agent。",
+            },
+          ],
+          [],
+          [],
+          { platform: "generic", adapterVersion: "test" },
+        ),
+      ).toThrowError(/specific agent/i);
+    } finally {
+      context.cleanup();
+    }
+  });
+
   test("requires complete narratives for reviewed work records and validates output citations", () => {
     const context = createTestContext();
     try {
