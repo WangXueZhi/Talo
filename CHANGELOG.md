@@ -8,6 +8,13 @@ All notable changes to this project are documented in this file.
 
 - No unreleased changes.
 
+## 0.14.2 - 2026-08-15
+
+- Added assisted desktop update checks with trusted release URL and SHA-256 validation.
+- Fixed Windows startup when launched from a verbatim-path working directory by normalizing
+  runtime paths and pinning the embedded Node process working directory.
+- Hidden background Windows CLI consoles and added a Windows path regression test.
+
 ## 0.14.1 - 2026-08-13
 
 - Added a standard macOS DMG installer to tagged GitHub Releases while retaining the portable

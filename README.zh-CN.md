@@ -62,7 +62,7 @@ pnpm build
 | **Codex** | 把本仓库添加为 Codex marketplace，再安装插件 | Skill、CLI、审核流程和最小沙箱权限 |
 | **Claude Code** | 使用 Talo Desktop 或 `talo integration install claude` | 本地 marketplace 插件或受管用户级 Skill |
 | **Antigravity** | 执行 `talo integration install antigravity` | 自包含全局 Skill 和受管激活规则 |
-| **其他本地 Agent** | 从 Releases 下载通用 Agent Skill | Skill、CLI、浏览器资源和规则片段 |
+| **其他本地 Agent** | 从 Releases 下载通用 Agent Skill | Skill、CLI、浏览器资源和规则片段；提交时必须声明具体 Agent 名称 |
 
 Codex marketplace 安装命令：
 

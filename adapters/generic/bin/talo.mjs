@@ -7156,8 +7156,11 @@ var ProjectMemoryService = class {
     this.store.requireProject(projectId);
     const rawPlatform = actor.platform.trim();
     const platform = ["claude", "claude-code"].includes(rawPlatform.toLocaleLowerCase()) ? "claude" : rawPlatform;
-    if (!platform || platform.length > 80) {
-      throw new ProjectMemoryError("INVALID_INPUT", "Proposal actor platform is invalid.");
+    if (!platform || platform.length > 80 || platform.toLocaleLowerCase() === "generic") {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "Proposal submissions must identify a specific agent; generic is not a valid source."
+      );
     }
     if (actor.adapterVersion !== null && actor.adapterVersion.length > 120) {
       throw new ProjectMemoryError("INVALID_INPUT", "Proposal adapter version is invalid.");
@@ -9592,10 +9595,16 @@ function runCommand2(argv) {
         const candidates = Array.isArray(input) ? input : input.candidates;
         const updates = Array.isArray(input) ? [] : input.updates;
         const relations = Array.isArray(input) ? [] : input.relations;
-        const actor = Array.isArray(input) ? { platform: args.options.get("platform") ?? "generic", adapterVersion: null } : input.actor ?? {
-          platform: args.options.get("platform") ?? "generic",
+        const actor = Array.isArray(input) ? args.options.has("platform") ? { platform: args.options.get("platform"), adapterVersion: null } : null : input.actor ?? (args.options.has("platform") ? {
+          platform: args.options.get("platform"),
           adapterVersion: args.options.get("adapter-version") ?? null
-        };
+        } : null);
+        if (!actor) {
+          throw new ProjectMemoryError(
+            "INVALID_INPUT",
+            "Proposal submissions must identify the submitting agent with --platform or actor.platform."
+          );
+        }
         if (candidates !== void 0 && !Array.isArray(candidates)) {
           throw new ProjectMemoryError("INVALID_INPUT", "Proposal candidates must be an array.");
         }

@@ -36,17 +36,57 @@ function runCliText(cwd: string, dataDir: string, args: string[]): string {
   return result.stdout;
 }
 
-function runCliFailure(cwd: string, dataDir: string, args: string[]): string {
+function runCliFailure(cwd: string, dataDir: string, args: string[], input?: unknown): string {
   const result = spawnSync(process.execPath, [path.resolve("dist/project-memory.mjs"), ...args], {
     cwd,
     encoding: "utf8",
     env: { ...process.env, CODEX_PROJECT_MEMORY_HOME: dataDir },
+    input: input === undefined ? undefined : JSON.stringify(input),
   });
   if (result.status === 0) throw new Error("Expected CLI command to fail.");
   return result.stderr;
 }
 
 describe("Skill CLI", () => {
+  test("requires an explicit submitting agent for new proposals", () => {
+    const root = mkdtempSync(path.join(tmpdir(), "codex-project-memory-actor-"));
+    cleanups.push(() => rmSync(root, { recursive: true, force: true }));
+    const pluginRoot = path.resolve(".");
+    const dataDir = path.join(root, "data");
+    const projectPath = path.join(root, "project");
+    mkdirSync(projectPath);
+    runCli(pluginRoot, dataDir, ["register", "--path", projectPath]);
+    const input = {
+      candidates: [
+        {
+          kind: "status",
+          title: "明确来源的提案",
+          content: "提交来源必须可追溯。",
+        },
+      ],
+    };
+
+    expect(runCliFailure(pluginRoot, dataDir, ["propose", "--path", projectPath], input)).toContain(
+      "submitting agent",
+    );
+    expect(
+      runCliFailure(
+        pluginRoot,
+        dataDir,
+        ["propose", "--path", projectPath, "--platform", "generic"],
+        input,
+      ),
+    ).toContain("specific agent");
+
+    const proposal = runCli(
+      pluginRoot,
+      dataDir,
+      ["propose", "--path", projectPath, "--platform", "codex"],
+      input,
+    );
+    expect(proposal.actor).toMatchObject({ platform: "codex" });
+  });
+
   test("repairs Codex sandbox access without initializing the memory store", () => {
     const root = mkdtempSync(path.join(tmpdir(), "codex-project-memory-repair-"));
     cleanups.push(() => rmSync(root, { recursive: true, force: true }));
@@ -99,16 +139,21 @@ describe("Skill CLI", () => {
     writeFileSync(path.join(projectPath, "evidence.md"), "first\n");
 
     const project = runCli(pluginRoot, dataDir, ["register", "--path", projectPath]);
-    const proposal = runCli(pluginRoot, dataDir, ["propose", "--path", projectPath], {
-      candidates: [
-        {
-          kind: "status",
-          title: "来源需要确认",
-          content: "这条内容仍然适用于当前文件。",
-          citations: [{ sourcePath: "evidence.md", role: "evidence" }],
-        },
-      ],
-    });
+    const proposal = runCli(
+      pluginRoot,
+      dataDir,
+      ["propose", "--path", projectPath, "--platform", "codex"],
+      {
+        candidates: [
+          {
+            kind: "status",
+            title: "来源需要确认",
+            content: "这条内容仍然适用于当前文件。",
+            citations: [{ sourcePath: "evidence.md", role: "evidence" }],
+          },
+        ],
+      },
+    );
     const items = proposal.items as Array<{ id: string }>;
     writeFileSync(path.join(projectPath, "evidence.md"), "updated\n");
 
@@ -165,49 +210,54 @@ describe("Skill CLI", () => {
     ]);
     expect(search.results).toHaveLength(1);
 
-    const proposal = runCli(pluginRoot, dataDir, ["propose", "--path", projectBPath], {
-      candidates: [
-        {
-          ref: "protocol-source",
-          kind: "architecture",
-          title: "Protocol source",
-          briefRole: "conclusion",
-          content: "Project A documents the shared protocol.",
-          narrative: {
-            occurredAt: "2026-07-22T09:00:00.000Z",
-            reason: "需要保存共享协议来源。",
-            action: "读取并记录项目 A 的协议说明。",
-            outcome: "协议来源已可追溯。",
-            conclusion: "发布验证可以引用这份协议。",
+    const proposal = runCli(
+      pluginRoot,
+      dataDir,
+      ["propose", "--path", projectBPath, "--platform", "codex"],
+      {
+        candidates: [
+          {
+            ref: "protocol-source",
+            kind: "architecture",
+            title: "Protocol source",
+            briefRole: "conclusion",
+            content: "Project A documents the shared protocol.",
+            narrative: {
+              occurredAt: "2026-07-22T09:00:00.000Z",
+              reason: "需要保存共享协议来源。",
+              action: "读取并记录项目 A 的协议说明。",
+              outcome: "协议来源已可追溯。",
+              conclusion: "发布验证可以引用这份协议。",
+            },
+            sourceProjectId: projectA.id,
+            sourcePath: "README.md",
           },
-          sourceProjectId: projectA.id,
-          sourcePath: "README.md",
-        },
-        {
-          ref: "verification-flow",
-          kind: "workflow",
-          title: "Protocol verification",
-          briefRole: "progress",
-          content: "Verify the shared protocol before release.",
-          narrative: {
-            occurredAt: "2026-07-22T10:00:00.000Z",
-            reason: "发布前需要核验共享协议。",
-            action: "建立协议验证流程。",
-            outcome: "验证步骤已记录。",
-            conclusion: "发布前可按此流程核验协议。",
+          {
+            ref: "verification-flow",
+            kind: "workflow",
+            title: "Protocol verification",
+            briefRole: "progress",
+            content: "Verify the shared protocol before release.",
+            narrative: {
+              occurredAt: "2026-07-22T10:00:00.000Z",
+              reason: "发布前需要核验共享协议。",
+              action: "建立协议验证流程。",
+              outcome: "验证步骤已记录。",
+              conclusion: "发布前可按此流程核验协议。",
+            },
           },
-        },
-      ],
-      relations: [
-        {
-          from: { candidateRef: "verification-flow" },
-          to: { candidateRef: "protocol-source" },
-          type: "depends_on",
-          rationale: "验证流程依赖协议来源",
-          confidence: "verified",
-        },
-      ],
-    });
+        ],
+        relations: [
+          {
+            from: { candidateRef: "verification-flow" },
+            to: { candidateRef: "protocol-source" },
+            type: "depends_on",
+            rationale: "验证流程依赖协议来源",
+            confidence: "verified",
+          },
+        ],
+      },
+    );
     const items = proposal.items as Array<{ id: string }>;
     const relationItems = proposal.relationItems as Array<{ id: string }>;
     const committed = runCli(pluginRoot, dataDir, [
@@ -258,23 +308,28 @@ describe("Skill CLI", () => {
     expect(retrieved.memories).toHaveLength(2);
     expect(JSON.stringify(retrieved)).not.toContain("sourceFileHash");
     expect(JSON.stringify(retrieved)).not.toContain("sourceCommit");
-    const updateProposal = runCli(pluginRoot, dataDir, ["propose", "--path", projectBPath], {
-      updates: [
-        {
-          memoryId: committedMemories[0]?.id ?? "",
-          summary: "The shared protocol is traceable to project A.",
-          topic: "Protocol",
-          briefRole: "reference",
-          citations: [
-            {
-              sourceProjectId: projectA.id as string,
-              sourcePath: "README.md",
-              role: "reference",
-            },
-          ],
-        },
-      ],
-    });
+    const updateProposal = runCli(
+      pluginRoot,
+      dataDir,
+      ["propose", "--path", projectBPath, "--platform", "codex"],
+      {
+        updates: [
+          {
+            memoryId: committedMemories[0]?.id ?? "",
+            summary: "The shared protocol is traceable to project A.",
+            topic: "Protocol",
+            briefRole: "reference",
+            citations: [
+              {
+                sourceProjectId: projectA.id as string,
+                sourcePath: "README.md",
+                role: "reference",
+              },
+            ],
+          },
+        ],
+      },
+    );
     const updateItems = updateProposal.updateItems as Array<{ id: string }>;
     const updated = runCli(pluginRoot, dataDir, [
       "commit",

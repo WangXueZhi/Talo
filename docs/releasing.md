@@ -43,6 +43,7 @@ The tag starts `.github/workflows/release.yml`. It verifies the tag/version matc
 - `talo-desktop-0.14.1-macos-*.zip`
 - `talo-desktop-0.14.1-windows-x64-setup.exe`
 - per-platform release manifests and SHA-256 files
+- `talo-update.json` (the unified manifest used by desktop update checks)
 
 Do not upload local `release/` contents manually unless the tagged workflow is unavailable and the
 same source commit has been rebuilt and verified.
@@ -54,3 +55,9 @@ same source commit has been rebuilt and verified.
 3. Verify `talo --help`, Desktop launch, project detection, recall, proposal review, and offline Hub.
 4. Verify the README, website, repository About URL, Privacy, Terms, Security, and Support links.
 5. Keep release notes explicit about compatibility identifiers and local-only data handling.
+
+The desktop app does not replace itself silently. When a newer version is found at startup or from
+Settings, the user can download the platform-specific DMG/EXE. Talo verifies the manifest SHA-256
+and opens the installer. SHA-256 detects download corruption but is not operating-system code
+signing. After restart, Talo only synchronizes platform integrations that were already installed
+and are managed by the desktop app.

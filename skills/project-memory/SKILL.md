@@ -105,11 +105,12 @@ commands, or relation enums the title. Put those technical identifiers in `summa
 citations, or outputs instead. A candidate `ref` is internal relationship wiring and must never be
 presented as a user-facing title.
 
-Pass one JSON object through stdin:
+Pass one JSON object through stdin. Replace `your-agent-id` with the stable name of the
+submitting agent; do not use `generic` or omit the field:
 
 ```json
 {
-  "actor": { "platform": "generic", "adapterVersion": "0.14.1" },
+  "actor": { "platform": "your-agent-id", "adapterVersion": "0.14.2" },
   "candidates": [
     {
       "ref": "daily-observation",
@@ -205,7 +206,8 @@ Pass one JSON object through stdin:
 }
 ```
 
-Use `propose --path "$PWD" --platform PLATFORM --adapter-version VERSION`. Only propose
+Use `propose --path "$PWD" --platform PLATFORM --adapter-version VERSION`, where `PLATFORM`
+is the submitting agent's explicit stable name. A missing or generic source is rejected. Only propose
 high-confidence formal relations. Do not automatically commit.
 
 ## Shared review

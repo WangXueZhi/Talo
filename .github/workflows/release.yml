@@ -104,6 +104,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm --dir apps/desktop test
       - run: pnpm --dir apps/desktop tauri build --bundles ${{ matrix.bundle }}
       - run: node scripts/package-release.mjs
         env:
@@ -126,6 +127,8 @@ jobs:
           pattern: talo-*
           path: release-assets
           merge-multiple: true
+      - name: Build desktop update manifest
+        run: node scripts/build-update-manifest.mjs release-assets
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
