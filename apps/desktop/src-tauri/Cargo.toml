@@ -1,6 +1,6 @@
 [package]
 name = "project-memory-desktop"
-version = "0.14.2"
+version = "0.14.3"
 description = "Native desktop access to Talo"
 authors = ["WangXueZhi"]
 license = "Apache-2.0"
@@ -17,6 +17,7 @@ tauri-build = { version = "2.6.3", features = [] }
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+sha2 = "0.10"
 tauri = { version = "2.11.3", features = [] }
 
 [profile.release]

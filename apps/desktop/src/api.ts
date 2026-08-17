@@ -5,9 +5,34 @@ import type {
   DesktopProposalSelection,
   DesktopReviewMutationResult,
   DesktopIntegrationStatus,
+  DesktopAppUpdate,
   GraphViewData,
   MemoryHub,
 } from "./types";
+
+export function getAppVersion(): Promise<string> {
+  return invoke<string>("get_app_version");
+}
+
+export function checkForUpdate(): Promise<DesktopAppUpdate> {
+  return invoke<DesktopAppUpdate>("check_for_update");
+}
+
+export function downloadUpdate(
+  downloadUrl: string,
+  expectedSha256: string,
+  fileName: string,
+): Promise<{ fileName: string; path: string }> {
+  return invoke<{ fileName: string; path: string }>("download_update", {
+    downloadUrl,
+    expectedSha256,
+    fileName,
+  });
+}
+
+export function openUpdateInstaller(fileName: string): Promise<void> {
+  return invoke("open_update_installer", { fileName });
+}
 
 export async function getCachedHub(): Promise<MemoryHub | null> {
   return invoke<MemoryHub | null>("get_cached_hub");

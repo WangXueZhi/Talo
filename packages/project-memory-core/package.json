@@ -1,6 +1,6 @@
 {
   "name": "project-memory-core",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "Talo's platform-neutral local project memory core and offline project hub.",
   "type": "module",
   "private": true,

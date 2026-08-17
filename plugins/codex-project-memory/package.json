@@ -1,6 +1,6 @@
 {
   "name": "codex-project-memory",
-  "version": "0.14.2",
+  "version": "0.14.3",
   "description": "Talo shares reviewed local project context across AI agents with precise recall, unified review, timelines, and an offline project hub.",
   "type": "module",
   "private": true,

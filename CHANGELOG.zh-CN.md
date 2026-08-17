@@ -8,12 +8,18 @@
 
 - 暂无未发布变更。
 
-## 0.14.2 - 2026-08-17
+## 0.14.3 - 2026-08-17
 
 - Windows 桌面应用及其内置 Node 运行时在启动和执行后端操作时不再弹出命令行窗口。
 - 新增对 Codex Desktop 写入 Local AppData 的版本化 Codex CLI 的检测。
 - 新增 Microsoft Store/AppX 版 Claude Desktop 检测；未安装 Claude Code CLI 时继续使用
   桌面应用直连集成流程。
+
+## 0.14.2 - 2026-08-15
+
+- 新增桌面端辅助更新检查，并校验可信 Release 地址和 SHA-256 完整性。
+- 修复从 Windows verbatim 路径工作目录启动时的 Node `EISDIR` 错误；现在会规范化运行时路径并固定内置 Node 的工作目录。
+- 隐藏 Windows 后台 CLI 控制台窗口，并新增 Windows 路径回归测试。
 
 ## 0.14.1 - 2026-08-13
 

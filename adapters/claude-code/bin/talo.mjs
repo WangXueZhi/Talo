@@ -3140,7 +3140,7 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
 }
 
 // src/integration.ts
-var INTEGRATION_VERSION = "0.14.2";
+var INTEGRATION_VERSION = "0.14.3";
 var INTEGRATION_SCHEMA_VERSION = 1;
 var RULE_START = "<!-- project-memory:start -->";
 var RULE_END = "<!-- project-memory:end -->";
@@ -3668,7 +3668,7 @@ function removeClaudeIntegration(options = {}) {
 // src/desktop-integration.ts
 var DESKTOP_MARKETPLACE = "project-memory-desktop";
 var PLUGIN_NAME = "codex-project-memory";
-var DEFAULT_VERSION = "0.14.2";
+var DEFAULT_VERSION = "0.14.3";
 function integrationDataRoot(options) {
   if (options.dataRoot) return path6.resolve(options.dataRoot);
   if (options.homeDir) {
@@ -4626,8 +4626,8 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   <key>CFBundleIdentifier</key><string>com.wangxuezhi.talo</string>
   <key>CFBundleName</key><string>Talo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.14.2</string>
-  <key>CFBundleVersion</key><string>1402</string>
+  <key>CFBundleShortVersionString</key><string>0.14.3</string>
+  <key>CFBundleVersion</key><string>1403</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>TaloCLI</key><string>${xmlText(options.cliPath)}</string>
@@ -7181,8 +7181,11 @@ var ProjectMemoryService = class {
     this.store.requireProject(projectId);
     const rawPlatform = actor.platform.trim();
     const platform = ["claude", "claude-code"].includes(rawPlatform.toLocaleLowerCase()) ? "claude" : rawPlatform;
-    if (!platform || platform.length > 80) {
-      throw new ProjectMemoryError("INVALID_INPUT", "Proposal actor platform is invalid.");
+    if (!platform || platform.length > 80 || platform.toLocaleLowerCase() === "generic") {
+      throw new ProjectMemoryError(
+        "INVALID_INPUT",
+        "Proposal submissions must identify a specific agent; generic is not a valid source."
+      );
     }
     if (actor.adapterVersion !== null && actor.adapterVersion.length > 120) {
       throw new ProjectMemoryError("INVALID_INPUT", "Proposal adapter version is invalid.");
@@ -9617,10 +9620,16 @@ function runCommand2(argv) {
         const candidates = Array.isArray(input) ? input : input.candidates;
         const updates = Array.isArray(input) ? [] : input.updates;
         const relations = Array.isArray(input) ? [] : input.relations;
-        const actor = Array.isArray(input) ? { platform: args.options.get("platform") ?? "generic", adapterVersion: null } : input.actor ?? {
-          platform: args.options.get("platform") ?? "generic",
+        const actor = Array.isArray(input) ? args.options.has("platform") ? { platform: args.options.get("platform"), adapterVersion: null } : null : input.actor ?? (args.options.has("platform") ? {
+          platform: args.options.get("platform"),
           adapterVersion: args.options.get("adapter-version") ?? null
-        };
+        } : null);
+        if (!actor) {
+          throw new ProjectMemoryError(
+            "INVALID_INPUT",
+            "Proposal submissions must identify the submitting agent with --platform or actor.platform."
+          );
+        }
         if (candidates !== void 0 && !Array.isArray(candidates)) {
           throw new ProjectMemoryError("INVALID_INPUT", "Proposal candidates must be an array.");
         }

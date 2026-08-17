@@ -1,10 +1,10 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use serde_json::{json, Value};
-#[cfg(windows)]
-use std::os::windows::process::CommandExt;
+use sha2::{Digest, Sha256};
 use std::{
     env, fs,
+    io::{BufReader, Read},
     path::{Path, PathBuf},
     process::{Command, Output},
 };
@@ -13,7 +13,142 @@ use tauri::{AppHandle, Manager};
 const CODEX_URL: &str = "https://openai.com/codex/";
 const CLAUDE_URL: &str = "https://claude.ai/download";
 const ANTIGRAVITY_URL: &str = "https://antigravity.google/";
+const UPDATE_MANIFEST_URL: &str =
+    "https://github.com/WangXueZhi/Talo/releases/latest/download/talo-update.json";
+const UPDATE_RELEASE_API_URL: &str = "https://api.github.com/repos/WangXueZhi/Talo/releases/latest";
+const UPDATE_ASSET_PREFIX: &str = "https://github.com/WangXueZhi/Talo/releases/download/";
 const MAX_REVIEW_IDS: usize = 100;
+
+#[cfg(any(windows, test))]
+fn windows_dos_path(path: &Path) -> PathBuf {
+    let value = path.as_os_str().to_string_lossy();
+    if let Some(value) = value.strip_prefix(r"\\?\UNC\") {
+        return PathBuf::from(format!(r"\\{value}"));
+    }
+    if let Some(value) = value.strip_prefix(r"\\?\") {
+        return PathBuf::from(value);
+    }
+    path.to_path_buf()
+}
+
+#[cfg(windows)]
+fn cli_path(path: PathBuf) -> PathBuf {
+    windows_dos_path(&path)
+}
+
+#[cfg(not(windows))]
+fn cli_path(path: PathBuf) -> PathBuf {
+    path
+}
+
+#[cfg(windows)]
+fn background_command<S: AsRef<std::ffi::OsStr>>(program: S) -> Command {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    let mut command = Command::new(program);
+    command.creation_flags(CREATE_NO_WINDOW);
+    command
+}
+
+#[cfg(not(windows))]
+fn background_command<S: AsRef<std::ffi::OsStr>>(program: S) -> Command {
+    Command::new(program)
+}
+
+fn update_platform_key() -> Option<&'static str> {
+    if cfg!(target_os = "macos") && cfg!(target_arch = "aarch64") {
+        Some("darwin-aarch64")
+    } else if cfg!(target_os = "macos") && cfg!(target_arch = "x86_64") {
+        Some("darwin-x86_64")
+    } else if cfg!(target_os = "windows") && cfg!(target_arch = "x86_64") {
+        Some("windows-x86_64")
+    } else {
+        None
+    }
+}
+
+fn run_curl(args: &[String]) -> Result<Vec<u8>, String> {
+    let output = background_command("curl")
+        .args([
+            "--fail",
+            "--location",
+            "--silent",
+            "--show-error",
+            "--retry",
+            "2",
+        ])
+        .args(args)
+        .output()
+        .map_err(|error| format!("Unable to start curl: {error}"))?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+        return Err(if stderr.is_empty() {
+            format!("Download failed with {}.", output.status)
+        } else {
+            stderr
+        });
+    }
+    Ok(output.stdout)
+}
+
+fn parse_version(value: &str) -> Option<[u64; 3]> {
+    let version = value.trim().trim_start_matches('v');
+    let mut parts = version.split('.');
+    Some([
+        parts.next()?.parse().ok()?,
+        parts.next()?.parse().ok()?,
+        parts.next()?.split('-').next()?.parse().ok()?,
+    ])
+}
+
+fn is_newer_version(current: &str, candidate: &str) -> bool {
+    matches!((parse_version(current), parse_version(candidate)), (Some(left), Some(right)) if right > left)
+}
+
+fn validate_update_url(url: &str) -> Result<(), String> {
+    if url.starts_with(UPDATE_ASSET_PREFIX) && !url.contains("..") {
+        Ok(())
+    } else {
+        Err("The update URL is not a trusted Talo release URL.".into())
+    }
+}
+
+fn validate_update_file_name(file_name: &str) -> Result<(), String> {
+    if file_name.is_empty()
+        || file_name.contains('/')
+        || file_name.contains('\\')
+        || file_name.contains("..")
+    {
+        Err("The update file name is invalid.".into())
+    } else {
+        Ok(())
+    }
+}
+
+fn update_cache_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_cache_dir()
+        .map(|directory| directory.join("updates"))
+        .map_err(|error| error.to_string())
+}
+
+fn sha256_file(path: &Path) -> Result<String, String> {
+    let file = fs::File::open(path).map_err(|error| error.to_string())?;
+    let mut reader = BufReader::new(file);
+    let mut digest = Sha256::new();
+    let mut buffer = [0_u8; 1024 * 1024];
+    loop {
+        let count = reader
+            .read(&mut buffer)
+            .map_err(|error| error.to_string())?;
+        if count == 0 {
+            break;
+        }
+        digest.update(&buffer[..count]);
+    }
+    Ok(format!("{:x}", digest.finalize()))
+}
 
 fn runtime_root(app: &AppHandle) -> Result<PathBuf, String> {
     let mut candidates = Vec::new();
@@ -25,12 +160,13 @@ fn runtime_root(app: &AppHandle) -> Result<PathBuf, String> {
     candidates
         .into_iter()
         .find(|candidate| candidate.join("project-memory.mjs").is_file())
+        .map(cli_path)
         .ok_or_else(|| "Talo desktop runtime is missing.".to_string())
 }
 
 fn node_binary() -> PathBuf {
     if let Some(explicit) = env::var_os("PROJECT_MEMORY_NODE") {
-        return PathBuf::from(explicit);
+        return cli_path(PathBuf::from(explicit));
     }
     let executable_name = if cfg!(windows) {
         "project-memory-node.exe"
@@ -41,7 +177,7 @@ fn node_binary() -> PathBuf {
         if let Some(parent) = current.parent() {
             let bundled = parent.join(executable_name);
             if bundled.is_file() {
-                return bundled;
+                return cli_path(bundled);
             }
         }
     }
@@ -52,7 +188,7 @@ fn node_binary() -> PathBuf {
         suffix
     ));
     if development.is_file() {
-        return development;
+        return cli_path(development);
     }
     PathBuf::from(if cfg!(windows) { "node.exe" } else { "node" })
 }
@@ -60,10 +196,10 @@ fn node_binary() -> PathBuf {
 fn execute_cli(app: &AppHandle, args: &[String]) -> Result<Value, String> {
     let runtime = runtime_root(app)?;
     let cli = runtime.join("project-memory.mjs");
-    let mut command = Command::new(node_binary());
-    command
-        .arg(cli)
+    let output = background_command(node_binary())
+        .arg(&cli)
         .args(args)
+        .current_dir(&runtime)
         .env(
             "PROJECT_MEMORY_CLI_SOURCE",
             runtime.join("project-memory.mjs"),
@@ -72,10 +208,7 @@ fn execute_cli(app: &AppHandle, args: &[String]) -> Result<Value, String> {
         .env(
             "PROJECT_MEMORY_SKILL_SOURCE",
             runtime.join("skills/project-memory"),
-        );
-    #[cfg(windows)]
-    command.creation_flags(0x08000000);
-    let output = command
+        )
         .output()
         .map_err(|error| format!("Unable to start the Talo runtime: {error}"))?;
     parse_cli_output(output)
@@ -425,6 +558,289 @@ fn open_download_page(platform: String) -> Result<(), String> {
     }
 }
 
+#[tauri::command]
+fn get_app_version() -> String {
+    env!("CARGO_PKG_VERSION").to_string()
+}
+
+#[tauri::command]
+fn check_for_update() -> Result<Value, String> {
+    let current_version = env!("CARGO_PKG_VERSION");
+    let Some(platform_key) = update_platform_key() else {
+        return Ok(json!({
+            "available": false,
+            "currentVersion": current_version,
+            "version": current_version,
+            "notes": "",
+            "pubDate": null,
+            "downloadUrl": null,
+            "sha256": null,
+            "fileName": null,
+        }));
+    };
+    let manifest_bytes = match run_curl(&[UPDATE_MANIFEST_URL.to_string()]) {
+        Ok(bytes) => bytes,
+        Err(manifest_error) => {
+            return check_github_release_for_update(current_version, platform_key)
+                .map_err(|release_error| format!("{manifest_error}; {release_error}"));
+        }
+    };
+    let manifest: Value = serde_json::from_slice(&manifest_bytes)
+        .map_err(|error| format!("The update manifest is invalid: {error}"))?;
+    let version = manifest["version"]
+        .as_str()
+        .ok_or_else(|| "The update manifest has no version.".to_string())?;
+    let platform = manifest["platforms"][platform_key]
+        .as_object()
+        .ok_or_else(|| format!("The update manifest has no {platform_key} artifact."))?;
+    let download_url = platform["url"]
+        .as_str()
+        .ok_or_else(|| "The update manifest has no download URL.".to_string())?;
+    let sha256 = platform["sha256"]
+        .as_str()
+        .ok_or_else(|| "The update manifest has no SHA-256 checksum.".to_string())?;
+    let file_name = platform["fileName"]
+        .as_str()
+        .ok_or_else(|| "The update manifest has no file name.".to_string())?;
+    validate_update_url(download_url)?;
+    validate_update_file_name(file_name)?;
+    if sha256.len() != 64
+        || !sha256
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    {
+        return Err("The update manifest has an invalid SHA-256 checksum.".into());
+    }
+    Ok(update_value(
+        current_version,
+        version,
+        manifest["notes"].as_str().unwrap_or_default(),
+        manifest["pubDate"].as_str(),
+        download_url,
+        sha256,
+        file_name,
+    ))
+}
+
+fn update_value(
+    current_version: &str,
+    version: &str,
+    notes: &str,
+    pub_date: Option<&str>,
+    download_url: &str,
+    sha256: &str,
+    file_name: &str,
+) -> Value {
+    json!({
+        "available": is_newer_version(current_version, version),
+        "currentVersion": current_version,
+        "version": version,
+        "notes": notes,
+        "pubDate": pub_date,
+        "downloadUrl": download_url,
+        "sha256": sha256,
+        "fileName": file_name,
+    })
+}
+
+fn release_asset_name(version: &str, platform_key: &str) -> Option<String> {
+    match platform_key {
+        "darwin-aarch64" => Some(format!("talo-desktop-{version}-macos-aarch64.dmg")),
+        "darwin-x86_64" => Some(format!("talo-desktop-{version}-macos-x64.dmg")),
+        "windows-x86_64" => Some(format!("talo-desktop-{version}-windows-x64-setup.exe")),
+        _ => None,
+    }
+}
+
+fn release_checksum_asset_name(version: &str, platform_key: &str) -> Option<String> {
+    match platform_key {
+        "darwin-aarch64" => Some(format!("SHA256SUMS-{version}-darwin-arm64.txt")),
+        "darwin-x86_64" => Some(format!("SHA256SUMS-{version}-darwin-x64.txt")),
+        "windows-x86_64" => Some(format!("SHA256SUMS-{version}-win32-x64.txt")),
+        _ => None,
+    }
+}
+
+fn release_asset<'a>(assets: &'a [Value], file_name: &str) -> Result<&'a Value, String> {
+    assets
+        .iter()
+        .find(|asset| asset["name"].as_str() == Some(file_name))
+        .ok_or_else(|| format!("The latest release has no {file_name} asset."))
+}
+
+fn release_asset_url(asset: &Value) -> Result<&str, String> {
+    let url = asset["browser_download_url"]
+        .as_str()
+        .ok_or_else(|| "The release asset has no download URL.".to_string())?;
+    validate_update_url(url)?;
+    Ok(url)
+}
+
+fn release_asset_sha256(
+    asset: &Value,
+    assets: &[Value],
+    version: &str,
+    platform_key: &str,
+    file_name: &str,
+) -> Result<String, String> {
+    if let Some(digest) = asset["digest"].as_str() {
+        let sha256 = digest.strip_prefix("sha256:").unwrap_or(digest);
+        if sha256.len() == 64
+            && sha256
+                .chars()
+                .all(|character| character.is_ascii_hexdigit())
+        {
+            return Ok(sha256.to_string());
+        }
+    }
+    let checksum_name = release_checksum_asset_name(version, platform_key)
+        .ok_or_else(|| "No checksum asset is defined for this platform.".to_string())?;
+    let checksum_asset = release_asset(assets, &checksum_name)?;
+    let checksum_url = release_asset_url(checksum_asset)?;
+    let checksum_text = String::from_utf8(run_curl(&[checksum_url.to_string()])?)
+        .map_err(|error| format!("The checksum asset is not valid UTF-8: {error}"))?;
+    checksum_text
+        .lines()
+        .filter_map(|line| {
+            let mut fields = line.split_whitespace();
+            let digest = fields.next()?;
+            let name = fields.next()?.trim_start_matches('*');
+            (name == file_name).then(|| digest.to_string())
+        })
+        .find(|digest| {
+            digest.len() == 64
+                && digest
+                    .chars()
+                    .all(|character| character.is_ascii_hexdigit())
+        })
+        .ok_or_else(|| format!("The checksum asset has no SHA-256 for {file_name}."))
+}
+
+fn check_github_release_for_update(
+    current_version: &str,
+    platform_key: &str,
+) -> Result<Value, String> {
+    let response = run_curl(&[
+        "--header".to_string(),
+        "Accept: application/vnd.github+json".to_string(),
+        "--header".to_string(),
+        "User-Agent: Talo-desktop-updater".to_string(),
+        UPDATE_RELEASE_API_URL.to_string(),
+    ])?;
+    let release: Value = serde_json::from_slice(&response)
+        .map_err(|error| format!("The GitHub release response is invalid: {error}"))?;
+    let version = release["tag_name"]
+        .as_str()
+        .ok_or_else(|| "The GitHub release has no tag.".to_string())?
+        .trim_start_matches('v');
+    let file_name = release_asset_name(version, platform_key)
+        .ok_or_else(|| "This platform has no supported update asset.".to_string())?;
+    let assets = release["assets"]
+        .as_array()
+        .ok_or_else(|| "The GitHub release has no assets.".to_string())?;
+    let asset = release_asset(assets, &file_name)?;
+    let download_url = release_asset_url(asset)?;
+    let sha256 = release_asset_sha256(asset, assets, version, platform_key, &file_name)?;
+    Ok(update_value(
+        current_version,
+        version,
+        release["body"].as_str().unwrap_or_default(),
+        release["published_at"].as_str(),
+        download_url,
+        &sha256,
+        &file_name,
+    ))
+}
+
+fn download_to_file(url: &str, path: &Path) -> Result<(), String> {
+    let output = Command::new("curl")
+        .args([
+            "--fail",
+            "--location",
+            "--silent",
+            "--show-error",
+            "--retry",
+            "2",
+        ])
+        .args(["--output", path.to_string_lossy().as_ref(), url])
+        .output()
+        .map_err(|error| format!("Unable to start curl: {error}"))?;
+    if output.status.success() {
+        return Ok(());
+    }
+    let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    Err(if stderr.is_empty() {
+        format!("Download failed with {}.", output.status)
+    } else {
+        stderr
+    })
+}
+
+#[tauri::command]
+fn download_update(
+    app: AppHandle,
+    download_url: String,
+    expected_sha256: String,
+    file_name: String,
+) -> Result<Value, String> {
+    validate_update_url(&download_url)?;
+    validate_update_file_name(&file_name)?;
+    if expected_sha256.len() != 64
+        || !expected_sha256
+            .chars()
+            .all(|character| character.is_ascii_hexdigit())
+    {
+        return Err("The update checksum is invalid.".into());
+    }
+    let cache_dir = update_cache_dir(&app)?;
+    fs::create_dir_all(&cache_dir).map_err(|error| error.to_string())?;
+    let target = cache_dir.join(&file_name);
+    let temporary = cache_dir.join(format!(".{file_name}.{}.download", std::process::id()));
+    let _ = fs::remove_file(&temporary);
+    if let Err(error) = download_to_file(&download_url, &temporary) {
+        let _ = fs::remove_file(&temporary);
+        return Err(error);
+    }
+    let actual_sha256 = match sha256_file(&temporary) {
+        Ok(value) => value,
+        Err(error) => {
+            let _ = fs::remove_file(&temporary);
+            return Err(error);
+        }
+    };
+    if !actual_sha256.eq_ignore_ascii_case(&expected_sha256) {
+        let _ = fs::remove_file(&temporary);
+        return Err("The downloaded update failed SHA-256 verification.".into());
+    }
+    let _ = fs::remove_file(&target);
+    fs::rename(&temporary, &target).map_err(|error| error.to_string())?;
+    Ok(json!({ "fileName": file_name, "path": target }))
+}
+
+#[tauri::command]
+fn open_update_installer(app: AppHandle, file_name: String) -> Result<(), String> {
+    validate_update_file_name(&file_name)?;
+    let path = update_cache_dir(&app)?.join(file_name);
+    if !path.is_file() {
+        return Err("The update installer has not been downloaded.".into());
+    }
+    let status = if cfg!(target_os = "macos") {
+        Command::new("open").arg(&path).status()
+    } else if cfg!(windows) {
+        Command::new("cmd")
+            .args(["/C", "start", "", path.to_string_lossy().as_ref()])
+            .status()
+    } else {
+        Command::new("xdg-open").arg(&path).status()
+    }
+    .map_err(|error| error.to_string())?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err("Unable to open the update installer.".into())
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -439,7 +855,11 @@ fn main() {
             install_integration,
             repair_integration,
             remove_integration,
-            open_download_page
+            open_download_page,
+            get_app_version,
+            check_for_update,
+            download_update,
+            open_update_installer
         ])
         .run(tauri::generate_context!())
         .expect("error while running Talo desktop");
@@ -447,7 +867,13 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use super::{build_commit_args, parse_cli_output, validate_review_id};
+    use super::{
+        build_commit_args, is_newer_version, parse_cli_output, release_asset_name,
+        release_asset_sha256, release_checksum_asset_name, validate_review_id,
+        validate_update_file_name, validate_update_url, windows_dos_path,
+    };
+    use serde_json::json;
+    use std::path::{Path, PathBuf};
     use std::process::{ExitStatus, Output};
 
     #[cfg(unix)]
@@ -547,6 +973,63 @@ mod tests {
                 "--refresh-sources",
                 "true",
             ]
+        );
+    }
+
+    #[test]
+    fn compares_release_versions() {
+        assert!(is_newer_version("0.14.1", "0.15.0"));
+        assert!(!is_newer_version("0.14.1", "0.14.1"));
+        assert!(!is_newer_version("0.14.1", "0.14.0"));
+    }
+
+    #[test]
+    fn validates_update_inputs() {
+        assert!(validate_update_url(
+            "https://github.com/WangXueZhi/Talo/releases/download/v0.15.0/talo.exe"
+        )
+        .is_ok());
+        assert!(validate_update_url("https://example.com/talo.exe").is_err());
+        assert!(validate_update_file_name("talo-desktop.exe").is_ok());
+        assert!(validate_update_file_name("../talo-desktop.exe").is_err());
+    }
+
+    #[test]
+    fn normalizes_windows_verbatim_paths_for_node() {
+        assert_eq!(
+            windows_dos_path(Path::new(r"\\?\F:\Talo\resources\runtime")),
+            PathBuf::from(r"F:\Talo\resources\runtime")
+        );
+        assert_eq!(
+            windows_dos_path(Path::new(r"\\?\UNC\server\share\runtime")),
+            PathBuf::from(r"\\server\share\runtime")
+        );
+    }
+
+    #[test]
+    fn resolves_legacy_release_asset_names_and_digests() {
+        assert_eq!(
+            release_asset_name("0.14.1", "darwin-aarch64").as_deref(),
+            Some("talo-desktop-0.14.1-macos-aarch64.dmg")
+        );
+        assert_eq!(
+            release_checksum_asset_name("0.14.1", "windows-x86_64").as_deref(),
+            Some("SHA256SUMS-0.14.1-win32-x64.txt")
+        );
+        let asset = json!({
+            "name": "talo-desktop-0.14.1-windows-x64-setup.exe",
+            "digest": format!("sha256:{}", "a".repeat(64)),
+        });
+        assert_eq!(
+            release_asset_sha256(
+                &asset,
+                &[asset.clone()],
+                "0.14.1",
+                "windows-x86_64",
+                "talo-desktop-0.14.1-windows-x64-setup.exe",
+            )
+            .expect("asset digest"),
+            "a".repeat(64)
         );
     }
 }

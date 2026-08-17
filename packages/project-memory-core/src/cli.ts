@@ -361,11 +361,22 @@ export function runCommand(argv: string[]): unknown {
         const updates = Array.isArray(input) ? [] : input.updates;
         const relations = Array.isArray(input) ? [] : input.relations;
         const actor = Array.isArray(input)
-          ? { platform: args.options.get("platform") ?? "generic", adapterVersion: null }
-          : (input.actor ?? {
-              platform: args.options.get("platform") ?? "generic",
-              adapterVersion: args.options.get("adapter-version") ?? null,
-            });
+          ? args.options.has("platform")
+            ? { platform: args.options.get("platform") as string, adapterVersion: null }
+            : null
+          : (input.actor ??
+            (args.options.has("platform")
+              ? {
+                  platform: args.options.get("platform") as string,
+                  adapterVersion: args.options.get("adapter-version") ?? null,
+                }
+              : null));
+        if (!actor) {
+          throw new ProjectMemoryError(
+            "INVALID_INPUT",
+            "Proposal submissions must identify the submitting agent with --platform or actor.platform.",
+          );
+        }
         if (candidates !== undefined && !Array.isArray(candidates)) {
           throw new ProjectMemoryError("INVALID_INPUT", "Proposal candidates must be an array.");
         }

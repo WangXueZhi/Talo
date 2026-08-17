@@ -155,6 +155,8 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .page-notice { margin: 20px 0; }
 .error-banner { margin: 20px 0; }.error-banner span { flex: 1; }.error-banner button { color: inherit; background: transparent; border: 0; cursor: pointer; }
 .global-error { margin: 16px 28px 0; }
+.update-banner { margin: 18px 28px 0; padding: 14px 16px; border: 1px solid #2b5870; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; color: #e8fbff; background: linear-gradient(120deg, rgba(12, 50, 70, .96), rgba(17, 37, 58, .94)); }
+.update-banner div { display: grid; gap: 4px; }.update-banner span { color: #b7dbe5; font-size: 12px; }
 .loading-panel { min-height: 180px; display: flex; align-items: center; justify-content: center; gap: 10px; color: #8b98ad; }
 .onboarding-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
 .spin { animation: spin 1s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }
@@ -173,6 +175,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .settings-label { font-weight: 750; }
 .settings-card small { min-height: 34px; color: #78859b; line-height: 1.55; }
 .settings-card select { width: 100%; border: 1px solid #2a354d; border-radius: 10px; padding: 10px 12px; color: #e8edf7; background: #0e1421; }
+.update-card { grid-column: 1 / -1; }.update-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }.update-card-heading > div { display: grid; gap: 8px; }.update-notes { display: grid; gap: 6px; margin: 16px 0; padding: 12px; border: 1px solid var(--desktop-line-soft); border-radius: 10px; color: var(--desktop-text-soft); font-size: 12px; line-height: 1.6; }.update-notes strong { color: var(--desktop-text); }.update-notes p { margin: 0; white-space: pre-wrap; }
 
 :root[data-theme="light"] {
   --desktop-bg: #eef4f8;
@@ -271,6 +274,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 :root[data-theme="light"] .review-confirmation-backdrop { background: rgba(221, 231, 238, .72); }
 :root[data-theme="light"] .issue-box, :root[data-theme="light"] .error-banner { color: #a72e45; border-color: #edb0bc; background: #fff0f3; }
 :root[data-theme="light"] .success-note { color: #087555; border-color: #a9d8c9; background: #edf9f4; }
+:root[data-theme="light"] .update-banner { color: #123047; border-color: #9bc9d8; background: linear-gradient(120deg, #dff5fa, #edf7fb); }.update-banner span { color: #426b7a; }
 :root[data-theme="light"] .app-shell, :root[data-theme="light"] .topbar { background: var(--void); }
 :root[data-theme="light"] .topbar { border-color: var(--line); box-shadow: 0 1px 24px rgba(44, 62, 80, .08); }
 :root[data-theme="light"] .brand-block h1, :root[data-theme="light"] .guide-hero h2,

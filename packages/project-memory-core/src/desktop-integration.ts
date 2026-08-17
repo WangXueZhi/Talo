@@ -31,7 +31,7 @@ import { resolveDataDir } from "./paths.js";
 
 const DESKTOP_MARKETPLACE = "project-memory-desktop";
 const PLUGIN_NAME = "codex-project-memory";
-const DEFAULT_VERSION = "0.14.2";
+const DEFAULT_VERSION = "0.14.3";
 
 export type AgentPlatform = "codex" | "claude" | "antigravity";
 export type ProductState = "not_found" | "found" | "config_only";

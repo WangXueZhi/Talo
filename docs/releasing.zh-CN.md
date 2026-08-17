@@ -3,7 +3,7 @@
 [English](releasing.md)
 
 本清单用于 Talo 第一次公开正式发布，也可复用于后续 Tag Release。当前发布版本为
-`v0.14.2`。
+`v0.14.3`。
 
 ## 发布身份
 
@@ -29,18 +29,19 @@
 ```bash
 git checkout main
 git pull --ff-only origin main
-git tag -a v0.14.2 -m "Talo 0.14.2"
-git push origin v0.14.2
+git tag -a v0.14.3 -m "Talo 0.14.3"
+git push origin v0.14.3
 ```
 
 Tag 会启动 `.github/workflows/release.yml`。工作流校验 Tag 与版本号一致，并上传：
 
-- `talo-agent-skill-0.14.2.zip`
-- `talo-codex-plugin-0.14.2.zip`
-- `talo-desktop-0.14.2-macos-*.dmg`
-- `talo-desktop-0.14.2-macos-*.zip`
-- `talo-desktop-0.14.2-windows-x64-setup.exe`
+- `talo-agent-skill-0.14.3.zip`
+- `talo-codex-plugin-0.14.3.zip`
+- `talo-desktop-0.14.3-macos-*.dmg`
+- `talo-desktop-0.14.3-macos-*.zip`
+- `talo-desktop-0.14.3-windows-x64-setup.exe`
 - 各平台 release manifest 与 SHA-256 文件
+- `talo-update.json`（桌面应用启动检查使用的统一更新清单）
 
 除非 Tag 工作流不可用，并且已经从同一源码提交重新构建和验证，否则不要手工上传本地
 `release/` 目录中的文件。
@@ -52,3 +53,7 @@ Tag 会启动 `.github/workflows/release.yml`。工作流校验 Tag 与版本号
 3. 验证 `talo --help`、Desktop 启动、项目识别、召回、Proposal 审核和离线 Hub。
 4. 验证 README、官网、仓库 About URL、隐私、条款、安全和支持链接。
 5. Release Note 中明确说明兼容标识和本地数据边界。
+
+桌面应用不会静默替换自身。启动或设置页检查到新版本后，用户可以下载当前平台的 DMG/EXE；
+下载完成后应用会校验清单中的 SHA-256 并打开安装器。SHA-256 只用于发现下载损坏，不等同于
+操作系统代码签名。应用重新启动后，只会自动同步原本由桌面端托管且已经安装的平台集成。
