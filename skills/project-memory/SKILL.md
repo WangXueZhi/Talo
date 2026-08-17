@@ -109,7 +109,7 @@ Pass one JSON object through stdin:
 
 ```json
 {
-  "actor": { "platform": "generic", "adapterVersion": "0.14.1" },
+  "actor": { "platform": "generic", "adapterVersion": "0.14.2" },
   "candidates": [
     {
       "ref": "daily-observation",

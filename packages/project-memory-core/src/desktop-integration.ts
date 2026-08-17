@@ -31,7 +31,7 @@ import { resolveDataDir } from "./paths.js";
 
 const DESKTOP_MARKETPLACE = "project-memory-desktop";
 const PLUGIN_NAME = "codex-project-memory";
-const DEFAULT_VERSION = "0.14.1";
+const DEFAULT_VERSION = "0.14.2";
 
 export type AgentPlatform = "codex" | "claude" | "antigravity";
 export type ProductState = "not_found" | "found" | "config_only";
@@ -203,6 +203,31 @@ function firstExisting(candidates: Array<string | null | undefined>): string | n
   return match ? path.resolve(match) : null;
 }
 
+function windowsAppxInstallLocation(
+  packageName: string,
+  env: NodeJS.ProcessEnv,
+  runner?: DesktopIntegrationOptions["commandRunner"],
+): string | null {
+  const result = runCommand(
+    "powershell.exe",
+    [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      `(Get-AppxPackage -Name '${packageName}' -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1).InstallLocation`,
+    ],
+    env,
+    runner,
+  );
+  if (result.status !== 0) return null;
+  const installLocation = result.stdout
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .find(Boolean);
+  return installLocation ? path.resolve(installLocation) : null;
+}
+
 function compatibleIntegrationVersion(
   installedVersion: string | null,
   currentVersion: string,
@@ -226,10 +251,20 @@ function codexCandidates(
   }
   if (platform === "win32") {
     const local = env.LOCALAPPDATA ?? path.join(homeDir, "AppData", "Local");
+    const desktopBin = path.join(local, "OpenAI", "Codex", "bin");
+    let desktopCliCandidates: string[] = [];
+    try {
+      desktopCliCandidates = readdirSync(desktopBin, { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => path.join(desktopBin, entry.name, "codex.exe"))
+        .filter((candidate) => existsSync(candidate))
+        .sort((left, right) => statSync(right).mtimeMs - statSync(left).mtimeMs);
+    } catch {}
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value): value is string => Boolean(value),
     );
     return [
+      ...desktopCliCandidates,
       path.join(local, "Programs", "Codex", "codex.exe"),
       path.join(local, "Programs", "ChatGPT", "resources", "codex.exe"),
       ...programFiles.flatMap((root) => [
@@ -285,6 +320,7 @@ function claudeAppCandidates(
   platform: NodeJS.Platform,
   homeDir: string,
   env: NodeJS.ProcessEnv,
+  runner?: DesktopIntegrationOptions["commandRunner"],
 ): string[] {
   if (platform === "darwin") {
     return [
@@ -294,10 +330,12 @@ function claudeAppCandidates(
   }
   if (platform === "win32") {
     const local = env.LOCALAPPDATA ?? path.join(homeDir, "AppData", "Local");
+    const appxRoot = windowsAppxInstallLocation("Claude", env, runner);
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value): value is string => Boolean(value),
     );
     return [
+      ...(appxRoot ? [path.join(appxRoot, "app", "Claude.exe")] : []),
       path.join(local, "Programs", "Claude", "Claude.exe"),
       ...programFiles.map((root) => path.join(root, "Claude", "Claude.exe")),
     ];
@@ -328,11 +366,11 @@ function detectProduct(
   const commandPath = firstExisting([explicitCommand, onPath, ...candidates]);
   const executablePath =
     platformName === "claude"
-      ? firstExisting([
-          commandPath,
+      ? (commandPath ??
+        firstExisting([
           options.claudeAppPath,
-          ...claudeAppCandidates(platform, homeDir, env),
-        ])
+          ...claudeAppCandidates(platform, homeDir, env, options.commandRunner),
+        ]))
       : commandPath;
   const configPath = path.join(
     homeDir,

@@ -8,6 +8,13 @@
 
 - 暂无未发布变更。
 
+## 0.14.2 - 2026-08-17
+
+- Windows 桌面应用及其内置 Node 运行时在启动和执行后端操作时不再弹出命令行窗口。
+- 新增对 Codex Desktop 写入 Local AppData 的版本化 Codex CLI 的检测。
+- 新增 Microsoft Store/AppX 版 Claude Desktop 检测；未安装 Claude Code CLI 时继续使用
+  桌面应用直连集成流程。
+
 ## 0.14.1 - 2026-08-13
 
 - GitHub Tag Release 新增标准 macOS DMG 安装包，同时保留便携式 `.app.zip` 下载。

@@ -1,4 +1,8 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
 use serde_json::{json, Value};
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 use std::{
     env, fs,
     path::{Path, PathBuf},
@@ -56,7 +60,8 @@ fn node_binary() -> PathBuf {
 fn execute_cli(app: &AppHandle, args: &[String]) -> Result<Value, String> {
     let runtime = runtime_root(app)?;
     let cli = runtime.join("project-memory.mjs");
-    let output = Command::new(node_binary())
+    let mut command = Command::new(node_binary());
+    command
         .arg(cli)
         .args(args)
         .env(
@@ -67,7 +72,10 @@ fn execute_cli(app: &AppHandle, args: &[String]) -> Result<Value, String> {
         .env(
             "PROJECT_MEMORY_SKILL_SOURCE",
             runtime.join("skills/project-memory"),
-        )
+        );
+    #[cfg(windows)]
+    command.creation_flags(0x08000000);
+    let output = command
         .output()
         .map_err(|error| format!("Unable to start the Talo runtime: {error}"))?;
     parse_cli_output(output)

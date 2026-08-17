@@ -3140,7 +3140,7 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
 }
 
 // ../../packages/project-memory-core/src/integration.ts
-var INTEGRATION_VERSION = "0.14.1";
+var INTEGRATION_VERSION = "0.14.2";
 var INTEGRATION_SCHEMA_VERSION = 1;
 var RULE_START = "<!-- project-memory:start -->";
 var RULE_END = "<!-- project-memory:end -->";
@@ -3668,7 +3668,7 @@ function removeClaudeIntegration(options = {}) {
 // ../../packages/project-memory-core/src/desktop-integration.ts
 var DESKTOP_MARKETPLACE = "project-memory-desktop";
 var PLUGIN_NAME = "codex-project-memory";
-var DEFAULT_VERSION = "0.14.1";
+var DEFAULT_VERSION = "0.14.2";
 function integrationDataRoot(options) {
   if (options.dataRoot) return path6.resolve(options.dataRoot);
   if (options.homeDir) {
@@ -3722,6 +3722,23 @@ function firstExisting2(candidates) {
   );
   return match ? path6.resolve(match) : null;
 }
+function windowsAppxInstallLocation(packageName, env, runner) {
+  const result = runCommand(
+    "powershell.exe",
+    [
+      "-NoLogo",
+      "-NoProfile",
+      "-NonInteractive",
+      "-Command",
+      `(Get-AppxPackage -Name '${packageName}' -ErrorAction SilentlyContinue | Sort-Object Version -Descending | Select-Object -First 1).InstallLocation`
+    ],
+    env,
+    runner
+  );
+  if (result.status !== 0) return null;
+  const installLocation = result.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
+  return installLocation ? path6.resolve(installLocation) : null;
+}
 function compatibleIntegrationVersion(installedVersion, currentVersion) {
   if (!installedVersion) return false;
   return installedVersion.split("+", 1)[0] === currentVersion.split("+", 1)[0];
@@ -3737,10 +3754,17 @@ function codexCandidates(platform, homeDir, env) {
   }
   if (platform === "win32") {
     const local = env.LOCALAPPDATA ?? path6.join(homeDir, "AppData", "Local");
+    const desktopBin = path6.join(local, "OpenAI", "Codex", "bin");
+    let desktopCliCandidates = [];
+    try {
+      desktopCliCandidates = readdirSync4(desktopBin, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => path6.join(desktopBin, entry.name, "codex.exe")).filter((candidate) => existsSync5(candidate)).sort((left, right) => statSync4(right).mtimeMs - statSync4(left).mtimeMs);
+    } catch {
+    }
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value) => Boolean(value)
     );
     return [
+      ...desktopCliCandidates,
       path6.join(local, "Programs", "Codex", "codex.exe"),
       path6.join(local, "Programs", "ChatGPT", "resources", "codex.exe"),
       ...programFiles.flatMap((root) => [
@@ -3785,7 +3809,7 @@ function claudeCandidates(platform, homeDir) {
   }
   return [path6.join(homeDir, ".local", "bin", "claude")];
 }
-function claudeAppCandidates(platform, homeDir, env) {
+function claudeAppCandidates(platform, homeDir, env, runner) {
   if (platform === "darwin") {
     return [
       "/Applications/Claude.app/Contents/MacOS/Claude",
@@ -3794,10 +3818,12 @@ function claudeAppCandidates(platform, homeDir, env) {
   }
   if (platform === "win32") {
     const local = env.LOCALAPPDATA ?? path6.join(homeDir, "AppData", "Local");
+    const appxRoot = windowsAppxInstallLocation("Claude", env, runner);
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value) => Boolean(value)
     );
     return [
+      ...appxRoot ? [path6.join(appxRoot, "app", "Claude.exe")] : [],
       path6.join(local, "Programs", "Claude", "Claude.exe"),
       ...programFiles.map((root) => path6.join(root, "Claude", "Claude.exe"))
     ];
@@ -3812,10 +3838,9 @@ function detectProduct(platformName, options) {
   const onPath = executableOnPath(platformName, env, platform);
   const candidates = platformName === "codex" ? codexCandidates(platform, homeDir, env) : platformName === "claude" ? claudeCandidates(platform, homeDir) : antigravityCandidates(platform, homeDir, env);
   const commandPath = firstExisting2([explicitCommand, onPath, ...candidates]);
-  const executablePath = platformName === "claude" ? firstExisting2([
-    commandPath,
+  const executablePath = platformName === "claude" ? commandPath ?? firstExisting2([
     options.claudeAppPath,
-    ...claudeAppCandidates(platform, homeDir, env)
+    ...claudeAppCandidates(platform, homeDir, env, options.commandRunner)
   ]) : commandPath;
   const configPath = path6.join(
     homeDir,
@@ -4601,8 +4626,8 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   <key>CFBundleIdentifier</key><string>com.wangxuezhi.talo</string>
   <key>CFBundleName</key><string>Talo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.14.1</string>
-  <key>CFBundleVersion</key><string>1401</string>
+  <key>CFBundleShortVersionString</key><string>0.14.2</string>
+  <key>CFBundleVersion</key><string>1402</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>TaloCLI</key><string>${xmlText(options.cliPath)}</string>

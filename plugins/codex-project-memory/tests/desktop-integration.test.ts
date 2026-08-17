@@ -233,6 +233,86 @@ describe("desktop integration management", () => {
     expect(fake.calls.filter((args) => args[0] === "--version")).toHaveLength(2);
   });
 
+  test("detects the versioned CLI installed by Codex Desktop", () => {
+    const paths = fixture();
+    const localAppData = path.join(paths.root, "AppData", "Local");
+    const desktopCodex = path.join(
+      localAppData,
+      "OpenAI",
+      "Codex",
+      "bin",
+      "desktop-build",
+      "codex.exe",
+    );
+    mkdirSync(path.dirname(desktopCodex), { recursive: true });
+    writeFileSync(desktopCodex, "codex");
+    const fake = runner(null);
+
+    const codex = scanDesktopIntegrations({
+      platform: "win32",
+      homeDir: paths.homeDir,
+      env: {
+        PATH: path.join(paths.root, "empty-bin"),
+        LOCALAPPDATA: localAppData,
+      },
+      marketplaceRoot: paths.marketplaceRoot,
+      commandRunner: fake.commandRunner,
+      antigravity: {
+        antigravityHome: path.join(paths.root, "gemini"),
+        configHome: path.join(paths.root, "config"),
+      },
+    })[0];
+
+    expect(codex).toMatchObject({
+      platform: "codex",
+      productState: "found",
+      executablePath: desktopCodex,
+      productVersion: "codex-cli 1.0.0",
+    });
+  });
+
+  test("detects Claude Desktop installed from the Microsoft Store", () => {
+    const paths = fixture();
+    const appxRoot = path.join(paths.root, "WindowsApps", "Claude_1.0.0.0_x64");
+    const claudeApp = path.join(appxRoot, "app", "Claude.exe");
+    mkdirSync(path.dirname(claudeApp), { recursive: true });
+    writeFileSync(claudeApp, "claude desktop");
+    const fake = runner(null);
+    const commandRunner = (command: string, args: string[]): CommandResult => {
+      if (command.toLocaleLowerCase() === "powershell.exe") {
+        return { status: 0, stdout: `${appxRoot}\n`, stderr: "" };
+      }
+      return fake.commandRunner(command, args);
+    };
+
+    const claude = scanDesktopIntegrations({
+      platform: "win32",
+      homeDir: paths.homeDir,
+      env: {
+        PATH: path.join(paths.root, "empty-bin"),
+        LOCALAPPDATA: path.join(paths.root, "AppData", "Local"),
+      },
+      marketplaceRoot: paths.marketplaceRoot,
+      commandRunner,
+      claude: {
+        claudeHome: path.join(paths.root, "claude-home"),
+        configHome: path.join(paths.root, "config"),
+      },
+      antigravity: {
+        antigravityHome: path.join(paths.root, "gemini"),
+        configHome: path.join(paths.root, "config"),
+      },
+    })[1];
+
+    expect(claude).toMatchObject({
+      platform: "claude",
+      productState: "found",
+      executablePath: claudeApp,
+      integrationState: "absent",
+    });
+    expect(fake.calls.some((args) => args.join(" ") === "plugin list --json")).toBe(false);
+  });
+
   test("installs and removes the managed Claude Code plugin at user scope", () => {
     const paths = fixture();
     const fake = runner(null);

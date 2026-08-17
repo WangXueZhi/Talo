@@ -8,6 +8,14 @@ All notable changes to this project are documented in this file.
 
 - No unreleased changes.
 
+## 0.14.2 - 2026-08-17
+
+- Prevented the Windows desktop application and its bundled Node runtime from opening visible
+  command prompt windows during launch and backend operations.
+- Added detection for the versioned Codex CLI installed by Codex Desktop under Local AppData.
+- Added Microsoft Store/AppX Claude Desktop detection while preserving the direct desktop
+  integration path when the Claude Code CLI is not installed.
+
 ## 0.14.1 - 2026-08-13
 
 - Added a standard macOS DMG installer to tagged GitHub Releases while retaining the portable
