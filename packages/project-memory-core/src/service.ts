@@ -50,11 +50,13 @@ import {
   type ProjectRecord,
   type ProjectStory,
   type ProposalActor,
+  type ProposalSubmissionResult,
   RELATION_TYPES,
   type RecallResult,
   type RelationDirection,
   type RelationType,
   type RelationView,
+  type ReviewPolicy,
 } from "./types.js";
 import {
   buildGraphViewData,
@@ -119,12 +121,55 @@ function desktopHubBriefItem(memory: MemoryRecord, briefRole: BriefRole): Projec
 
 export class ProjectMemoryService {
   private readonly denyPatterns: string[];
+  private readonly reviewPolicy: ReviewPolicy;
 
   constructor(
     readonly store: MemoryStore,
     readonly dataDir: string,
   ) {
-    this.denyPatterns = loadLocalConfig(dataDir).denyPatterns;
+    const config = loadLocalConfig(dataDir);
+    this.denyPatterns = config.denyPatterns;
+    this.reviewPolicy = config.reviewPolicy;
+  }
+
+  private smartReviewReasons(
+    projectId: string,
+    candidates: PreparedCandidate[],
+    updates: PreparedUpdateCandidate[],
+    relations: PreparedRelationCandidate[],
+    actor: ProposalActor,
+  ): string[] {
+    if (this.reviewPolicy === "manual") return ["manual_policy"];
+    const reasons = new Set<string>();
+    if (!["codex", "claude", "antigravity"].includes(actor.platform)) {
+      reasons.add("untrusted_actor");
+    }
+    if (candidates.length === 0) reasons.add("no_new_memory");
+    if (candidates.length > 5) reasons.add("large_proposal");
+    if (updates.length > 0) reasons.add("updates_existing_memory");
+    if (relations.some((relation) => "memoryId" in relation.from || "memoryId" in relation.to)) {
+      reasons.add("links_existing_memory");
+    }
+    if (relations.some((relation) => relation.confidence === "inferred")) {
+      reasons.add("inferred_relation");
+    }
+    for (const candidate of candidates) {
+      if (candidate.confidence === "inferred") reasons.add("inferred_memory");
+      if (candidate.sourceProjectId && candidate.sourceProjectId !== projectId) {
+        reasons.add("cross_project_source");
+      }
+      if (candidate.citations.some((citation) => citation.sourceProjectId !== projectId)) {
+        reasons.add("cross_project_citation");
+      }
+      if (
+        ["architecture", "decision"].includes(candidate.kind) &&
+        candidate.sourcePath === null &&
+        candidate.citations.length === 0
+      ) {
+        reasons.add("ungrounded_high_impact_memory");
+      }
+    }
+    return [...reasons];
   }
 
   detectProject(inputPath: string): DetectedProject {
@@ -923,7 +968,7 @@ export class ProjectMemoryService {
     relations: MemoryRelationCandidate[] = [],
     updates: MemoryUpdateCandidate[] = [],
     actor: ProposalActor = { platform: "codex", adapterVersion: null },
-  ): unknown {
+  ): ProposalSubmissionResult {
     this.store.requireProject(projectId);
     const rawPlatform = actor.platform.trim();
     const platform = ["claude", "claude-code"].includes(rawPlatform.toLocaleLowerCase())
@@ -963,10 +1008,75 @@ export class ProjectMemoryService {
     const preparedUpdates = updates.map((candidate) =>
       this.prepareUpdateCandidate(projectId, candidate),
     );
-    return this.store.createProposal(projectId, prepared, preparedUpdates, preparedRelations, {
-      platform,
-      adapterVersion: actor.adapterVersion,
-    });
+    const proposal = this.store.createProposal(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      {
+        platform,
+        adapterVersion: actor.adapterVersion,
+      },
+    );
+    const normalizedActor = { platform, adapterVersion: actor.adapterVersion };
+    const reasons = this.smartReviewReasons(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      normalizedActor,
+    );
+    if (reasons.length > 0) {
+      return {
+        ...proposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "pending",
+          reasons,
+          committedMemoryIds: [],
+          committedUpdateIds: [],
+          committedRelationIds: [],
+        },
+      };
+    }
+    try {
+      const committed = this.commitMemory(
+        proposal.id,
+        proposal.items.map((item) => item.id),
+        proposal.relationItems.map((item) => item.id),
+        proposal.updateItems.map((item) => item.id),
+      );
+      const reviewedProposal = this.store.getProposal(proposal.id) ?? proposal;
+      return {
+        ...reviewedProposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "auto_committed",
+          reasons: [],
+          committedMemoryIds: committed.memories.map((memory) => memory.id),
+          committedUpdateIds: committed.updatedMemories.map((memory) => memory.id),
+          committedRelationIds: committed.relations.map((relation) => relation.id),
+        },
+      };
+    } catch (error) {
+      if (
+        error instanceof ProjectMemoryError &&
+        ["STALE_SOURCE", "REVISION_CONFLICT", "PROJECT_LOCKED"].includes(error.code)
+      ) {
+        return {
+          ...proposal,
+          autoReview: {
+            policy: this.reviewPolicy,
+            outcome: "pending",
+            reasons: [`commit_${error.code.toLocaleLowerCase()}`],
+            committedMemoryIds: [],
+            committedUpdateIds: [],
+            committedRelationIds: [],
+          },
+        };
+      }
+      throw error;
+    }
   }
 
   commitMemory(

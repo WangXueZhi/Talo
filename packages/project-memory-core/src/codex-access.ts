@@ -51,6 +51,7 @@ const ESCALATED_MEMORY_COMMANDS = [
   "graph",
   "hub",
   "proposals",
+  "review-policy",
   "propose",
   "commit",
   "reject",

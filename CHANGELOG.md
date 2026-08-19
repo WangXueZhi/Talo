@@ -8,6 +8,16 @@ All notable changes to this project are documented in this file.
 
 - No unreleased changes.
 
+## 0.14.4 - 2026-08-19
+
+- Added configurable `manual` and `smart` memory review policies, with smart mode automatically
+  committing bounded, same-project, non-inferred proposals that do not modify or link existing
+  memories.
+- Kept inferred, cross-project, existing-memory, large, and ungrounded high-impact changes in the
+  shared review inbox so reduced interruption does not bypass important safety checks.
+- Added the `review-policy` CLI command, a Desktop memory save policy setting, structured
+  `autoReview` proposal results, narrowly scoped Codex permission rules, and regression coverage.
+
 ## 0.14.3 - 2026-08-17
 
 - Prevented the Windows desktop application and its bundled Node runtime from opening visible

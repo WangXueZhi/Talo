@@ -13,9 +13,11 @@ import { homedir } from "node:os";
 import path from "node:path";
 import picomatch from "picomatch";
 import { ProjectMemoryError } from "./errors.js";
+import { REVIEW_POLICIES, type ReviewPolicy } from "./types.js";
 
 export interface LocalConfig {
   denyPatterns: string[];
+  reviewPolicy: ReviewPolicy;
 }
 
 export interface DataHomeInspection {
@@ -286,15 +288,45 @@ export function ensureDataDir(dataDir = resolveDataDir()): string {
 export function loadLocalConfig(dataDir: string): LocalConfig {
   const configPath = path.join(dataDir, "config.json");
   if (!existsSync(configPath)) {
-    return { denyPatterns: [] };
+    return { denyPatterns: [], reviewPolicy: "manual" };
   }
 
-  const raw = JSON.parse(readFileSync(configPath, "utf8")) as { denyPatterns?: unknown };
+  const raw = JSON.parse(readFileSync(configPath, "utf8")) as {
+    denyPatterns?: unknown;
+    reviewPolicy?: unknown;
+  };
   return {
     denyPatterns: Array.isArray(raw.denyPatterns)
       ? raw.denyPatterns.filter((value): value is string => typeof value === "string")
       : [],
+    reviewPolicy:
+      typeof raw.reviewPolicy === "string" &&
+      REVIEW_POLICIES.includes(raw.reviewPolicy as ReviewPolicy)
+        ? (raw.reviewPolicy as ReviewPolicy)
+        : "manual",
   };
+}
+
+export function setReviewPolicy(dataDir: string, reviewPolicy: ReviewPolicy): LocalConfig {
+  if (!REVIEW_POLICIES.includes(reviewPolicy)) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.", {
+      reviewPolicy,
+    });
+  }
+  ensureDataDir(dataDir);
+  const configPath = path.join(dataDir, "config.json");
+  const current = existsSync(configPath)
+    ? (JSON.parse(readFileSync(configPath, "utf8")) as Record<string, unknown>)
+    : {};
+  const temporaryPath = `${configPath}.${process.pid}.tmp`;
+  writeFileSync(temporaryPath, `${JSON.stringify({ ...current, reviewPolicy }, null, 2)}\n`, {
+    encoding: "utf8",
+    mode: 0o600,
+  });
+  if (process.platform !== "win32") chmodSync(temporaryPath, 0o600);
+  renameSync(temporaryPath, configPath);
+  if (process.platform !== "win32") chmodSync(configPath, 0o600);
+  return loadLocalConfig(dataDir);
 }
 
 export function matchesCustomDeny(relativePath: string, patterns: string[]): boolean {

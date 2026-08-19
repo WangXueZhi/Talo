@@ -14,9 +14,11 @@ import { installShortcut, removeShortcut } from "./launcher.js";
 import {
   ensureDataDir,
   inspectDataHomes,
+  loadLocalConfig,
   migrateDataDir,
   resolveDataDir,
   selectDataDir,
+  setReviewPolicy,
 } from "./paths.js";
 import { ProjectMemoryService } from "./service.js";
 import { MemoryStore } from "./store.js";
@@ -27,6 +29,7 @@ import type {
   ProposalActor,
   RelationDirection,
   RelationType,
+  ReviewPolicy,
 } from "./types.js";
 
 interface ParsedArgs {
@@ -156,6 +159,7 @@ function help(): Record<string, unknown> {
         "recall (--query TEXT|--recent true) [--path PATH] [--include-linked true] [--limit N] [--recommend N] [--budget-tokens N]",
       get: "get --memory-ids ID,ID [--path PATH] [--include-linked true] [--budget-tokens N]",
       propose: "propose [--path PATH] [--json JSON|--json-file FILE|stdin]",
+      "review-policy": "review-policy [--mode manual|smart]",
       commit:
         "commit --proposal-id ID [--accepted-item-ids ID,ID] [--accepted-update-ids ID,ID] [--accepted-relation-ids ID,ID] [--refresh-sources true]",
       reject: "reject --proposal-id ID",
@@ -229,6 +233,15 @@ export function runCommand(argv: string[]): unknown {
       mcpRequired: false,
       reviewModes: ["structured", "conversational", "shared-inbox"],
     };
+  }
+  if (args.command === "review-policy") {
+    const dataDir = ensureDataDir(resolveDataDir());
+    const mode = args.options.get("mode");
+    if (mode === undefined) return loadLocalConfig(dataDir);
+    if (!(["manual", "smart"] as string[]).includes(mode)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.");
+    }
+    return setReviewPolicy(dataDir, mode as ReviewPolicy);
   }
   if (args.command === "shortcut") {
     if (args.positionals[0] === "install") return installShortcut();
@@ -386,13 +399,17 @@ export function runCommand(argv: string[]): unknown {
         if (updates !== undefined && !Array.isArray(updates)) {
           throw new ProjectMemoryError("INVALID_INPUT", "Proposal updates must be an array.");
         }
-        return service.proposeMemory(
-          registeredProjectId(service, pathValue),
+        const projectId = registeredProjectId(service, pathValue);
+        const result = service.proposeMemory(
+          projectId,
           candidates ?? [],
           relations ?? [],
           updates ?? [],
           actor,
         );
+        return result.autoReview.outcome === "auto_committed"
+          ? { ...result, viewRefresh: refreshProjectGraph(service, projectId) }
+          : result;
       }
       case "commit": {
         const proposalId = option(args, "proposal-id");

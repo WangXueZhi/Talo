@@ -25,6 +25,7 @@ import {
   downloadUpdate,
   getAppVersion,
   getProjectView,
+  getReviewPolicy,
   installIntegration,
   openDownloadPage,
   openUpdateInstaller,
@@ -33,6 +34,7 @@ import {
   repairIntegration,
   removeIntegration,
   scanIntegrations,
+  setReviewPolicy,
 } from "./api";
 import type {
   AgentPlatform,
@@ -40,6 +42,7 @@ import type {
   DesktopIntegrationStatus,
   GraphViewData,
   MemoryHub,
+  ReviewPolicy,
 } from "./types";
 import {
   buildProjectDirectoryItems,
@@ -257,11 +260,32 @@ function SettingsPanel({
   onInstallUpdate: () => void;
   t: ReturnType<typeof usePreferences>["t"];
 }) {
+  const [reviewPolicy, setReviewPolicyState] = useState<ReviewPolicy>("manual");
+  const [reviewPolicyBusy, setReviewPolicyBusy] = useState(false);
+  const [reviewPolicyError, setReviewPolicyError] = useState<string | null>(null);
+  useEffect(() => {
+    getReviewPolicy()
+      .then((result) => setReviewPolicyState(result.reviewPolicy))
+      .catch((reason) => setReviewPolicyError(message(reason)));
+  }, []);
+  const updateReviewPolicy = async (value: ReviewPolicy) => {
+    setReviewPolicyBusy(true);
+    setReviewPolicyError(null);
+    try {
+      const result = await setReviewPolicy(value);
+      setReviewPolicyState(result.reviewPolicy);
+    } catch (reason) {
+      setReviewPolicyError(message(reason));
+    } finally {
+      setReviewPolicyBusy(false);
+    }
+  };
   return <section class="settings-panel">
     <header class="settings-panel-heading"><div><span class="eyebrow">{t("settings.title")}</span><h1>{t("settings.title")}</h1><p>{t("settings.subtitle")}</p></div></header>
     <div class="settings-grid">
       <label class="settings-card"><span class="settings-label">{t("settings.language")}</span><small>{t("settings.languageDescription")}</small><select value={languagePreference} onChange={(event) => onLanguageChange(event.currentTarget.value as LanguagePreference)}><option value="system">{t("settings.language.system")}</option><option value="zh-CN">{t("settings.language.zhCN")}</option><option value="en-US">{t("settings.language.enUS")}</option></select></label>
       <label class="settings-card"><span class="settings-label">{t("settings.theme")}</span><small>{t("settings.themeDescription")}</small><select value={themePreference} onChange={(event) => onThemeChange(event.currentTarget.value as ThemePreference)}><option value="system">{t("settings.theme.system")}</option><option value="light">{t("settings.theme.light")}</option><option value="dark">{t("settings.theme.dark")}</option></select></label>
+      <label class="settings-card"><span class="settings-label">{t("settings.reviewPolicy")}</span><small>{t("settings.reviewPolicyDescription")}</small><select disabled={reviewPolicyBusy} value={reviewPolicy} onChange={(event) => void updateReviewPolicy(event.currentTarget.value as ReviewPolicy)}><option value="smart">{t("settings.reviewPolicy.smart")}</option><option value="manual">{t("settings.reviewPolicy.manual")}</option></select>{reviewPolicyError && <span class="settings-error">{reviewPolicyError}</span>}</label>
       <UpdateCard update={update} checking={checking} downloading={downloading} error={updateError} notice={updateNotice} onCheck={onCheckUpdate} onInstall={onInstallUpdate} t={t} />
     </div>
   </section>;

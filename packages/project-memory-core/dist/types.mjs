@@ -7,6 +7,7 @@ var MEMORY_KINDS = [
   "pitfall",
   "status"
 ];
+var REVIEW_POLICIES = ["manual", "smart"];
 var MEMORY_PHASES = [
   "context",
   "data_collection",
@@ -37,5 +38,6 @@ export {
   CITATION_ROLES,
   MEMORY_KINDS,
   MEMORY_PHASES,
-  RELATION_TYPES
+  RELATION_TYPES,
+  REVIEW_POLICIES
 };

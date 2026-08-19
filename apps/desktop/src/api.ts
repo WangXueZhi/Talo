@@ -2,12 +2,14 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   AgentPlatform,
   DesktopPendingProposals,
+  DesktopReviewPolicy,
   DesktopProposalSelection,
   DesktopReviewMutationResult,
   DesktopIntegrationStatus,
   DesktopAppUpdate,
   GraphViewData,
   MemoryHub,
+  ReviewPolicy,
 } from "./types";
 
 export function getAppVersion(): Promise<string> {
@@ -44,6 +46,14 @@ export async function refreshHub(): Promise<MemoryHub> {
 
 export async function getPendingProposals(): Promise<DesktopPendingProposals> {
   return invoke<DesktopPendingProposals>("get_pending_proposals");
+}
+
+export async function getReviewPolicy(): Promise<DesktopReviewPolicy> {
+  return invoke<DesktopReviewPolicy>("get_review_policy");
+}
+
+export async function setReviewPolicy(reviewPolicy: ReviewPolicy): Promise<DesktopReviewPolicy> {
+  return invoke<DesktopReviewPolicy>("set_review_policy", { reviewPolicy });
 }
 
 export async function commitProposal(

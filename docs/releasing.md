@@ -3,7 +3,7 @@
 [简体中文](releasing.zh-CN.md)
 
 This checklist covers Talo's first public release and later tagged releases. The current release is
-`v0.14.3`.
+`v0.14.4`.
 
 ## Release identity
 
@@ -31,17 +31,17 @@ This checklist covers Talo's first public release and later tagged releases. The
 ```bash
 git checkout main
 git pull --ff-only origin main
-git tag -a v0.14.3 -m "Talo 0.14.3"
-git push origin v0.14.3
+git tag -a v0.14.4 -m "Talo 0.14.4"
+git push origin v0.14.4
 ```
 
 The tag starts `.github/workflows/release.yml`. It verifies the tag/version match and uploads:
 
-- `talo-agent-skill-0.14.3.zip`
-- `talo-codex-plugin-0.14.3.zip`
-- `talo-desktop-0.14.3-macos-*.dmg`
-- `talo-desktop-0.14.3-macos-*.zip`
-- `talo-desktop-0.14.3-windows-x64-setup.exe`
+- `talo-agent-skill-0.14.4.zip`
+- `talo-codex-plugin-0.14.4.zip`
+- `talo-desktop-0.14.4-macos-*.dmg`
+- `talo-desktop-0.14.4-macos-*.zip`
+- `talo-desktop-0.14.4-windows-x64-setup.exe`
 - per-platform release manifests and SHA-256 files
 - `talo-update.json` (the unified manifest used by desktop update checks)
 

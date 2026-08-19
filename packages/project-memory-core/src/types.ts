@@ -10,6 +10,9 @@ export const MEMORY_KINDS = [
 export type MemoryKind = (typeof MEMORY_KINDS)[number];
 export type Confidence = "observed" | "verified" | "inferred";
 
+export const REVIEW_POLICIES = ["manual", "smart"] as const;
+export type ReviewPolicy = (typeof REVIEW_POLICIES)[number];
+
 export const MEMORY_PHASES = [
   "context",
   "data_collection",
@@ -302,6 +305,19 @@ export interface ProposalRecord {
   items: ProposalItem[];
   updateItems: MemoryUpdateProposalItem[];
   relationItems: RelationProposalItem[];
+}
+
+export interface ProposalAutoReview {
+  policy: ReviewPolicy;
+  outcome: "pending" | "auto_committed";
+  reasons: string[];
+  committedMemoryIds: string[];
+  committedUpdateIds: string[];
+  committedRelationIds: string[];
+}
+
+export interface ProposalSubmissionResult extends ProposalRecord {
+  autoReview: ProposalAutoReview;
 }
 
 export interface ProposalActor {

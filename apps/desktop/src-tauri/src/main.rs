@@ -371,6 +371,32 @@ async fn get_pending_proposals(app: AppHandle) -> Result<Value, String> {
 }
 
 #[tauri::command]
+async fn get_review_policy(app: AppHandle) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || execute_cli(&app, &["review-policy".into()]))
+        .await
+        .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn set_review_policy(app: AppHandle, review_policy: String) -> Result<Value, String> {
+    if !matches!(review_policy.as_str(), "manual" | "smart") {
+        return Err("Review policy must be manual or smart.".into());
+    }
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "review-policy".into(),
+                "--mode".into(),
+                review_policy,
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
 async fn commit_proposal(
     app: AppHandle,
     proposal_id: String,
@@ -847,6 +873,8 @@ fn main() {
             get_cached_hub,
             refresh_hub,
             get_pending_proposals,
+            get_review_policy,
+            set_review_policy,
             commit_proposal,
             reject_proposal,
             get_project_view,

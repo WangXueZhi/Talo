@@ -2335,6 +2335,7 @@ var ESCALATED_MEMORY_COMMANDS = [
   "graph",
   "hub",
   "proposals",
+  "review-policy",
   "propose",
   "commit",
   "reject",
@@ -2634,6 +2635,44 @@ import {
 } from "fs";
 import { homedir as homedir2 } from "os";
 import path2 from "path";
+
+// src/types.ts
+var MEMORY_KINDS = [
+  "architecture",
+  "decision",
+  "workflow",
+  "convention",
+  "pitfall",
+  "status"
+];
+var REVIEW_POLICIES = ["manual", "smart"];
+var MEMORY_PHASES = [
+  "context",
+  "data_collection",
+  "analysis",
+  "decision",
+  "execution",
+  "verification",
+  "handoff",
+  "learning",
+  "risk",
+  "next_step",
+  "other"
+];
+var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
+var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
+var RELATION_TYPES = [
+  "related_to",
+  "observes",
+  "causes",
+  "depends_on",
+  "supports",
+  "contradicts",
+  "supersedes",
+  "derived_from"
+];
+
+// src/paths.ts
 function configRoot() {
   const windowsAppData = process.platform === "win32" ? process.env.APPDATA ?? process.env.LOCALAPPDATA : null;
   return process.env.PROJECT_MEMORY_CONFIG_HOME ? path2.resolve(process.env.PROJECT_MEMORY_CONFIG_HOME) : path2.join(windowsAppData ?? homedir2(), ".project-memory");
@@ -2855,12 +2894,33 @@ function ensureDataDir(dataDir = resolveDataDir()) {
 function loadLocalConfig(dataDir) {
   const configPath = path2.join(dataDir, "config.json");
   if (!existsSync2(configPath)) {
-    return { denyPatterns: [] };
+    return { denyPatterns: [], reviewPolicy: "manual" };
   }
   const raw = JSON.parse(readFileSync2(configPath, "utf8"));
   return {
-    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : []
+    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : [],
+    reviewPolicy: typeof raw.reviewPolicy === "string" && REVIEW_POLICIES.includes(raw.reviewPolicy) ? raw.reviewPolicy : "manual"
   };
+}
+function setReviewPolicy(dataDir, reviewPolicy) {
+  if (!REVIEW_POLICIES.includes(reviewPolicy)) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.", {
+      reviewPolicy
+    });
+  }
+  ensureDataDir(dataDir);
+  const configPath = path2.join(dataDir, "config.json");
+  const current = existsSync2(configPath) ? JSON.parse(readFileSync2(configPath, "utf8")) : {};
+  const temporaryPath = `${configPath}.${process.pid}.tmp`;
+  writeFileSync2(temporaryPath, `${JSON.stringify({ ...current, reviewPolicy }, null, 2)}
+`, {
+    encoding: "utf8",
+    mode: 384
+  });
+  if (process.platform !== "win32") chmodSync2(temporaryPath, 384);
+  renameSync2(temporaryPath, configPath);
+  if (process.platform !== "win32") chmodSync2(configPath, 384);
+  return loadLocalConfig(dataDir);
 }
 function matchesCustomDeny(relativePath, patterns) {
   return patterns.some((pattern) => import_picomatch.default.isMatch(relativePath, pattern, { dot: true }));
@@ -3140,7 +3200,7 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
 }
 
 // src/integration.ts
-var INTEGRATION_VERSION = "0.14.3";
+var INTEGRATION_VERSION = "0.14.4";
 var INTEGRATION_SCHEMA_VERSION = 1;
 var RULE_START = "<!-- project-memory:start -->";
 var RULE_END = "<!-- project-memory:end -->";
@@ -3668,7 +3728,7 @@ function removeClaudeIntegration(options = {}) {
 // src/desktop-integration.ts
 var DESKTOP_MARKETPLACE = "project-memory-desktop";
 var PLUGIN_NAME = "codex-project-memory";
-var DEFAULT_VERSION = "0.14.3";
+var DEFAULT_VERSION = "0.14.4";
 function integrationDataRoot(options) {
   if (options.dataRoot) return path6.resolve(options.dataRoot);
   if (options.homeDir) {
@@ -4626,8 +4686,8 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   <key>CFBundleIdentifier</key><string>com.wangxuezhi.talo</string>
   <key>CFBundleName</key><string>Talo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.14.3</string>
-  <key>CFBundleVersion</key><string>1403</string>
+  <key>CFBundleShortVersionString</key><string>0.14.4</string>
+  <key>CFBundleVersion</key><string>1404</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>TaloCLI</key><string>${xmlText(options.cliPath)}</string>
@@ -5906,41 +5966,6 @@ function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjec
   return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), platforms: groups };
 }
 
-// src/types.ts
-var MEMORY_KINDS = [
-  "architecture",
-  "decision",
-  "workflow",
-  "convention",
-  "pitfall",
-  "status"
-];
-var MEMORY_PHASES = [
-  "context",
-  "data_collection",
-  "analysis",
-  "decision",
-  "execution",
-  "verification",
-  "handoff",
-  "learning",
-  "risk",
-  "next_step",
-  "other"
-];
-var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
-var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
-var RELATION_TYPES = [
-  "related_to",
-  "observes",
-  "causes",
-  "depends_on",
-  "supports",
-  "contradicts",
-  "supersedes",
-  "derived_from"
-];
-
 // src/view.ts
 import { createHash as createHash4 } from "crypto";
 import { existsSync as existsSync8, readFileSync as readFileSync7 } from "fs";
@@ -6491,11 +6516,43 @@ var ProjectMemoryService = class {
   constructor(store, dataDir) {
     this.store = store;
     this.dataDir = dataDir;
-    this.denyPatterns = loadLocalConfig(dataDir).denyPatterns;
+    const config = loadLocalConfig(dataDir);
+    this.denyPatterns = config.denyPatterns;
+    this.reviewPolicy = config.reviewPolicy;
   }
   store;
   dataDir;
   denyPatterns;
+  reviewPolicy;
+  smartReviewReasons(projectId, candidates, updates, relations, actor) {
+    if (this.reviewPolicy === "manual") return ["manual_policy"];
+    const reasons = /* @__PURE__ */ new Set();
+    if (!["codex", "claude", "antigravity"].includes(actor.platform)) {
+      reasons.add("untrusted_actor");
+    }
+    if (candidates.length === 0) reasons.add("no_new_memory");
+    if (candidates.length > 5) reasons.add("large_proposal");
+    if (updates.length > 0) reasons.add("updates_existing_memory");
+    if (relations.some((relation) => "memoryId" in relation.from || "memoryId" in relation.to)) {
+      reasons.add("links_existing_memory");
+    }
+    if (relations.some((relation) => relation.confidence === "inferred")) {
+      reasons.add("inferred_relation");
+    }
+    for (const candidate of candidates) {
+      if (candidate.confidence === "inferred") reasons.add("inferred_memory");
+      if (candidate.sourceProjectId && candidate.sourceProjectId !== projectId) {
+        reasons.add("cross_project_source");
+      }
+      if (candidate.citations.some((citation) => citation.sourceProjectId !== projectId)) {
+        reasons.add("cross_project_citation");
+      }
+      if (["architecture", "decision"].includes(candidate.kind) && candidate.sourcePath === null && candidate.citations.length === 0) {
+        reasons.add("ungrounded_high_impact_memory");
+      }
+    }
+    return [...reasons];
+  }
   detectProject(inputPath) {
     let metadata;
     try {
@@ -7208,10 +7265,72 @@ var ProjectMemoryService = class {
     const preparedUpdates = updates.map(
       (candidate) => this.prepareUpdateCandidate(projectId, candidate)
     );
-    return this.store.createProposal(projectId, prepared, preparedUpdates, preparedRelations, {
-      platform,
-      adapterVersion: actor.adapterVersion
-    });
+    const proposal = this.store.createProposal(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      {
+        platform,
+        adapterVersion: actor.adapterVersion
+      }
+    );
+    const normalizedActor = { platform, adapterVersion: actor.adapterVersion };
+    const reasons = this.smartReviewReasons(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      normalizedActor
+    );
+    if (reasons.length > 0) {
+      return {
+        ...proposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "pending",
+          reasons,
+          committedMemoryIds: [],
+          committedUpdateIds: [],
+          committedRelationIds: []
+        }
+      };
+    }
+    try {
+      const committed = this.commitMemory(
+        proposal.id,
+        proposal.items.map((item) => item.id),
+        proposal.relationItems.map((item) => item.id),
+        proposal.updateItems.map((item) => item.id)
+      );
+      const reviewedProposal = this.store.getProposal(proposal.id) ?? proposal;
+      return {
+        ...reviewedProposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "auto_committed",
+          reasons: [],
+          committedMemoryIds: committed.memories.map((memory) => memory.id),
+          committedUpdateIds: committed.updatedMemories.map((memory) => memory.id),
+          committedRelationIds: committed.relations.map((relation) => relation.id)
+        }
+      };
+    } catch (error) {
+      if (error instanceof ProjectMemoryError && ["STALE_SOURCE", "REVISION_CONFLICT", "PROJECT_LOCKED"].includes(error.code)) {
+        return {
+          ...proposal,
+          autoReview: {
+            policy: this.reviewPolicy,
+            outcome: "pending",
+            reasons: [`commit_${error.code.toLocaleLowerCase()}`],
+            committedMemoryIds: [],
+            committedUpdateIds: [],
+            committedRelationIds: []
+          }
+        };
+      }
+      throw error;
+    }
   }
   commitMemory(proposalId, acceptedItemIds, acceptedRelationIds = [], acceptedUpdateIds = [], refreshSources = false) {
     const proposal = this.store.getProposal(proposalId);
@@ -9434,6 +9553,7 @@ function help() {
       recall: "recall (--query TEXT|--recent true) [--path PATH] [--include-linked true] [--limit N] [--recommend N] [--budget-tokens N]",
       get: "get --memory-ids ID,ID [--path PATH] [--include-linked true] [--budget-tokens N]",
       propose: "propose [--path PATH] [--json JSON|--json-file FILE|stdin]",
+      "review-policy": "review-policy [--mode manual|smart]",
       commit: "commit --proposal-id ID [--accepted-item-ids ID,ID] [--accepted-update-ids ID,ID] [--accepted-relation-ids ID,ID] [--refresh-sources true]",
       reject: "reject --proposal-id ID",
       link: "link --source-project-id ID --target-project-id ID",
@@ -9503,6 +9623,15 @@ function runCommand2(argv) {
       mcpRequired: false,
       reviewModes: ["structured", "conversational", "shared-inbox"]
     };
+  }
+  if (args.command === "review-policy") {
+    const dataDir = ensureDataDir(resolveDataDir());
+    const mode = args.options.get("mode");
+    if (mode === void 0) return loadLocalConfig(dataDir);
+    if (!["manual", "smart"].includes(mode)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.");
+    }
+    return setReviewPolicy(dataDir, mode);
   }
   if (args.command === "shortcut") {
     if (args.positionals[0] === "install") return installShortcut();
@@ -9639,13 +9768,15 @@ function runCommand2(argv) {
         if (updates !== void 0 && !Array.isArray(updates)) {
           throw new ProjectMemoryError("INVALID_INPUT", "Proposal updates must be an array.");
         }
-        return service.proposeMemory(
-          registeredProjectId(service, pathValue),
+        const projectId = registeredProjectId(service, pathValue);
+        const result = service.proposeMemory(
+          projectId,
           candidates ?? [],
           relations ?? [],
           updates ?? [],
           actor
         );
+        return result.autoReview.outcome === "auto_committed" ? { ...result, viewRefresh: refreshProjectGraph(service, projectId) } : result;
       }
       case "commit": {
         const proposalId = option(args, "proposal-id");

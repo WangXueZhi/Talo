@@ -2281,6 +2281,42 @@ var ProjectMemoryError = class extends Error {
   }
 };
 
+// ../../packages/project-memory-core/src/types.ts
+var MEMORY_KINDS = [
+  "architecture",
+  "decision",
+  "workflow",
+  "convention",
+  "pitfall",
+  "status"
+];
+var REVIEW_POLICIES = ["manual", "smart"];
+var MEMORY_PHASES = [
+  "context",
+  "data_collection",
+  "analysis",
+  "decision",
+  "execution",
+  "verification",
+  "handoff",
+  "learning",
+  "risk",
+  "next_step",
+  "other"
+];
+var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
+var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
+var RELATION_TYPES = [
+  "related_to",
+  "observes",
+  "causes",
+  "depends_on",
+  "supports",
+  "contradicts",
+  "supersedes",
+  "derived_from"
+];
+
 // ../../packages/project-memory-core/src/paths.ts
 function configRoot() {
   const windowsAppData = process.platform === "win32" ? process.env.APPDATA ?? process.env.LOCALAPPDATA : null;
@@ -2378,11 +2414,12 @@ function ensureDataDir(dataDir = resolveDataDir()) {
 function loadLocalConfig(dataDir) {
   const configPath = path.join(dataDir, "config.json");
   if (!existsSync(configPath)) {
-    return { denyPatterns: [] };
+    return { denyPatterns: [], reviewPolicy: "manual" };
   }
   const raw = JSON.parse(readFileSync(configPath, "utf8"));
   return {
-    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : []
+    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : [],
+    reviewPolicy: typeof raw.reviewPolicy === "string" && REVIEW_POLICIES.includes(raw.reviewPolicy) ? raw.reviewPolicy : "manual"
   };
 }
 function matchesCustomDeny(relativePath, patterns) {
@@ -3866,41 +3903,6 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
   return results;
 }
 
-// ../../packages/project-memory-core/src/types.ts
-var MEMORY_KINDS = [
-  "architecture",
-  "decision",
-  "workflow",
-  "convention",
-  "pitfall",
-  "status"
-];
-var MEMORY_PHASES = [
-  "context",
-  "data_collection",
-  "analysis",
-  "decision",
-  "execution",
-  "verification",
-  "handoff",
-  "learning",
-  "risk",
-  "next_step",
-  "other"
-];
-var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
-var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
-var RELATION_TYPES = [
-  "related_to",
-  "observes",
-  "causes",
-  "depends_on",
-  "supports",
-  "contradicts",
-  "supersedes",
-  "derived_from"
-];
-
 // ../../packages/project-memory-core/src/view.ts
 import { createHash as createHash4 } from "crypto";
 import { existsSync as existsSync4, readFileSync as readFileSync4 } from "fs";
@@ -4451,11 +4453,43 @@ var ProjectMemoryService = class {
   constructor(store, dataDir) {
     this.store = store;
     this.dataDir = dataDir;
-    this.denyPatterns = loadLocalConfig(dataDir).denyPatterns;
+    const config = loadLocalConfig(dataDir);
+    this.denyPatterns = config.denyPatterns;
+    this.reviewPolicy = config.reviewPolicy;
   }
   store;
   dataDir;
   denyPatterns;
+  reviewPolicy;
+  smartReviewReasons(projectId, candidates, updates, relations, actor) {
+    if (this.reviewPolicy === "manual") return ["manual_policy"];
+    const reasons = /* @__PURE__ */ new Set();
+    if (!["codex", "claude", "antigravity"].includes(actor.platform)) {
+      reasons.add("untrusted_actor");
+    }
+    if (candidates.length === 0) reasons.add("no_new_memory");
+    if (candidates.length > 5) reasons.add("large_proposal");
+    if (updates.length > 0) reasons.add("updates_existing_memory");
+    if (relations.some((relation) => "memoryId" in relation.from || "memoryId" in relation.to)) {
+      reasons.add("links_existing_memory");
+    }
+    if (relations.some((relation) => relation.confidence === "inferred")) {
+      reasons.add("inferred_relation");
+    }
+    for (const candidate of candidates) {
+      if (candidate.confidence === "inferred") reasons.add("inferred_memory");
+      if (candidate.sourceProjectId && candidate.sourceProjectId !== projectId) {
+        reasons.add("cross_project_source");
+      }
+      if (candidate.citations.some((citation) => citation.sourceProjectId !== projectId)) {
+        reasons.add("cross_project_citation");
+      }
+      if (["architecture", "decision"].includes(candidate.kind) && candidate.sourcePath === null && candidate.citations.length === 0) {
+        reasons.add("ungrounded_high_impact_memory");
+      }
+    }
+    return [...reasons];
+  }
   detectProject(inputPath) {
     let metadata;
     try {
@@ -5168,10 +5202,72 @@ var ProjectMemoryService = class {
     const preparedUpdates = updates.map(
       (candidate) => this.prepareUpdateCandidate(projectId, candidate)
     );
-    return this.store.createProposal(projectId, prepared, preparedUpdates, preparedRelations, {
-      platform,
-      adapterVersion: actor.adapterVersion
-    });
+    const proposal = this.store.createProposal(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      {
+        platform,
+        adapterVersion: actor.adapterVersion
+      }
+    );
+    const normalizedActor = { platform, adapterVersion: actor.adapterVersion };
+    const reasons = this.smartReviewReasons(
+      projectId,
+      prepared,
+      preparedUpdates,
+      preparedRelations,
+      normalizedActor
+    );
+    if (reasons.length > 0) {
+      return {
+        ...proposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "pending",
+          reasons,
+          committedMemoryIds: [],
+          committedUpdateIds: [],
+          committedRelationIds: []
+        }
+      };
+    }
+    try {
+      const committed = this.commitMemory(
+        proposal.id,
+        proposal.items.map((item) => item.id),
+        proposal.relationItems.map((item) => item.id),
+        proposal.updateItems.map((item) => item.id)
+      );
+      const reviewedProposal = this.store.getProposal(proposal.id) ?? proposal;
+      return {
+        ...reviewedProposal,
+        autoReview: {
+          policy: this.reviewPolicy,
+          outcome: "auto_committed",
+          reasons: [],
+          committedMemoryIds: committed.memories.map((memory) => memory.id),
+          committedUpdateIds: committed.updatedMemories.map((memory) => memory.id),
+          committedRelationIds: committed.relations.map((relation) => relation.id)
+        }
+      };
+    } catch (error) {
+      if (error instanceof ProjectMemoryError && ["STALE_SOURCE", "REVISION_CONFLICT", "PROJECT_LOCKED"].includes(error.code)) {
+        return {
+          ...proposal,
+          autoReview: {
+            policy: this.reviewPolicy,
+            outcome: "pending",
+            reasons: [`commit_${error.code.toLocaleLowerCase()}`],
+            committedMemoryIds: [],
+            committedUpdateIds: [],
+            committedRelationIds: []
+          }
+        };
+      }
+      throw error;
+    }
   }
   commitMemory(proposalId, acceptedItemIds, acceptedRelationIds = [], acceptedUpdateIds = [], refreshSources = false) {
     const proposal = this.store.getProposal(proposalId);

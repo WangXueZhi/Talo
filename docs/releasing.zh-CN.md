@@ -3,7 +3,7 @@
 [English](releasing.md)
 
 本清单用于 Talo 第一次公开正式发布，也可复用于后续 Tag Release。当前发布版本为
-`v0.14.3`。
+`v0.14.4`。
 
 ## 发布身份
 
@@ -29,17 +29,17 @@
 ```bash
 git checkout main
 git pull --ff-only origin main
-git tag -a v0.14.3 -m "Talo 0.14.3"
-git push origin v0.14.3
+git tag -a v0.14.4 -m "Talo 0.14.4"
+git push origin v0.14.4
 ```
 
 Tag 会启动 `.github/workflows/release.yml`。工作流校验 Tag 与版本号一致，并上传：
 
-- `talo-agent-skill-0.14.3.zip`
-- `talo-codex-plugin-0.14.3.zip`
-- `talo-desktop-0.14.3-macos-*.dmg`
-- `talo-desktop-0.14.3-macos-*.zip`
-- `talo-desktop-0.14.3-windows-x64-setup.exe`
+- `talo-agent-skill-0.14.4.zip`
+- `talo-codex-plugin-0.14.4.zip`
+- `talo-desktop-0.14.4-macos-*.dmg`
+- `talo-desktop-0.14.4-macos-*.zip`
+- `talo-desktop-0.14.4-windows-x64-setup.exe`
 - 各平台 release manifest 与 SHA-256 文件
 - `talo-update.json`（桌面应用启动检查使用的统一更新清单）
 

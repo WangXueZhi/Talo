@@ -1,8 +1,10 @@
 import type { GraphViewData } from "../../../packages/project-memory-core/src/browser/types.ts";
 import type { DesktopPlatformInventory } from "../../../packages/project-memory-core/src/platform-projects.ts";
 import type { MemoryHub, ProposalRecord } from "../../../packages/project-memory-core/src/types.ts";
+import type { ReviewPolicy } from "../../../packages/project-memory-core/src/types.ts";
 
 export type { DesktopPlatformInventory, GraphViewData, MemoryHub, ProposalRecord };
+export type { ReviewPolicy };
 
 export type AgentPlatform = "codex" | "claude" | "antigravity";
 export interface DesktopAppUpdate {
@@ -48,6 +50,10 @@ export interface DesktopIntegrationStatus {
 
 export interface DesktopPendingProposals {
   proposals: ProposalRecord[];
+}
+
+export interface DesktopReviewPolicy {
+  reviewPolicy: ReviewPolicy;
 }
 
 export interface DesktopProposalSelection {

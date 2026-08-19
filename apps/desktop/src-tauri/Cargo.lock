@@ -2259,7 +2259,7 @@ dependencies = [
 
 [[package]]
 name = "project-memory-desktop"
-version = "0.14.3"
+version = "0.14.4"
 dependencies = [
  "serde",
  "serde_json",

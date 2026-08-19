@@ -81,7 +81,9 @@ talo story --path "$PWD"
 ```
 
 At the end of substantial work, an agent proposes durable conclusions, workflows, risks, evidence,
-and next steps. Nothing becomes formal memory until it passes review.
+and next steps. Manual mode reviews every proposal. Smart save can automatically commit bounded,
+well-grounded same-project memories, while inferred, cross-project, existing-memory, and ungrounded
+high-impact changes still go to the review inbox.
 
 ## One history, multiple views
 
@@ -96,7 +98,8 @@ and next steps. Nothing becomes formal memory until it passes review.
   work produced, and what comes next.
 - **Cause and effect when needed.** Reviewed `observes`, `causes`, `supports`, `depends_on`, and
   related links preserve the path from finding to decision.
-- **Unified review inbox.** Every platform may propose; formal memory is written only after review.
+- **Unified save policy.** Every platform may propose; smart save handles low-risk content and sends
+  everything else to the shared review inbox.
 - **Direct access without AI.** Talo Desktop and the offline hub let you inspect every registered
   project without loading that history into an agent task.
 

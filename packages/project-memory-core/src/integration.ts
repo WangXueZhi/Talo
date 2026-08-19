@@ -17,7 +17,7 @@ import { ProjectMemoryError } from "./errors.js";
 import { resolveConfigRoot } from "./paths.js";
 import { sha256 } from "./security.js";
 
-const INTEGRATION_VERSION = "0.14.3";
+const INTEGRATION_VERSION = "0.14.4";
 const INTEGRATION_SCHEMA_VERSION = 1;
 const RULE_START = "<!-- project-memory:start -->";
 const RULE_END = "<!-- project-memory:end -->";

@@ -175,6 +175,7 @@ button:disabled { opacity: .5; cursor: not-allowed; }
 .settings-label { font-weight: 750; }
 .settings-card small { min-height: 34px; color: #78859b; line-height: 1.55; }
 .settings-card select { width: 100%; border: 1px solid #2a354d; border-radius: 10px; padding: 10px 12px; color: #e8edf7; background: #0e1421; }
+.settings-error { color: #f2a0b0; font-size: 12px; line-height: 1.5; }
 .update-card { grid-column: 1 / -1; }.update-card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }.update-card-heading > div { display: grid; gap: 8px; }.update-notes { display: grid; gap: 6px; margin: 16px 0; padding: 12px; border: 1px solid var(--desktop-line-soft); border-radius: 10px; color: var(--desktop-text-soft); font-size: 12px; line-height: 1.6; }.update-notes strong { color: var(--desktop-text); }.update-notes p { margin: 0; white-space: pre-wrap; }
 
 :root[data-theme="light"] {

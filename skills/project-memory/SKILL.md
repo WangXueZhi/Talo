@@ -110,7 +110,7 @@ submitting agent; do not use `generic` or omit the field:
 
 ```json
 {
-  "actor": { "platform": "your-agent-id", "adapterVersion": "0.14.3" },
+  "actor": { "platform": "your-agent-id", "adapterVersion": "0.14.4" },
   "candidates": [
     {
       "ref": "daily-observation",
@@ -208,18 +208,26 @@ submitting agent; do not use `generic` or omit the field:
 
 Use `propose --path "$PWD" --platform PLATFORM --adapter-version VERSION`, where `PLATFORM`
 is the submitting agent's explicit stable name. A missing or generic source is rejected. Only propose
-high-confidence formal relations. Do not automatically commit.
+high-confidence formal relations. Inspect `autoReview` in the result before starting a review:
+
+- `outcome: "auto_committed"`: the configured smart policy already validated and saved the safe
+  proposal. Do not ask the user to approve it again; report the committed count from
+  `committedMemoryIds`, `committedUpdateIds`, and `committedRelationIds`.
+- `outcome: "pending"`: explain the returned reasons in plain language and continue with shared
+  review. Never bypass a pending decision by calling `commit` automatically.
 
 ## Shared review
 
-Every platform writes proposals into the same shared inbox.
+Every platform writes proposals through the same policy. Manual mode sends every proposal to the
+shared inbox. Smart mode automatically commits only bounded, same-project, non-inferred proposals
+that do not update or link existing memories; all other proposals remain in the shared inbox.
 
 1. Show a short Chinese review grouped as “为什么做、做了什么、依据、产出、结论”.
 2. If structured choices are supported, offer “保存全部 / 选择保存 / 暂不保存”.
 3. Otherwise ask the same question in one short Chinese message.
 4. If the platform cannot continue interaction, leave the proposal pending and say it can be
    reviewed later from any supported agent with `proposals`.
-5. Commit only explicitly accepted item IDs. Use `reject` for “暂不保存”.
+5. For pending proposals, commit only explicitly accepted item IDs. Use `reject` for “暂不保存”.
 6. If commit returns a revision, source, permission, or duplicate conflict, do not retry blindly;
    regenerate and show a fresh proposal.
 7. The knowledge graph contains reviewed memory only. A successful `commit` regenerates the
