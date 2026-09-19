@@ -279,8 +279,8 @@ var require_utils = __commonJS({
       }
       return output;
     };
-    exports.basename = (path12, { windows } = {}) => {
-      const segs = path12.split(windows ? /[\\/]/ : "/");
+    exports.basename = (path14, { windows } = {}) => {
+      const segs = path14.split(windows ? /[\\/]/ : "/");
       const last = segs[segs.length - 1];
       if (last === "") {
         return segs[segs.length - 2];
@@ -2089,7 +2089,7 @@ var require_ignore = __commonJS({
       //   path matching.
       // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
       // @returns {TestResult} true if a file is ignored
-      test(path12, checkUnignored, mode) {
+      test(path14, checkUnignored, mode) {
         let ignored = false;
         let unignored = false;
         let matchedRule;
@@ -2098,7 +2098,7 @@ var require_ignore = __commonJS({
           if (unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored) {
             return;
           }
-          const matched = rule[mode].test(path12);
+          const matched = rule[mode].test(path14);
           if (!matched) {
             return;
           }
@@ -2119,17 +2119,17 @@ var require_ignore = __commonJS({
     var throwError = (message, Ctor) => {
       throw new Ctor(message);
     };
-    var checkPath = (path12, originalPath, doThrow) => {
-      if (!isString(path12)) {
+    var checkPath = (path14, originalPath, doThrow) => {
+      if (!isString(path14)) {
         return doThrow(
           `path must be a string, but got \`${originalPath}\``,
           TypeError
         );
       }
-      if (!path12) {
+      if (!path14) {
         return doThrow(`path must not be empty`, TypeError);
       }
-      if (checkPath.isNotRelative(path12)) {
+      if (checkPath.isNotRelative(path14)) {
         const r = "`path.relative()`d";
         return doThrow(
           `path should be a ${r} string, but got "${originalPath}"`,
@@ -2138,7 +2138,7 @@ var require_ignore = __commonJS({
       }
       return true;
     };
-    var isNotRelative = (path12) => REGEX_TEST_INVALID_PATH.test(path12);
+    var isNotRelative = (path14) => REGEX_TEST_INVALID_PATH.test(path14);
     checkPath.isNotRelative = isNotRelative;
     checkPath.convert = (p) => p;
     var Ignore = class {
@@ -2168,19 +2168,19 @@ var require_ignore = __commonJS({
       }
       // @returns {TestResult}
       _test(originalPath, cache, checkUnignored, slices) {
-        const path12 = originalPath && checkPath.convert(originalPath);
+        const path14 = originalPath && checkPath.convert(originalPath);
         checkPath(
-          path12,
+          path14,
           originalPath,
           this._strictPathCheck ? throwError : RETURN_FALSE
         );
-        return this._t(path12, cache, checkUnignored, slices);
+        return this._t(path14, cache, checkUnignored, slices);
       }
-      checkIgnore(path12) {
-        if (!REGEX_TEST_TRAILING_SLASH.test(path12)) {
-          return this.test(path12);
+      checkIgnore(path14) {
+        if (!REGEX_TEST_TRAILING_SLASH.test(path14)) {
+          return this.test(path14);
         }
-        const slices = path12.split(SLASH).filter(Boolean);
+        const slices = path14.split(SLASH).filter(Boolean);
         slices.pop();
         if (slices.length) {
           const parent = this._t(
@@ -2193,18 +2193,18 @@ var require_ignore = __commonJS({
             return parent;
           }
         }
-        return this._rules.test(path12, false, MODE_CHECK_IGNORE);
+        return this._rules.test(path14, false, MODE_CHECK_IGNORE);
       }
-      _t(path12, cache, checkUnignored, slices) {
-        if (path12 in cache) {
-          return cache[path12];
+      _t(path14, cache, checkUnignored, slices) {
+        if (path14 in cache) {
+          return cache[path14];
         }
         if (!slices) {
-          slices = path12.split(SLASH).filter(Boolean);
+          slices = path14.split(SLASH).filter(Boolean);
         }
         slices.pop();
         if (!slices.length) {
-          return cache[path12] = this._rules.test(path12, checkUnignored, MODE_IGNORE);
+          return cache[path14] = this._rules.test(path14, checkUnignored, MODE_IGNORE);
         }
         const parent = this._t(
           slices.join(SLASH) + SLASH,
@@ -2212,29 +2212,29 @@ var require_ignore = __commonJS({
           checkUnignored,
           slices
         );
-        return cache[path12] = parent.ignored ? parent : this._rules.test(path12, checkUnignored, MODE_IGNORE);
+        return cache[path14] = parent.ignored ? parent : this._rules.test(path14, checkUnignored, MODE_IGNORE);
       }
-      ignores(path12) {
-        return this._test(path12, this._ignoreCache, false).ignored;
+      ignores(path14) {
+        return this._test(path14, this._ignoreCache, false).ignored;
       }
       createFilter() {
-        return (path12) => !this.ignores(path12);
+        return (path14) => !this.ignores(path14);
       }
       filter(paths) {
         return makeArray(paths).filter(this.createFilter());
       }
       // @returns {TestResult}
-      test(path12) {
-        return this._test(path12, this._testCache, true);
+      test(path14) {
+        return this._test(path14, this._testCache, true);
       }
     };
     var factory = (options) => new Ignore(options);
-    var isPathValid = (path12) => checkPath(path12 && checkPath.convert(path12), path12, RETURN_FALSE);
+    var isPathValid = (path14) => checkPath(path14 && checkPath.convert(path14), path14, RETURN_FALSE);
     var setupWindows = () => {
       const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
       checkPath.convert = makePosix;
       const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
-      checkPath.isNotRelative = (path12) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path12) || isNotRelative(path12);
+      checkPath.isNotRelative = (path14) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path14) || isNotRelative(path14);
     };
     if (
       // Detect `process` so that it can run in browsers.
@@ -2251,7 +2251,7 @@ var require_ignore = __commonJS({
 
 // ../../packages/project-memory-core/src/cli.ts
 import { spawnSync as spawnSync3 } from "child_process";
-import { readFileSync as readFileSync9 } from "fs";
+import { readFileSync as readFileSync11 } from "fs";
 import { pathToFileURL as pathToFileURL3 } from "url";
 
 // ../../packages/project-memory-core/src/desktop-integration.ts
@@ -3200,7 +3200,7 @@ function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
 }
 
 // ../../packages/project-memory-core/src/integration.ts
-var INTEGRATION_VERSION = "0.14.4";
+var INTEGRATION_VERSION = "0.14.5";
 var INTEGRATION_SCHEMA_VERSION = 1;
 var RULE_START = "<!-- project-memory:start -->";
 var RULE_END = "<!-- project-memory:end -->";
@@ -3728,7 +3728,7 @@ function removeClaudeIntegration(options = {}) {
 // ../../packages/project-memory-core/src/desktop-integration.ts
 var DESKTOP_MARKETPLACE = "project-memory-desktop";
 var PLUGIN_NAME = "codex-project-memory";
-var DEFAULT_VERSION = "0.14.4";
+var DEFAULT_VERSION = "0.14.5";
 function integrationDataRoot(options) {
   if (options.dataRoot) return path6.resolve(options.dataRoot);
   if (options.homeDir) {
@@ -4686,8 +4686,8 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   <key>CFBundleIdentifier</key><string>com.wangxuezhi.talo</string>
   <key>CFBundleName</key><string>Talo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.14.4</string>
-  <key>CFBundleVersion</key><string>1404</string>
+  <key>CFBundleShortVersionString</key><string>0.14.5</string>
+  <key>CFBundleVersion</key><string>1405</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>TaloCLI</key><string>${xmlText(options.cliPath)}</string>
@@ -4761,8 +4761,251 @@ function removeShortcut(options = {}) {
 }
 
 // ../../packages/project-memory-core/src/service.ts
-import path10, { basename } from "path";
+import path12, { basename } from "path";
 import { pathToFileURL as pathToFileURL2 } from "url";
+
+// ../../packages/project-memory-core/src/agents-bridge.ts
+import {
+  chmodSync as chmodSync6,
+  existsSync as existsSync7,
+  lstatSync as lstatSync3,
+  mkdirSync as mkdirSync5,
+  readFileSync as readFileSync6,
+  renameSync as renameSync6,
+  rmSync as rmSync4,
+  statSync as statSync5,
+  writeFileSync as writeFileSync6
+} from "fs";
+import path8 from "path";
+var POLICY_START = "<!-- TALO_MANAGED_POLICY_START -->";
+var POLICY_END = "<!-- TALO_MANAGED_POLICY_END -->";
+function hashFile(filePath) {
+  return sha256(readFileSync6(filePath));
+}
+function parseManagedBlock(content) {
+  const positions = (marker) => {
+    const found = [];
+    let offset = 0;
+    while (true) {
+      const index = content.indexOf(marker, offset);
+      if (index < 0) return found;
+      found.push(index);
+      offset = index + marker.length;
+    }
+  };
+  const starts = positions(POLICY_START);
+  const ends = positions(POLICY_END);
+  if (starts.length === 0 && ends.length === 0) return null;
+  const start = starts[0];
+  const endMarker = ends[0];
+  if (starts.length !== 1 || ends.length !== 1 || start === void 0 || endMarker === void 0 || start > endMarker) {
+    throw new ProjectMemoryError(
+      "AGENTS_MARKERS_INVALID",
+      "Talo Policy markers are incomplete, repeated, or nested."
+    );
+  }
+  const end = endMarker + POLICY_END.length;
+  return { start, end, block: content.slice(start, end) };
+}
+function fileInfo(filePath, root, ownership) {
+  const exists = existsSync7(filePath);
+  const scope = path8.resolve(filePath) === path8.join(path8.resolve(root), "AGENTS.md") ? "project-root" : "ancestor";
+  if (!exists)
+    return {
+      path: filePath,
+      exists: false,
+      scope,
+      ownership,
+      wholeFileHash: null,
+      managedBlockHash: null,
+      managedBlock: null
+    };
+  if (!lstatSync3(filePath).isFile())
+    throw new ProjectMemoryError("AGENTS_NOT_WRITABLE", "AGENTS.md must be a regular file.", {
+      path: filePath
+    });
+  const content = readFileSync6(filePath, "utf8");
+  const block = parseManagedBlock(content);
+  return {
+    path: filePath,
+    exists: true,
+    scope,
+    ownership,
+    wholeFileHash: hashFile(filePath),
+    managedBlockHash: block ? sha256(block.block) : null,
+    managedBlock: block?.block ?? null
+  };
+}
+function discoverAgents(projectRoot, currentPath = projectRoot, ownership = "unknown") {
+  const root = path8.resolve(projectRoot);
+  const targetPath = path8.join(root, "AGENTS.md");
+  const affected = [];
+  let cursor = path8.resolve(currentPath);
+  while (true) {
+    const candidate = path8.join(cursor, "AGENTS.md");
+    if (existsSync7(candidate) && path8.resolve(candidate) !== path8.resolve(targetPath)) {
+      const info = fileInfo(candidate, root, "unknown");
+      info.scope = cursor === root ? "project-root" : path8.relative(root, cursor).startsWith("..") ? "ancestor" : "nested";
+      affected.push(info);
+    }
+    const parent = path8.dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+    if (path8.relative(root, cursor).startsWith("..")) {
+      const candidateAbove = path8.join(cursor, "AGENTS.md");
+      if (existsSync7(candidateAbove)) affected.push(fileInfo(candidateAbove, root, "unknown"));
+      break;
+    }
+  }
+  const target = fileInfo(targetPath, root, ownership);
+  const potentialConflicts = affected.length > 0 ? affected.map((info) => `AGENTS.md may also apply: ${info.path}`) : [];
+  return { projectRoot: root, target, affected, potentialConflicts };
+}
+function renderPolicyBlock(policy) {
+  const lines = [
+    POLICY_START,
+    "\u7531 Talo \u7BA1\u7406\u3002\u8BF7\u52FF\u624B\u5DE5\u4FEE\u6539\u672C\u533A\u5757\u3002",
+    `Project: ${policy.projectId}`,
+    `Policy: ${policy.policyId}`,
+    `Policy version: ${policy.version}`,
+    `Synced at: ${policy.bridge.lastSyncedAt ?? (/* @__PURE__ */ new Date()).toISOString()}`,
+    `Source fingerprint: ${policy.sourceFingerprint}`,
+    "",
+    "## Required actions",
+    ...policy.rules.flatMap((rule) => rule.requiredActions.map((item) => `- ${item}`)),
+    "",
+    "## Forbidden actions",
+    ...policy.rules.flatMap((rule) => rule.forbiddenActions.map((item) => `- ${item}`)),
+    "",
+    "## Trigger topics",
+    ...policy.rules.flatMap((rule) => rule.triggerTopics.map((item) => `- ${item}`)),
+    POLICY_END
+  ];
+  return lines.join("\n");
+}
+function replaceBlock(content, block) {
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const normalized = block.replaceAll("\n", newline);
+  const located = parseManagedBlock(content);
+  if (located)
+    return `${content.slice(0, located.start)}${normalized}${content.slice(located.end)}`;
+  const prefix = content.trimEnd();
+  return prefix ? `${prefix}${newline}${newline}${normalized}${newline}` : `${normalized}${newline}`;
+}
+function writeAtomic2(filePath, content, mode) {
+  mkdirSync5(path8.dirname(filePath), { recursive: true });
+  const temporary = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync6(temporary, content, { encoding: "utf8", mode });
+    if (process.platform !== "win32") chmodSync6(temporary, mode);
+    renameSync6(temporary, filePath);
+    if (process.platform !== "win32") chmodSync6(filePath, mode);
+  } finally {
+    rmSync4(temporary, { force: true });
+  }
+}
+function withAgentsLock(projectRoot, action) {
+  const lockPath = `${path8.join(path8.resolve(projectRoot), "AGENTS.md")}.talo.lock`;
+  try {
+    mkdirSync5(lockPath, { mode: 448 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    try {
+      if (Date.now() - statSync5(lockPath).mtimeMs > 5 * 60 * 1e3) {
+        rmSync4(lockPath, { recursive: true, force: true });
+        mkdirSync5(lockPath, { mode: 448 });
+      } else {
+        throw new ProjectMemoryError(
+          "PROJECT_LOCKED",
+          "Another Talo process is synchronizing AGENTS.md.",
+          { lockPath }
+        );
+      }
+    } catch (lockError) {
+      if (lockError instanceof ProjectMemoryError) throw lockError;
+      throw new ProjectMemoryError(
+        "PROJECT_LOCKED",
+        "Another Talo process is synchronizing AGENTS.md.",
+        { lockPath }
+      );
+    }
+  }
+  try {
+    return action();
+  } finally {
+    rmSync4(lockPath, { recursive: true, force: true });
+  }
+}
+function syncAgentsPolicy(projectRoot, policy, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path8.join(path8.resolve(projectRoot), "AGENTS.md");
+    if (existsSync7(targetPath) && lstatSync3(targetPath).isSymbolicLink()) {
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not write through an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    }
+    const discovery = discoverAgents(projectRoot, projectRoot, ownership);
+    const existedBefore = existsSync7(targetPath);
+    const previous = existsSync7(targetPath) ? readFileSync6(targetPath, "utf8") : "";
+    const currentHash = existsSync7(targetPath) ? hashFile(targetPath) : null;
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash) {
+      throw new ProjectMemoryError("AGENTS_DRIFTED", "AGENTS.md changed before synchronization.", {
+        path: targetPath,
+        expectedWholeFileHash,
+        currentWholeFileHash: currentHash
+      });
+    }
+    const block = renderPolicyBlock(policy);
+    const next = replaceBlock(previous, block);
+    const mode = existsSync7(targetPath) ? statSync5(targetPath).mode & 511 : 420;
+    const changed = next !== previous;
+    if (changed) writeAtomic2(targetPath, next, mode);
+    const wholeFileHash = hashFile(targetPath);
+    const managedBlockHash = sha256(block.replaceAll("\n", next.includes("\r\n") ? "\r\n" : "\n"));
+    return {
+      path: targetPath,
+      changed,
+      wholeFileHash,
+      managedBlockHash,
+      ownership: existedBefore ? ownership : "talo_created",
+      potentialConflicts: discovery.potentialConflicts
+    };
+  });
+}
+function removeAgentsPolicy(projectRoot, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path8.join(path8.resolve(projectRoot), "AGENTS.md");
+    if (!existsSync7(targetPath)) return { removedBlock: false, deletedFile: false };
+    if (lstatSync3(targetPath).isSymbolicLink())
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not remove an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    const currentHash = hashFile(targetPath);
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash)
+      throw new ProjectMemoryError(
+        "AGENTS_DRIFTED",
+        "AGENTS.md changed before disabling the bridge.",
+        { path: targetPath }
+      );
+    const content = readFileSync6(targetPath, "utf8");
+    const located = parseManagedBlock(content);
+    if (!located) return { removedBlock: false, deletedFile: false };
+    const before = content.slice(0, located.start);
+    const after = content.slice(located.end);
+    const newline = content.includes("\r\n") ? "\r\n" : "\n";
+    const next = `${before.trimEnd()}${before.trim() && after.trim() ? newline : ""}${after.trimStart()}`;
+    if (ownership === "talo_created" && !next.trim()) {
+      rmSync4(targetPath);
+      return { removedBlock: true, deletedFile: true };
+    }
+    writeAtomic2(targetPath, next ? `${next}${newline}` : "", statSync5(targetPath).mode & 511);
+    return { removedBlock: true, deletedFile: false };
+  });
+}
 
 // ../../packages/project-memory-core/src/display-title.ts
 var FALLBACK_ROLES = {
@@ -5746,15 +5989,15 @@ function renderMemoryHubHtml(hub) {
 // ../../packages/project-memory-core/src/platform-projects.ts
 import {
   closeSync,
-  existsSync as existsSync7,
+  existsSync as existsSync8,
   openSync,
   readdirSync as readdirSync5,
-  readFileSync as readFileSync6,
+  readFileSync as readFileSync7,
   readSync,
-  statSync as statSync5
+  statSync as statSync6
 } from "fs";
 import { homedir as homedir6 } from "os";
-import path8 from "path";
+import path9 from "path";
 import { fileURLToPath } from "url";
 var MAX_CODEX_SESSION_FILES = 2e3;
 var MAX_SESSION_META_BYTES = 256 * 1024;
@@ -5773,7 +6016,7 @@ function readFirstLine(filePath) {
   }
 }
 function listFiles(root, depth = 0, result = []) {
-  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync7(root)) return result;
+  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync8(root)) return result;
   let entries;
   try {
     entries = readdirSync5(root, { encoding: "utf8", withFileTypes: true });
@@ -5782,16 +6025,16 @@ function listFiles(root, depth = 0, result = []) {
   }
   for (const entry of entries) {
     if (result.length >= MAX_CODEX_SESSION_FILES) break;
-    const entryPath = path8.join(root, entry.name);
+    const entryPath = path9.join(root, entry.name);
     if (entry.isDirectory()) listFiles(entryPath, depth + 1, result);
     else if (entry.isFile() && entry.name.endsWith(".jsonl")) result.push(entryPath);
   }
   return result;
 }
-function normalizeProjectPath(inputPath) {
+function normalizeProject(inputPath) {
   try {
-    if (!existsSync7(inputPath) || !statSync5(inputPath).isDirectory()) return null;
-    return detectGitMetadata(inputPath).rootPath;
+    if (!existsSync8(inputPath) || !statSync6(inputPath).isDirectory()) return null;
+    return detectGitMetadata(inputPath);
   } catch {
     return null;
   }
@@ -5805,8 +6048,8 @@ function addCandidate(candidates, candidate) {
 }
 function scanCodexProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path8.join(homeDir, ".codex");
-  const sessionRoot = path8.join(codexHome, "sessions");
+  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path9.join(homeDir, ".codex");
+  const sessionRoot = path9.join(codexHome, "sessions");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -5826,23 +6069,25 @@ function scanCodexProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "codex",
       platformProjectId: session.platformProjectId,
-      name: path8.basename(projectPath),
-      path: projectPath,
+      name: path9.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "codex-session"
+      source: "codex-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
 }
 function scanAntigravityProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path8.join(homeDir, ".gemini");
-  const configRoot2 = path8.join(geminiHome, "config", "projects");
+  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path9.join(homeDir, ".gemini");
+  const configRoot2 = path9.join(geminiHome, "config", "projects");
   const candidates = /* @__PURE__ */ new Map();
   let entries;
   try {
@@ -5852,9 +6097,9 @@ function scanAntigravityProjects(options) {
   }
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
-    const filePath = path8.join(configRoot2, entry.name);
+    const filePath = path9.join(configRoot2, entry.name);
     try {
-      const config = JSON.parse(readFileSync6(filePath, "utf8"));
+      const config = JSON.parse(readFileSync7(filePath, "utf8"));
       for (const resource of config.projectResources?.resources ?? []) {
         if (typeof resource.folderUri !== "string") continue;
         let requestedPath;
@@ -5863,15 +6108,17 @@ function scanAntigravityProjects(options) {
         } catch {
           continue;
         }
-        const projectPath = normalizeProjectPath(requestedPath);
-        if (!projectPath) continue;
+        const project = normalizeProject(requestedPath);
+        if (!project) continue;
         addCandidate(candidates, {
           platform: "antigravity",
-          platformProjectId: config.id ?? path8.basename(entry.name, ".json"),
-          name: config.name?.trim() || path8.basename(projectPath),
-          path: projectPath,
+          platformProjectId: config.id ?? path9.basename(entry.name, ".json"),
+          name: config.name?.trim() || path9.basename(project.rootPath),
+          path: project.rootPath,
           lastSeenAt: config.updatedAt ?? null,
-          source: "antigravity-config"
+          source: "antigravity-config",
+          gitCommonDir: project.gitCommonDir,
+          remoteUrl: project.remoteUrl
         });
       }
     } catch {
@@ -5881,8 +6128,8 @@ function scanAntigravityProjects(options) {
 }
 function scanClaudeProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path8.join(homeDir, ".claude");
-  const sessionRoot = path8.join(claudeHome, "projects");
+  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path9.join(homeDir, ".claude");
+  const sessionRoot = path9.join(claudeHome, "projects");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -5912,15 +6159,17 @@ function scanClaudeProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "claude",
       platformProjectId: session.platformProjectId,
-      name: path8.basename(projectPath),
-      path: projectPath,
+      name: path9.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "claude-session"
+      source: "claude-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
@@ -5937,11 +6186,19 @@ function discoverDesktopPlatformProjects(options = {}) {
 }
 function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjects) {
   const hubById = new Map(hubProjects.map((project) => [project.projectId, project]));
-  const registeredByPath = new Map(
-    registeredProjects.map((project) => [project.primaryPath, project])
-  );
-  const projects = candidates.map((candidate) => {
-    const registered = registeredByPath.get(candidate.path) ?? null;
+  const uniqueCandidates = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const identity = candidate.gitCommonDir ? `git:${candidate.gitCommonDir}` : candidate.remoteUrl ? `remote:${candidate.remoteUrl}` : `path:${candidate.path}`;
+    const key = `${candidate.platform}:${identity}`;
+    const existing = uniqueCandidates.get(key);
+    if (!existing || (candidate.lastSeenAt ?? "") > (existing.lastSeenAt ?? "")) {
+      uniqueCandidates.set(key, candidate);
+    }
+  }
+  const projects = [...uniqueCandidates.values()].map((candidate) => {
+    const registered = registeredProjects.find(
+      (project) => project.primaryPath === candidate.path || candidate.gitCommonDir !== null && project.gitCommonDir === candidate.gitCommonDir || candidate.remoteUrl !== null && project.remoteUrl === candidate.remoteUrl
+    ) ?? null;
     const hubProject = registered ? hubById.get(registered.id) : null;
     return {
       ...candidate,
@@ -5966,10 +6223,140 @@ function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjec
   return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), platforms: groups };
 }
 
+// ../../packages/project-memory-core/src/policy.ts
+import { randomUUID } from "crypto";
+import {
+  chmodSync as chmodSync7,
+  existsSync as existsSync9,
+  lstatSync as lstatSync4,
+  mkdirSync as mkdirSync6,
+  readFileSync as readFileSync8,
+  renameSync as renameSync7,
+  rmSync as rmSync5,
+  writeFileSync as writeFileSync7
+} from "fs";
+import path10 from "path";
+var POLICY_SCHEMA_VERSION = 1;
+function policyPath(projectDir) {
+  return path10.join(projectDir, "policy.json");
+}
+function readPolicy(filePath) {
+  if (!existsSync9(filePath)) return null;
+  try {
+    const value = JSON.parse(readFileSync8(filePath, "utf8"));
+    if (value.schemaVersion !== POLICY_SCHEMA_VERSION || typeof value.policyId !== "string" || typeof value.projectId !== "string" || !Number.isInteger(value.version) || !Array.isArray(value.rules) || !Array.isArray(value.sources) || !value.bridge) {
+      throw new Error("invalid policy shape");
+    }
+    return value;
+  } catch (error) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy is invalid.", {
+      path: filePath,
+      cause: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+function writePolicy(filePath, policy) {
+  mkdirSync6(path10.dirname(filePath), { recursive: true, mode: 448 });
+  const temporary = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    writeFileSync7(temporary, `${JSON.stringify(policy, null, 2)}
+`, {
+      encoding: "utf8",
+      mode: 384
+    });
+    chmodSync7(temporary, 384);
+    renameSync7(temporary, filePath);
+    chmodSync7(filePath, 384);
+  } finally {
+    rmSync5(temporary, { force: true });
+  }
+}
+function validatePolicyInput(input) {
+  if (!input.summary.trim() || input.summary.length > 1e3) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Policy summary must be 1-1000 characters.");
+  }
+  if (input.rules.length > 50) {
+    throw new ProjectMemoryError("INVALID_INPUT", "A Policy can contain at most 50 rules.");
+  }
+  for (const rule of input.rules) {
+    if (!rule.id.trim() || rule.id.length > 120 || !Number.isInteger(rule.priority)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Policy rule metadata is invalid.");
+    }
+    for (const text2 of [...rule.triggerTopics, ...rule.requiredActions, ...rule.forbiddenActions]) {
+      assertNoSecret(text2, "policy rule");
+      if (text2.length > 500)
+        throw new ProjectMemoryError("INVALID_INPUT", "Policy rule text is too long.");
+    }
+  }
+}
+function updatePolicyRecord(current, project, input) {
+  validatePolicyInput(input);
+  if (current && input.expectedVersion !== void 0 && input.expectedVersion !== current.version) {
+    throw new ProjectMemoryError(
+      "POLICY_VERSION_CONFLICT",
+      "Policy version changed before this edit was saved.",
+      {
+        expectedVersion: input.expectedVersion,
+        currentVersion: current.version
+      }
+    );
+  }
+  const now2 = (/* @__PURE__ */ new Date()).toISOString();
+  const sources = input.sources ?? [];
+  const sourceFingerprint = sha256(JSON.stringify(sources));
+  return {
+    schemaVersion: POLICY_SCHEMA_VERSION,
+    policyId: current?.policyId ?? randomUUID(),
+    projectId: current?.projectId ?? project.registeredProject?.id ?? "",
+    version: (current?.version ?? 0) + 1,
+    status: current?.bridge.enabled ? "pending_sync" : "disabled",
+    summary: input.summary.trim(),
+    rules: input.rules,
+    sources,
+    sourceFingerprint,
+    createdAt: current?.createdAt ?? now2,
+    updatedAt: now2,
+    updatedBy: input.actor,
+    bridge: current?.bridge ?? {
+      enabled: false,
+      consentAt: null,
+      targetPath: path10.join(project.rootPath, "AGENTS.md"),
+      fileOwnership: "preexisting",
+      createdFileHash: null,
+      lastWholeFileHash: null,
+      lastManagedBlockHash: null,
+      lastSyncedPolicyVersion: null,
+      lastSyncedAt: null,
+      syncStatus: "disabled",
+      lastError: null
+    }
+  };
+}
+function policySourceIsCurrent(project, source) {
+  if (source.kind !== "file" || !source.path) return true;
+  const target = path10.resolve(project.rootPath, source.path);
+  if (path10.isAbsolute(source.path) || path10.relative(project.rootPath, target).startsWith(".."))
+    return false;
+  if (!existsSync9(target) || !lstatSync4(target).isFile()) return false;
+  return sha256(readFileSync8(target)) === source.fileHash;
+}
+function assertPolicySourcesCurrent(project, policy) {
+  const stale = policy.sources.filter((source) => !policySourceIsCurrent(project, source));
+  if (stale.length > 0) {
+    throw new ProjectMemoryError(
+      "POLICY_SOURCE_STALE",
+      "A Policy source file changed or was removed.",
+      {
+        sources: stale.map((source) => ({ path: source.path, fileHash: source.fileHash }))
+      }
+    );
+  }
+}
+
 // ../../packages/project-memory-core/src/view.ts
 import { createHash as createHash4 } from "crypto";
-import { existsSync as existsSync8, readFileSync as readFileSync7 } from "fs";
-import path9 from "path";
+import { existsSync as existsSync10, readFileSync as readFileSync9 } from "fs";
+import path11 from "path";
 import { fileURLToPath as fileURLToPath2, pathToFileURL } from "url";
 
 // ../../packages/project-memory-core/src/event-metadata.ts
@@ -6406,18 +6793,18 @@ function htmlAttribute(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 function browserAsset(name) {
-  const moduleDir = path9.dirname(fileURLToPath2(import.meta.url));
+  const moduleDir = path11.dirname(fileURLToPath2(import.meta.url));
   const candidates = [
-    path9.join(moduleDir, "browser", name),
-    path9.resolve(moduleDir, "..", "dist", "browser", name),
-    path9.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
-    path9.resolve(process.cwd(), "dist", "browser", name)
+    path11.join(moduleDir, "browser", name),
+    path11.resolve(moduleDir, "..", "dist", "browser", name),
+    path11.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
+    path11.resolve(process.cwd(), "dist", "browser", name)
   ];
-  const assetPath = candidates.find((candidate) => existsSync8(candidate));
+  const assetPath = candidates.find((candidate) => existsSync10(candidate));
   if (!assetPath) {
     throw new Error(`Browser asset ${name} is missing. Run pnpm build:browser first.`);
   }
-  return readFileSync7(assetPath, "utf8");
+  return readFileSync9(assetPath, "utf8");
 }
 function contentHash(value) {
   return createHash4("sha256").update(value).digest("base64");
@@ -6607,8 +6994,8 @@ var ProjectMemoryService = class {
       name: projectName,
       primaryPath: detected.rootPath,
       isGit: detected.isGit,
-      gitCommonDir: detected.gitCommonDir,
-      remoteUrl: detected.remoteUrl,
+      gitCommonDir: detected.gitCommonDir ?? null,
+      remoteUrl: detected.remoteUrl ?? null,
       headCommit: detected.headCommit,
       ...relinkProjectId ? { relinkProjectId } : {}
     });
@@ -6629,8 +7016,190 @@ var ProjectMemoryService = class {
       currentDetection: current,
       pendingProposals: this.store.countPendingProposals(projectId),
       memoryCount: memories.length,
-      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null
+      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null,
+      policy: this.policyStatus(projectId)
     };
+  }
+  policyStatus(projectId) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy)
+      return { status: "unconfigured", policy: null, agents: discoverAgents(project.primaryPath) };
+    let sourceStatus = "current";
+    try {
+      assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    } catch {
+      sourceStatus = "stale";
+    }
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const drifted = policy.bridge.lastWholeFileHash && agents.target.wholeFileHash !== policy.bridge.lastWholeFileHash;
+    return {
+      status: sourceStatus === "stale" ? "stale" : drifted ? "drifted" : policy.status,
+      policy,
+      agents
+    };
+  }
+  updatePolicy(projectId, input) {
+    const project = this.store.requireProject(projectId);
+    const detected = this.detectProject(project.primaryPath);
+    const next = updatePolicyRecord(this.store.getPolicy(projectId), detected, input);
+    const saved = this.store.savePolicy(projectId, next);
+    if (saved.bridge.enabled) {
+      this.syncPolicyBridge(projectId);
+      return this.store.getPolicy(projectId) ?? saved;
+    }
+    return saved;
+  }
+  enablePolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Enabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy || policy.version < 1)
+      throw new ProjectMemoryError(
+        "POLICY_NOT_CONFIGURED",
+        "Create a Project Policy before enabling the bridge."
+      );
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const ownership = agents.target.exists ? policy.bridge.fileOwnership === "talo_created" ? "talo_created" : "preexisting" : "talo_created";
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        enabled: true,
+        consentAt: policy.bridge.consentAt ?? (/* @__PURE__ */ new Date()).toISOString(),
+        fileOwnership: ownership,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    const result = syncAgentsPolicy(
+      project.primaryPath,
+      pending,
+      ownership,
+      agents.target.wholeFileHash
+    );
+    const effective = {
+      ...pending,
+      status: "effective",
+      bridge: {
+        ...pending.bridge,
+        syncStatus: "in_sync",
+        lastWholeFileHash: result.wholeFileHash,
+        lastManagedBlockHash: result.managedBlockHash,
+        lastSyncedPolicyVersion: pending.version,
+        lastSyncedAt: pending.bridge.lastSyncedAt
+      }
+    };
+    this.store.savePolicy(projectId, effective, "policy_bridge_enabled");
+    return { policy: effective, sync: result };
+  }
+  syncPolicyBridge(projectId, acceptDrift = false) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy?.bridge.enabled)
+      throw new ProjectMemoryError("POLICY_NOT_CONFIGURED", "Policy bridge is not enabled.");
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: policy.bridge.lastSyncedPolicyVersion === policy.version ? policy.bridge.lastSyncedAt : (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    this.store.savePolicy(projectId, pending, "policy_sync_started");
+    try {
+      const result = syncAgentsPolicy(
+        project.primaryPath,
+        pending,
+        pending.bridge.fileOwnership,
+        acceptDrift ? null : pending.bridge.lastWholeFileHash
+      );
+      const effective = {
+        ...pending,
+        status: "effective",
+        bridge: {
+          ...pending.bridge,
+          syncStatus: "in_sync",
+          lastWholeFileHash: result.wholeFileHash,
+          lastManagedBlockHash: result.managedBlockHash,
+          lastSyncedPolicyVersion: pending.version
+        }
+      };
+      this.store.savePolicy(projectId, effective, "policy_synced");
+      return { policy: effective, sync: result };
+    } catch (error) {
+      const normalized = error instanceof ProjectMemoryError ? { code: error.code, message: error.message, details: error.details } : { code: "STORAGE_ERROR", message: String(error), details: {} };
+      const failed = {
+        ...pending,
+        status: "failed",
+        bridge: { ...pending.bridge, syncStatus: "failed", lastError: normalized }
+      };
+      this.store.savePolicy(projectId, failed, "policy_sync_failed");
+      throw error;
+    }
+  }
+  repairPolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Repairing the Policy bridge requires explicit confirmation."
+      );
+    return this.syncPolicyBridge(projectId, true);
+  }
+  disablePolicyBridge(projectId, confirmed, removeCreatedFile = false) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Disabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy) return { status: "unconfigured", disabled: false };
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const currentHash = agents.target.wholeFileHash;
+    const userChanged = Boolean(
+      policy.bridge.lastWholeFileHash && currentHash && currentHash !== policy.bridge.lastWholeFileHash
+    );
+    const ownership = userChanged ? "user_claimed" : policy.bridge.fileOwnership;
+    const removed = userChanged ? { removedBlock: false, deletedFile: false } : removeAgentsPolicy(
+      project.primaryPath,
+      ownership === "talo_created" && removeCreatedFile ? "talo_created" : "preexisting",
+      currentHash
+    );
+    const disabled = {
+      ...policy,
+      status: "disabled",
+      bridge: {
+        ...policy.bridge,
+        enabled: false,
+        fileOwnership: ownership,
+        syncStatus: "disabled"
+      }
+    };
+    this.store.savePolicy(projectId, disabled, "policy_bridge_disabled");
+    return { policy: disabled, removed };
   }
   linkProjects(sourceProjectId, targetProjectId) {
     this.store.linkProjects(sourceProjectId, targetProjectId);
@@ -6721,7 +7290,7 @@ var ProjectMemoryService = class {
         stale,
         staleReason: stale ? "source_file_changed" : null,
         accessible: true,
-        fileUrl: pathToFileURL2(path10.resolve(metadata.rootPath, current.path)).href
+        fileUrl: pathToFileURL2(path12.resolve(metadata.rootPath, current.path)).href
       };
     } catch {
       return {
@@ -7727,6 +8296,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview: brief.handoff.coverage,
         latestActivityAt: latest?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest?.displayTitle ?? null,
@@ -7800,6 +8371,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview,
         latestActivityAt: latest?.narrative?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest ? buildMemoryDisplayTitle(latest) : null,
@@ -7852,7 +8425,7 @@ var ProjectMemoryService = class {
     return hub;
   }
   registerDesktopPlatformProject(platform, projectPath) {
-    const resolvedPath = path10.resolve(projectPath);
+    const resolvedPath = path12.resolve(projectPath);
     const candidate = discoverDesktopPlatformProjects().find(
       (project) => project.platform === platform && project.path === resolvedPath
     );
@@ -7863,7 +8436,8 @@ var ProjectMemoryService = class {
         { platform, path: resolvedPath }
       );
     }
-    this.registerProject(candidate.path, candidate.name);
+    const existing = this.store.getProjectByPath(candidate.path);
+    if (!existing) this.registerProject(candidate.path, candidate.name);
     return this.buildDesktopHubSnapshot();
   }
   buildDesktopProjectView(projectId) {
@@ -7872,7 +8446,8 @@ var ProjectMemoryService = class {
     const graph = this.buildGraph(projectId, null, 1, false);
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
     const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
-    return buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    const view = buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    return { ...view, policy: this.policyStatus(projectId) };
   }
   writeMemoryHub(regenerateProjectPages = true) {
     const hub = this.buildMemoryHub(regenerateProjectPages);
@@ -7946,43 +8521,43 @@ ${instruction}
 };
 
 // ../../packages/project-memory-core/src/store.ts
-import { createHash as createHash5, randomUUID } from "crypto";
+import { createHash as createHash5, randomUUID as randomUUID2 } from "crypto";
 import {
   appendFileSync,
-  chmodSync as chmodSync6,
-  existsSync as existsSync9,
-  mkdirSync as mkdirSync5,
+  chmodSync as chmodSync8,
+  existsSync as existsSync11,
+  mkdirSync as mkdirSync7,
   readdirSync as readdirSync6,
-  readFileSync as readFileSync8,
-  renameSync as renameSync6,
-  rmSync as rmSync4,
-  statSync as statSync6,
-  writeFileSync as writeFileSync6
+  readFileSync as readFileSync10,
+  renameSync as renameSync8,
+  rmSync as rmSync6,
+  statSync as statSync7,
+  writeFileSync as writeFileSync8
 } from "fs";
-import path11 from "path";
+import path13 from "path";
 var SCHEMA_VERSION = 1;
 var MEMORY_SCHEMA_VERSION = 6;
 function now() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function ensurePrivateDirectory(directory) {
-  mkdirSync5(directory, { recursive: true, mode: 448 });
-  chmodSync6(directory, 448);
+  mkdirSync7(directory, { recursive: true, mode: 448 });
+  chmodSync8(directory, 448);
 }
 function writePrivateFile(filePath, content, hardenDirectory = true) {
   if (hardenDirectory) {
-    ensurePrivateDirectory(path11.dirname(filePath));
+    ensurePrivateDirectory(path13.dirname(filePath));
   } else {
-    mkdirSync5(path11.dirname(filePath), { recursive: true, mode: 448 });
+    mkdirSync7(path13.dirname(filePath), { recursive: true, mode: 448 });
   }
-  const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  const temporaryPath = `${filePath}.${process.pid}.${randomUUID2()}.tmp`;
   try {
-    writeFileSync6(temporaryPath, content, { encoding: "utf8", mode: 384 });
-    chmodSync6(temporaryPath, 384);
-    renameSync6(temporaryPath, filePath);
-    chmodSync6(filePath, 384);
+    writeFileSync8(temporaryPath, content, { encoding: "utf8", mode: 384 });
+    chmodSync8(temporaryPath, 384);
+    renameSync8(temporaryPath, filePath);
+    chmodSync8(filePath, 384);
   } finally {
-    rmSync4(temporaryPath, { force: true });
+    rmSync6(temporaryPath, { force: true });
   }
 }
 function writeJson(filePath, value) {
@@ -7991,7 +8566,7 @@ function writeJson(filePath, value) {
 }
 function readJson(filePath) {
   try {
-    return JSON.parse(readFileSync8(filePath, "utf8"));
+    return JSON.parse(readFileSync10(filePath, "utf8"));
   } catch (error) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Unable to read project memory state.", {
       path: filePath,
@@ -8060,10 +8635,10 @@ ${JSON.stringify(metadata, null, 2)}
 ${sections.join("\n")}`;
 }
 function parseMemoryDocument(filePath, project) {
-  if (!existsSync9(filePath)) {
+  if (!existsSync11(filePath)) {
     return [];
   }
-  const text2 = readFileSync8(filePath, "utf8");
+  const text2 = readFileSync10(filePath, "utf8");
   const frontMatter = text2.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontMatter) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Project MEMORY.md has invalid front matter.", {
@@ -8299,16 +8874,16 @@ var MemoryStore = class {
   locksRoot;
   constructor(dataDir) {
     this.storageRoot = dataDir;
-    this.registryPath = path11.join(dataDir, "registry.json");
-    this.linksPath = path11.join(dataDir, "links.json");
-    this.projectsRoot = path11.join(dataDir, "projects");
-    this.locksRoot = path11.join(dataDir, "locks");
+    this.registryPath = path13.join(dataDir, "registry.json");
+    this.linksPath = path13.join(dataDir, "links.json");
+    this.projectsRoot = path13.join(dataDir, "projects");
+    this.locksRoot = path13.join(dataDir, "locks");
     ensurePrivateDirectory(this.projectsRoot);
     ensurePrivateDirectory(this.locksRoot);
-    if (!existsSync9(this.registryPath)) {
+    if (!existsSync11(this.registryPath)) {
       writeJson(this.registryPath, { schemaVersion: SCHEMA_VERSION, projects: [] });
     }
-    if (!existsSync9(this.linksPath)) {
+    if (!existsSync11(this.linksPath)) {
       writeJson(this.linksPath, { schemaVersion: SCHEMA_VERSION, links: [] });
     }
     this.readRegistry();
@@ -8317,12 +8892,12 @@ var MemoryStore = class {
   close() {
   }
   acquireProjectLock(projectId) {
-    const lockPath = path11.join(this.locksRoot, `${projectId}.lock`);
+    const lockPath = path13.join(this.locksRoot, `${projectId}.lock`);
     const acquire = () => {
       try {
-        mkdirSync5(lockPath, { mode: 448 });
+        mkdirSync7(lockPath, { mode: 448 });
         writePrivateFile(
-          path11.join(lockPath, "owner.json"),
+          path13.join(lockPath, "owner.json"),
           `${JSON.stringify({ pid: process.pid, acquiredAt: now() }, null, 2)}
 `,
           false
@@ -8330,12 +8905,12 @@ var MemoryStore = class {
       } catch (error) {
         const code = error.code;
         if (code !== "EEXIST") throw error;
-        const age = Date.now() - statSync6(lockPath).mtimeMs;
+        const age = Date.now() - statSync7(lockPath).mtimeMs;
         if (age > 5 * 60 * 1e3) {
-          rmSync4(lockPath, { recursive: true, force: true });
-          mkdirSync5(lockPath, { mode: 448 });
+          rmSync6(lockPath, { recursive: true, force: true });
+          mkdirSync7(lockPath, { mode: 448 });
           writePrivateFile(
-            path11.join(lockPath, "owner.json"),
+            path13.join(lockPath, "owner.json"),
             `${JSON.stringify({ pid: process.pid, acquiredAt: now(), recovered: true }, null, 2)}
 `,
             false
@@ -8350,7 +8925,7 @@ var MemoryStore = class {
       }
     };
     acquire();
-    return () => rmSync4(lockPath, { recursive: true, force: true });
+    return () => rmSync6(lockPath, { recursive: true, force: true });
   }
   projectRevision(projectId) {
     const hash2 = createHash5("sha256");
@@ -8359,50 +8934,84 @@ var MemoryStore = class {
       this.relationsPath(projectId),
       this.linksPath
     ]) {
-      hash2.update(path11.basename(filePath));
-      hash2.update(existsSync9(filePath) ? readFileSync8(filePath) : Buffer.from("<missing>"));
+      hash2.update(path13.basename(filePath));
+      hash2.update(existsSync11(filePath) ? readFileSync10(filePath) : Buffer.from("<missing>"));
     }
     return hash2.digest("hex");
   }
   projectDir(projectId) {
-    return path11.join(this.projectsRoot, projectId);
+    return path13.join(this.projectsRoot, projectId);
   }
   projectPath(projectId) {
-    return path11.join(this.projectDir(projectId), "project.json");
+    return path13.join(this.projectDir(projectId), "project.json");
   }
   memoryPath(projectId) {
-    return path11.join(this.projectDir(projectId), "MEMORY.md");
+    return path13.join(this.projectDir(projectId), "MEMORY.md");
+  }
+  policyPath(projectId) {
+    return policyPath(this.projectDir(projectId));
+  }
+  getPolicy(projectId) {
+    this.requireProject(projectId);
+    const current = readPolicy(this.policyPath(projectId));
+    if (current && current.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy belongs to another project.", {
+        path: this.policyPath(projectId),
+        projectId
+      });
+    }
+    return current;
+  }
+  savePolicy(projectId, policy, eventType = "policy_updated") {
+    this.requireProject(projectId);
+    if (policy.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy identity is invalid.", {
+        projectId
+      });
+    }
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      writePolicy(this.policyPath(projectId), policy);
+      this.audit(eventType, projectId, policy.policyId, {
+        version: policy.version,
+        status: policy.status,
+        syncStatus: policy.bridge.syncStatus
+      });
+      return policy;
+    } finally {
+      releaseLock();
+    }
   }
   writeKnowledgeGraph(projectId, content, outputPath) {
     this.requireProject(projectId);
-    const target = outputPath ? path11.resolve(outputPath) : path11.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    const target = outputPath ? path13.resolve(outputPath) : path13.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
     writePrivateFile(target, content, outputPath === void 0);
     return target;
   }
   knowledgeGraphPath(projectId) {
     this.requireProject(projectId);
-    return path11.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    return path13.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
   }
   writeMemoryHub(content, outputPath) {
-    writePrivateFile(path11.resolve(outputPath), content);
-    return path11.resolve(outputPath);
+    writePrivateFile(path13.resolve(outputPath), content);
+    return path13.resolve(outputPath);
   }
   relationsPath(projectId) {
-    return path11.join(this.projectDir(projectId), "RELATIONS.json");
+    return path13.join(this.projectDir(projectId), "RELATIONS.json");
   }
   proposalsDir(projectId) {
-    return path11.join(this.projectDir(projectId), "proposals");
+    return path13.join(this.projectDir(projectId), "proposals");
   }
   proposalPath(projectId, proposalId) {
-    return path11.join(this.proposalsDir(projectId), `${proposalId}.json`);
+    return path13.join(this.proposalsDir(projectId), `${proposalId}.json`);
   }
   auditPath(projectId) {
-    return path11.join(this.projectDir(projectId), "audit.jsonl");
+    return path13.join(this.projectDir(projectId), "audit.jsonl");
   }
   readRelationsDocument(projectId) {
     this.requireProject(projectId);
     const relationsPath = this.relationsPath(projectId);
-    if (!existsSync9(relationsPath)) {
+    if (!existsSync11(relationsPath)) {
       return { schemaVersion: SCHEMA_VERSION, projectId, relations: [] };
     }
     const document = readJson(relationsPath);
@@ -8453,14 +9062,14 @@ var MemoryStore = class {
     }
     const event = { eventType, projectId, subjectId, details, createdAt: now() };
     const auditPath = this.auditPath(projectId);
-    ensurePrivateDirectory(path11.dirname(auditPath));
+    ensurePrivateDirectory(path13.dirname(auditPath));
     appendFileSync(auditPath, `${JSON.stringify(event)}
 `, { encoding: "utf8", mode: 384 });
-    chmodSync6(auditPath, 384);
+    chmodSync8(auditPath, 384);
   }
   getProject(projectId) {
     const projectPath = this.projectPath(projectId);
-    return existsSync9(projectPath) ? readJson(projectPath) : null;
+    return existsSync11(projectPath) ? readJson(projectPath) : null;
   }
   listProjects() {
     return this.readRegistry().projects.map((entry) => this.getProject(entry.id)).filter((project) => Boolean(project)).sort(
@@ -8523,7 +9132,7 @@ var MemoryStore = class {
         this.audit("project_relinked", project2.id, project2.id, { path: input.primaryPath });
         return updated;
       }
-      const id = randomUUID();
+      const id = randomUUID2();
       const project = {
         id,
         name: input.name,
@@ -8631,7 +9240,7 @@ var MemoryStore = class {
     this.requireProject(projectId);
     const releaseLock = this.acquireProjectLock(projectId);
     try {
-      const proposalId = randomUUID();
+      const proposalId = randomUUID2();
       const baseMemorySnapshots = {};
       for (const update of updates) {
         const memory = this.getMemory(update.memoryId);
@@ -8648,20 +9257,20 @@ var MemoryStore = class {
         createdAt: now(),
         reviewedAt: null,
         items: candidates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending"
         })),
         updateItems: updates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
           rejectionReason: null
         })),
         relationItems: relations.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
@@ -8685,7 +9294,7 @@ var MemoryStore = class {
   findProposalPath(proposalId) {
     for (const entry of this.readRegistry().projects) {
       const proposalPath = this.proposalPath(entry.id, proposalId);
-      if (existsSync9(proposalPath)) {
+      if (existsSync11(proposalPath)) {
         return proposalPath;
       }
     }
@@ -8978,7 +9587,7 @@ ${item.candidate.content.trim()}`;
         }
         const candidate = item.candidate;
         const memory = {
-          id: randomUUID(),
+          id: randomUUID2(),
           projectId: project.id,
           projectName: project.name,
           kind: candidate.kind,
@@ -9116,7 +9725,7 @@ ${item.candidate.content.trim()}`;
           continue;
         }
         const relation = {
-          id: randomUUID(),
+          id: randomUUID2(),
           ownerProjectId: project.id,
           fromMemoryId: fromMemory.id,
           fromProjectId: fromMemory.projectId,
@@ -9219,9 +9828,9 @@ ${item.candidate.content.trim()}`;
     if (unresolved.length === 0) return memories;
     const candidatesByKey = /* @__PURE__ */ new Map();
     const directory = this.proposalsDir(projectId);
-    if (existsSync9(directory)) {
+    if (existsSync11(directory)) {
       for (const file of readdirSync6(directory).filter((name) => name.endsWith(".json"))) {
-        const proposal = readJson(path11.join(directory, file));
+        const proposal = readJson(path13.join(directory, file));
         for (const item of proposal.items) {
           if (item.status !== "accepted") continue;
           const key = memoryIdentityKey(item.candidate.title, item.candidate.content);
@@ -9330,16 +9939,16 @@ ${memory.content}`.toLocaleLowerCase();
   countPendingProposals(projectId) {
     this.requireProject(projectId);
     const directory = this.proposalsDir(projectId);
-    if (!existsSync9(directory)) {
+    if (!existsSync11(directory)) {
       return 0;
     }
-    return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path11.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+    return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path13.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
   }
   listProposals(status) {
     return this.listProjects().flatMap((project) => {
       const directory = this.proposalsDir(project.id);
-      if (!existsSync9(directory)) return [];
-      return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path11.join(directory, file))));
+      if (!existsSync11(directory)) return [];
+      return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path13.join(directory, file))));
     }).filter((proposal) => !status || proposal.status === status).sort(
       (left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)
     );
@@ -9490,7 +10099,7 @@ function listOption(args, name) {
 function jsonInput(args) {
   const inline = args.options.get("json");
   const filePath = args.options.get("json-file");
-  const raw = inline ?? (filePath ? readFileSync9(filePath, "utf8") : readFileSync9(0, "utf8"));
+  const raw = inline ?? (filePath ? readFileSync11(filePath, "utf8") : readFileSync11(0, "utf8"));
   if (!raw.trim()) {
     throw new ProjectMemoryError(
       "INVALID_INPUT",
@@ -9570,6 +10179,8 @@ function help() {
       "migrate-home": "migrate-home --from PATH --to PATH",
       shortcut: "shortcut install|remove",
       integration: "integration install|status|repair|remove codex|claude|antigravity",
+      policy: "policy show|update --path PATH|--project-id ID [--json JSON|--json-file FILE|stdin]",
+      "project-integration": "integration status|enable|disable|sync|repair --path PATH|--project-id ID",
       desktop: "desktop hub | desktop project --project-id ID | desktop integrations",
       relations: "relations --memory-id ID [--direction in|out|both] [--types CSV] [--include-linked true]",
       path: "path --from-memory-id ID --to-memory-id ID [--max-depth N] [--include-linked true]",
@@ -9641,6 +10252,25 @@ function runCommand2(argv) {
   if (args.command === "integration") {
     const action = args.positionals[0];
     const platform = args.positionals[1];
+    if (action && ["status", "enable", "disable", "sync", "repair"].includes(action) && !platform) {
+      const service2 = createService();
+      try {
+        const projectId = args.options.get("project-id") ?? registeredProjectId(service2, args.options.get("path") ?? process.cwd());
+        if (action === "status") return service2.policyStatus(projectId);
+        if (action === "enable")
+          return service2.enablePolicyBridge(projectId, args.options.get("confirm") === "true");
+        if (action === "disable")
+          return service2.disablePolicyBridge(
+            projectId,
+            args.options.get("confirm") === "true",
+            args.options.get("remove-created-file") === "true"
+          );
+        if (action === "sync") return service2.syncPolicyBridge(projectId);
+        return service2.repairPolicyBridge(projectId, args.options.get("confirm") === "true");
+      } finally {
+        service2.store.close();
+      }
+    }
     if (!action || !["install", "status", "repair", "remove"].includes(action) || !platform || !["codex", "claude", "antigravity"].includes(platform)) {
       throw new ProjectMemoryError(
         "INVALID_INPUT",
@@ -9710,6 +10340,25 @@ function runCommand2(argv) {
       case "status": {
         const detected = service.detectProject(pathValue);
         return detected.registeredProject ? service.projectStatus(detected.registeredProject.id) : { registered: false, detection: detected };
+      }
+      case "policy": {
+        const action = args.positionals[0];
+        const projectId = args.options.get("project-id") ?? registeredProjectId(service, pathValue);
+        if (action === "show") return service.policyStatus(projectId);
+        if (action === "update") {
+          const input = jsonInput(args);
+          return service.updatePolicy(projectId, {
+            summary: input.summary,
+            rules: input.rules,
+            sources: input.sources,
+            expectedVersion: input.expectedVersion,
+            actor: input.actor ?? {
+              platform: args.options.get("platform") ?? "codex",
+              adapterVersion: args.options.get("adapter-version") ?? null
+            }
+          });
+        }
+        throw new ProjectMemoryError("INVALID_INPUT", "Use `policy show` or `policy update`.");
       }
       case "load":
         return {

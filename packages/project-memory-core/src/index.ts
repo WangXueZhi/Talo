@@ -1,3 +1,4 @@
+export * from "./agents-bridge.js";
 export * from "./brief.js";
 export * from "./codex-access.js";
 export * from "./desktop-integration.js";
@@ -10,6 +11,7 @@ export * from "./integration.js";
 export * from "./launcher.js";
 export * from "./paths.js";
 export * from "./platform-projects.js";
+export * from "./policy.js";
 export * from "./retrieval.js";
 export * from "./service.js";
 export * from "./store.js";

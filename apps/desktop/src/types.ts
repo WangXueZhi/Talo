@@ -68,3 +68,35 @@ export interface DesktopReviewMutationResult {
   pendingProposals: ProposalRecord[];
   hub: MemoryHub;
 }
+
+export interface ProjectPolicyView {
+  status: string;
+  policy: {
+    policyId: string;
+    projectId: string;
+    version: number;
+    status: string;
+    summary: string;
+    rules: Array<{
+      id: string;
+      triggerTopics: string[];
+      requiredActions: string[];
+      forbiddenActions: string[];
+      priority: number;
+    }>;
+    sources: Array<{ kind: string; path: string | null; memoryId: string | null; fileHash: string }>;
+    sourceFingerprint: string;
+    bridge: {
+      enabled: boolean;
+      targetPath: string;
+      fileOwnership: string;
+      syncStatus: string;
+      lastSyncedAt: string | null;
+      lastError: { code: string; message: string } | null;
+    };
+  } | null;
+  agents: {
+    target: { path: string; exists: boolean; wholeFileHash: string | null; managedBlockHash: string | null };
+    potentialConflicts: string[];
+  };
+}

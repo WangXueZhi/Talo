@@ -147,12 +147,18 @@ recall / get / search / load   按预算读取项目上下文
 brief / story / guide          查看现状与完整工作时间线
 relations / graph / path       追溯已审核的因果关系
 propose / commit / reject      审核长期记忆变更
+policy / integration           查看、编辑并同步项目规则桥接
 hub / open / shortcut          离线浏览所有已注册项目
 integration / home             管理平台集成与存储目录
 ```
 
 Adapter Protocol v1 与原有 project-memory 命令保持兼容。迁移期间同时提供 `talo` 和
 `project-memory` 两个启动器。
+
+项目规则桥接默认关闭。明确启用后，Talo 将 Project Policy 的最小摘要同步到项目根目录
+`AGENTS.md` 的 `TALO_MANAGED_POLICY` 受管区块；用户内容保留，策略更新会在后续任务前自动同步。
+可使用 `policy show|update` 和项目级 `integration status|enable|disable|sync|repair` 管理，
+写入操作会输出结构化错误并要求必要确认。
 
 对外产品与仓库名称统一为 **Talo**。Codex 插件 ID `codex-project-memory`、Skill 名称
 `project-memory`、旧 CLI 别名和现有存储路径继续保留，确保已有安装无需迁移即可升级。

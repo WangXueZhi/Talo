@@ -142,6 +142,7 @@ New installations use `~/.project-memory/v1` by default. A sole legacy
 ├── integrations/
 └── projects/<project-id>/
     ├── project.json
+    ├── policy.json
     ├── MEMORY.md
     ├── RELATIONS.json
     ├── audit.jsonl
@@ -156,6 +157,35 @@ A directional link from project B to project A grants B read-only access to allo
 files from A. It does not grant reverse access. All file reads are normalized, constrained to the
 authorized root, checked against deny rules, and protected against symbolic-link escape.
 
+## Project Policy and the AGENTS.md Bridge
+
+Project Policy is the sole source of project rules and is stored separately from ordinary memory and
+proposals. It records the stable project identity, monotonically increasing version, minimal rule
+summary, verified source fingerprints, actor, and synchronization state. Historical memories cannot
+become project rules without review.
+
+After one explicit user confirmation, Talo maintains only the managed block in the project-root
+`AGENTS.md`:
+
+```text
+<!-- TALO_MANAGED_POLICY_START -->
+...
+<!-- TALO_MANAGED_POLICY_END -->
+```
+
+User-authored content outside the block is preserved byte-for-byte. `AGENTS.md` files in ancestors or
+subdirectories are discovered read-only and reported as possible scope conflicts. Writes use a
+project Policy lock, an `AGENTS.md.talo.lock` sidecar, whole-file hash comparison, a temporary file,
+and atomic replacement. Damaged markers, user drift, stale sources, and permission failures fail safe
+instead of silently overwriting content. An enabled Policy update synchronizes automatically and is
+`effective` only after the file write and verification succeed. The current task is not hot-reloaded;
+the next task receives the new version through native `AGENTS.md` loading.
+
+The minimal interface is `policy show|update` plus project-scoped
+`integration status|enable|disable|sync|repair`. Enable, disable, and repair require explicit
+confirmation. Disable preserves the file by default and can delete only an empty Talo-created file
+that has not been claimed by the user.
+
 ## Platform Integrations
 
 ### Codex
@@ -167,8 +197,9 @@ stable, narrowly permissioned launcher for managed-sandbox cases.
 ### Claude Code and Antigravity
 
 Both integrations install generated self-contained Skills that call the same core CLI. Installation
-is user-level and explicit. Registering a project never writes `AGENTS.md`, `GEMINI.md`, or other
-activation files into that project.
+is user-level and explicit. Registering a project never writes project files. Only explicit enablement
+of the Project Policy bridge causes Talo to maintain the root `AGENTS.md` managed block; it does not
+modify `GEMINI.md` or other platform activation files.
 
 ### Generic local agents
 

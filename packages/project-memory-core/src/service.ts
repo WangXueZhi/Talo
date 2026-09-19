@@ -1,5 +1,6 @@
 import path, { basename } from "node:path";
 import { pathToFileURL } from "node:url";
+import { discoverAgents, removeAgentsPolicy, syncAgentsPolicy } from "./agents-bridge.js";
 import { buildProjectBrief } from "./brief.js";
 import type { GraphViewData } from "./browser/types.js";
 import type { AgentPlatform } from "./desktop-integration.js";
@@ -13,6 +14,7 @@ import {
   buildDesktopPlatformInventory,
   discoverDesktopPlatformProjects,
 } from "./platform-projects.js";
+import { assertPolicySourcesCurrent, updatePolicyRecord } from "./policy.js";
 import { buildGetResult, buildRecallResult } from "./retrieval.js";
 import { assertNoSecret, readProjectFile, searchProjectFiles } from "./security.js";
 import type {
@@ -47,6 +49,9 @@ import {
   type MemoryUpdateCandidate,
   type ProjectBrief,
   type ProjectBriefItem,
+  type ProjectPolicyRecord,
+  type ProjectPolicyRule,
+  type ProjectPolicySource,
   type ProjectRecord,
   type ProjectStory,
   type ProposalActor,
@@ -238,8 +243,8 @@ export class ProjectMemoryService {
       name: projectName,
       primaryPath: detected.rootPath,
       isGit: detected.isGit,
-      gitCommonDir: detected.gitCommonDir,
-      remoteUrl: detected.remoteUrl,
+      gitCommonDir: detected.gitCommonDir ?? null,
+      remoteUrl: detected.remoteUrl ?? null,
       headCommit: detected.headCommit,
       ...(relinkProjectId ? { relinkProjectId } : {}),
     });
@@ -262,7 +267,224 @@ export class ProjectMemoryService {
       pendingProposals: this.store.countPendingProposals(projectId),
       memoryCount: memories.length,
       lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null,
+      policy: this.policyStatus(projectId),
     };
+  }
+
+  policyStatus(projectId: string): Record<string, unknown> {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy)
+      return { status: "unconfigured", policy: null, agents: discoverAgents(project.primaryPath) };
+    let sourceStatus: "current" | "stale" = "current";
+    try {
+      assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    } catch {
+      sourceStatus = "stale";
+    }
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership,
+    );
+    const drifted =
+      policy.bridge.lastWholeFileHash &&
+      agents.target.wholeFileHash !== policy.bridge.lastWholeFileHash;
+    return {
+      status: sourceStatus === "stale" ? "stale" : drifted ? "drifted" : policy.status,
+      policy,
+      agents,
+    };
+  }
+
+  updatePolicy(
+    projectId: string,
+    input: {
+      summary: string;
+      rules: ProjectPolicyRule[];
+      sources?: ProjectPolicySource[];
+      actor: ProposalActor;
+      expectedVersion?: number;
+    },
+  ): ProjectPolicyRecord {
+    const project = this.store.requireProject(projectId);
+    const detected = this.detectProject(project.primaryPath);
+    const next = updatePolicyRecord(this.store.getPolicy(projectId), detected, input);
+    const saved = this.store.savePolicy(projectId, next);
+    if (saved.bridge.enabled) {
+      this.syncPolicyBridge(projectId);
+      return this.store.getPolicy(projectId) ?? saved;
+    }
+    return saved;
+  }
+
+  enablePolicyBridge(projectId: string, confirmed: boolean): Record<string, unknown> {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Enabling the Policy bridge requires explicit confirmation.",
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy || policy.version < 1)
+      throw new ProjectMemoryError(
+        "POLICY_NOT_CONFIGURED",
+        "Create a Project Policy before enabling the bridge.",
+      );
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership,
+    );
+    const ownership: ProjectPolicyRecord["bridge"]["fileOwnership"] = agents.target.exists
+      ? policy.bridge.fileOwnership === "talo_created"
+        ? "talo_created"
+        : "preexisting"
+      : "talo_created";
+    const pending = {
+      ...policy,
+      status: "pending_sync" as const,
+      bridge: {
+        ...policy.bridge,
+        enabled: true,
+        consentAt: policy.bridge.consentAt ?? new Date().toISOString(),
+        fileOwnership: ownership,
+        syncStatus: "pending" as const,
+        lastError: null,
+        lastSyncedAt: new Date().toISOString(),
+      },
+    };
+    const result = syncAgentsPolicy(
+      project.primaryPath,
+      pending,
+      ownership,
+      agents.target.wholeFileHash,
+    );
+    const effective = {
+      ...pending,
+      status: "effective" as const,
+      bridge: {
+        ...pending.bridge,
+        syncStatus: "in_sync" as const,
+        lastWholeFileHash: result.wholeFileHash,
+        lastManagedBlockHash: result.managedBlockHash,
+        lastSyncedPolicyVersion: pending.version,
+        lastSyncedAt: pending.bridge.lastSyncedAt,
+      },
+    };
+    this.store.savePolicy(projectId, effective, "policy_bridge_enabled");
+    return { policy: effective, sync: result };
+  }
+
+  syncPolicyBridge(projectId: string, acceptDrift = false): Record<string, unknown> {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy?.bridge.enabled)
+      throw new ProjectMemoryError("POLICY_NOT_CONFIGURED", "Policy bridge is not enabled.");
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const pending = {
+      ...policy,
+      status: "pending_sync" as const,
+      bridge: {
+        ...policy.bridge,
+        syncStatus: "pending" as const,
+        lastError: null,
+        lastSyncedAt:
+          policy.bridge.lastSyncedPolicyVersion === policy.version
+            ? policy.bridge.lastSyncedAt
+            : new Date().toISOString(),
+      },
+    };
+    this.store.savePolicy(projectId, pending, "policy_sync_started");
+    try {
+      const result = syncAgentsPolicy(
+        project.primaryPath,
+        pending,
+        pending.bridge.fileOwnership,
+        acceptDrift ? null : pending.bridge.lastWholeFileHash,
+      );
+      const effective = {
+        ...pending,
+        status: "effective" as const,
+        bridge: {
+          ...pending.bridge,
+          syncStatus: "in_sync" as const,
+          lastWholeFileHash: result.wholeFileHash,
+          lastManagedBlockHash: result.managedBlockHash,
+          lastSyncedPolicyVersion: pending.version,
+        },
+      };
+      this.store.savePolicy(projectId, effective, "policy_synced");
+      return { policy: effective, sync: result };
+    } catch (error) {
+      const normalized =
+        error instanceof ProjectMemoryError
+          ? { code: error.code, message: error.message, details: error.details }
+          : { code: "STORAGE_ERROR", message: String(error), details: {} };
+      const failed = {
+        ...pending,
+        status: "failed" as const,
+        bridge: { ...pending.bridge, syncStatus: "failed" as const, lastError: normalized },
+      };
+      this.store.savePolicy(projectId, failed, "policy_sync_failed");
+      throw error;
+    }
+  }
+
+  repairPolicyBridge(projectId: string, confirmed: boolean): Record<string, unknown> {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Repairing the Policy bridge requires explicit confirmation.",
+      );
+    return this.syncPolicyBridge(projectId, true);
+  }
+
+  disablePolicyBridge(
+    projectId: string,
+    confirmed: boolean,
+    removeCreatedFile = false,
+  ): Record<string, unknown> {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Disabling the Policy bridge requires explicit confirmation.",
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy) return { status: "unconfigured", disabled: false };
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership,
+    );
+    const currentHash = agents.target.wholeFileHash;
+    const userChanged = Boolean(
+      policy.bridge.lastWholeFileHash &&
+        currentHash &&
+        currentHash !== policy.bridge.lastWholeFileHash,
+    );
+    const ownership = userChanged ? "user_claimed" : policy.bridge.fileOwnership;
+    const removed = userChanged
+      ? { removedBlock: false, deletedFile: false }
+      : removeAgentsPolicy(
+          project.primaryPath,
+          ownership === "talo_created" && removeCreatedFile ? "talo_created" : "preexisting",
+          currentHash,
+        );
+    const disabled = {
+      ...policy,
+      status: "disabled" as const,
+      bridge: {
+        ...policy.bridge,
+        enabled: false,
+        fileOwnership: ownership,
+        syncStatus: "disabled" as const,
+      },
+    };
+    this.store.savePolicy(projectId, disabled, "policy_bridge_disabled");
+    return { policy: disabled, removed };
   }
 
   linkProjects(sourceProjectId: string, targetProjectId: string): Record<string, unknown> {
@@ -1573,6 +1795,8 @@ export class ProjectMemoryService {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview: brief.handoff.coverage,
         latestActivityAt: latest?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest?.displayTitle ?? null,
@@ -1667,6 +1891,8 @@ export class ProjectMemoryService {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview,
         latestActivityAt: latest?.narrative?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest ? buildMemoryDisplayTitle(latest) : null,
@@ -1735,7 +1961,10 @@ export class ProjectMemoryService {
         { platform, path: resolvedPath },
       );
     }
-    this.registerProject(candidate.path, candidate.name);
+    // Registration is intentionally idempotent across platform adapters: the same
+    // project path shares one memory record even when discovered by multiple agents.
+    const existing = this.store.getProjectByPath(candidate.path);
+    if (!existing) this.registerProject(candidate.path, candidate.name);
     return this.buildDesktopHubSnapshot();
   }
 
@@ -1745,7 +1974,8 @@ export class ProjectMemoryService {
     const graph = this.buildGraph(projectId, null, 1, false);
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
     const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
-    return buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    const view = buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    return { ...view, policy: this.policyStatus(projectId) } as GraphViewData;
   }
 
   writeMemoryHub(regenerateProjectPages = true): Record<string, unknown> {

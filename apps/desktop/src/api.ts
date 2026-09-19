@@ -10,6 +10,7 @@ import type {
   GraphViewData,
   MemoryHub,
   ReviewPolicy,
+  ProjectPolicyView,
 } from "./types";
 
 export function getAppVersion(): Promise<string> {
@@ -82,6 +83,26 @@ export async function registerPlatformProject(
 
 export async function getProjectView(projectId: string): Promise<GraphViewData> {
   return invoke<GraphViewData>("get_project_view", { projectId });
+}
+
+export function getProjectPolicy(projectId: string): Promise<ProjectPolicyView> {
+  return invoke<ProjectPolicyView>("get_project_policy", { projectId });
+}
+
+export function updateProjectPolicy(projectId: string, input: unknown): Promise<ProjectPolicyView> {
+  return invoke<ProjectPolicyView>("update_project_policy", { projectId, input });
+}
+
+export function syncProjectPolicy(projectId: string): Promise<ProjectPolicyView> {
+  return invoke<ProjectPolicyView>("sync_project_policy", { projectId });
+}
+
+export function enableProjectPolicy(projectId: string): Promise<ProjectPolicyView> {
+  return invoke<ProjectPolicyView>("enable_project_policy", { projectId });
+}
+
+export function disableProjectPolicy(projectId: string): Promise<ProjectPolicyView> {
+  return invoke<ProjectPolicyView>("disable_project_policy", { projectId });
 }
 
 export async function scanIntegrations(): Promise<DesktopIntegrationStatus[]> {

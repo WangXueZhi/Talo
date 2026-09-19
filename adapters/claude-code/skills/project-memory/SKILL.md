@@ -110,7 +110,7 @@ submitting agent; do not use `generic` or omit the field:
 
 ```json
 {
-  "actor": { "platform": "your-agent-id", "adapterVersion": "0.14.4" },
+  "actor": { "platform": "your-agent-id", "adapterVersion": "0.14.5" },
   "candidates": [
     {
       "ref": "daily-observation",

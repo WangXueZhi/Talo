@@ -6,6 +6,7 @@ import {
   filterProjectDirectoryItems,
   getProjectDirectoryCounts,
   getProjectDirectoryPlatformCounts,
+  preferredRegistrationPlatform,
 } from "./project-directory";
 
 function registeredProject(overrides: Record<string, unknown> = {}) {
@@ -26,6 +27,8 @@ function registeredProject(overrides: Record<string, unknown> = {}) {
     needsAttention: false,
     storyPath: "",
     searchText: "架构决策摘要",
+    gitCommonDir: null,
+    remoteUrl: null,
     ...overrides,
   };
 }
@@ -47,6 +50,8 @@ function platformProject(platform: "codex" | "claude" | "antigravity", overrides
     registered: false,
     registeredProjectId: null,
     memoryCount: 0,
+    gitCommonDir: null,
+    remoteUrl: null,
     ...overrides,
   };
 }
@@ -132,6 +137,25 @@ describe("project directory", () => {
     expect(items[0]?.platforms).toEqual(["codex"]);
   });
 
+  it("merges a registered main worktree with an unregistered Codex worktree", () => {
+    const items = buildProjectDirectoryItems(hub(
+      [registeredProject({ primaryPath: "/workspace/project", name: "主项目", gitCommonDir: "/workspace/project/.git" })],
+      [platformProject("codex", {
+        path: "/Users/zhi/.codex/worktrees/9539/project",
+        name: "project",
+        gitCommonDir: "/workspace/project/.git",
+      })],
+    ));
+
+    expect(items).toHaveLength(1);
+    expect(items[0]).toMatchObject({
+      name: "主项目",
+      path: "/workspace/project",
+      registered: true,
+      platforms: ["codex"],
+    });
+  });
+
   it("keeps memory-only projects visible with a memory badge source", () => {
     const items = buildProjectDirectoryItems(hub([registeredProject({ primaryPath: "/workspace/only-memory" })]));
 
@@ -180,6 +204,22 @@ describe("project directory", () => {
 
     expect(pending[0]?.registered).toBe(false);
     expect(registered[0]?.registered).toBe(true);
+  });
+
+  it("keeps a dual-platform project addressable from either platform filter", () => {
+    const items = buildProjectDirectoryItems(hub([], [platformProject("codex"), platformProject("antigravity")]));
+
+    expect(filterProjectDirectoryItems(items, "unregistered", "codex")[0]?.platforms).toEqual([
+      "codex",
+      "antigravity",
+    ]);
+    expect(filterProjectDirectoryItems(items, "unregistered", "antigravity")[0]?.platforms).toEqual([
+      "codex",
+      "antigravity",
+    ]);
+    expect(preferredRegistrationPlatform(items[0]!, "codex")).toBe("codex");
+    expect(preferredRegistrationPlatform(items[0]!, "antigravity")).toBe("antigravity");
+    expect(preferredRegistrationPlatform(items[0]!, "all")).toBe("codex");
   });
 
   it("canonicalizes separators, dot segments, and Windows drive casing", () => {

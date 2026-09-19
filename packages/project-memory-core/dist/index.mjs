@@ -24,6 +24,464 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   mod
 ));
 
+// ../../node_modules/.pnpm/ignore@7.0.5/node_modules/ignore/index.js
+var require_ignore = __commonJS({
+  "../../node_modules/.pnpm/ignore@7.0.5/node_modules/ignore/index.js"(exports, module) {
+    "use strict";
+    function makeArray(subject) {
+      return Array.isArray(subject) ? subject : [subject];
+    }
+    var UNDEFINED = void 0;
+    var EMPTY = "";
+    var SPACE = " ";
+    var ESCAPE = "\\";
+    var REGEX_TEST_BLANK_LINE = /^\s+$/;
+    var REGEX_INVALID_TRAILING_BACKSLASH = /(?:[^\\]|^)\\$/;
+    var REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION = /^\\!/;
+    var REGEX_REPLACE_LEADING_EXCAPED_HASH = /^\\#/;
+    var REGEX_SPLITALL_CRLF = /\r?\n/g;
+    var REGEX_TEST_INVALID_PATH = /^\.{0,2}\/|^\.{1,2}$/;
+    var REGEX_TEST_TRAILING_SLASH = /\/$/;
+    var SLASH = "/";
+    var TMP_KEY_IGNORE = "node-ignore";
+    if (typeof Symbol !== "undefined") {
+      TMP_KEY_IGNORE = /* @__PURE__ */ Symbol.for("node-ignore");
+    }
+    var KEY_IGNORE = TMP_KEY_IGNORE;
+    var define = (object, key, value) => {
+      Object.defineProperty(object, key, { value });
+      return value;
+    };
+    var REGEX_REGEXP_RANGE = /([0-z])-([0-z])/g;
+    var RETURN_FALSE = () => false;
+    var sanitizeRange = (range) => range.replace(
+      REGEX_REGEXP_RANGE,
+      (match, from, to) => from.charCodeAt(0) <= to.charCodeAt(0) ? match : EMPTY
+    );
+    var cleanRangeBackSlash = (slashes) => {
+      const { length } = slashes;
+      return slashes.slice(0, length - length % 2);
+    };
+    var REPLACERS = [
+      [
+        // Remove BOM
+        // TODO:
+        // Other similar zero-width characters?
+        /^\uFEFF/,
+        () => EMPTY
+      ],
+      // > Trailing spaces are ignored unless they are quoted with backslash ("\")
+      [
+        // (a\ ) -> (a )
+        // (a  ) -> (a)
+        // (a ) -> (a)
+        // (a \ ) -> (a  )
+        /((?:\\\\)*?)(\\?\s+)$/,
+        (_, m1, m2) => m1 + (m2.indexOf("\\") === 0 ? SPACE : EMPTY)
+      ],
+      // Replace (\ ) with ' '
+      // (\ ) -> ' '
+      // (\\ ) -> '\\ '
+      // (\\\ ) -> '\\ '
+      [
+        /(\\+?)\s/g,
+        (_, m1) => {
+          const { length } = m1;
+          return m1.slice(0, length - length % 2) + SPACE;
+        }
+      ],
+      // Escape metacharacters
+      // which is written down by users but means special for regular expressions.
+      // > There are 12 characters with special meanings:
+      // > - the backslash \,
+      // > - the caret ^,
+      // > - the dollar sign $,
+      // > - the period or dot .,
+      // > - the vertical bar or pipe symbol |,
+      // > - the question mark ?,
+      // > - the asterisk or star *,
+      // > - the plus sign +,
+      // > - the opening parenthesis (,
+      // > - the closing parenthesis ),
+      // > - and the opening square bracket [,
+      // > - the opening curly brace {,
+      // > These special characters are often called "metacharacters".
+      [
+        /[\\$.|*+(){^]/g,
+        (match) => `\\${match}`
+      ],
+      [
+        // > a question mark (?) matches a single character
+        /(?!\\)\?/g,
+        () => "[^/]"
+      ],
+      // leading slash
+      [
+        // > A leading slash matches the beginning of the pathname.
+        // > For example, "/*.c" matches "cat-file.c" but not "mozilla-sha1/sha1.c".
+        // A leading slash matches the beginning of the pathname
+        /^\//,
+        () => "^"
+      ],
+      // replace special metacharacter slash after the leading slash
+      [
+        /\//g,
+        () => "\\/"
+      ],
+      [
+        // > A leading "**" followed by a slash means match in all directories.
+        // > For example, "**/foo" matches file or directory "foo" anywhere,
+        // > the same as pattern "foo".
+        // > "**/foo/bar" matches file or directory "bar" anywhere that is directly
+        // >   under directory "foo".
+        // Notice that the '*'s have been replaced as '\\*'
+        /^\^*\\\*\\\*\\\//,
+        // '**/foo' <-> 'foo'
+        () => "^(?:.*\\/)?"
+      ],
+      // starting
+      [
+        // there will be no leading '/'
+        //   (which has been replaced by section "leading slash")
+        // If starts with '**', adding a '^' to the regular expression also works
+        /^(?=[^^])/,
+        function startingReplacer() {
+          return !/\/(?!$)/.test(this) ? "(?:^|\\/)" : "^";
+        }
+      ],
+      // two globstars
+      [
+        // Use lookahead assertions so that we could match more than one `'/**'`
+        /\\\/\\\*\\\*(?=\\\/|$)/g,
+        // Zero, one or several directories
+        // should not use '*', or it will be replaced by the next replacer
+        // Check if it is not the last `'/**'`
+        (_, index, str) => index + 6 < str.length ? "(?:\\/[^\\/]+)*" : "\\/.+"
+      ],
+      // normal intermediate wildcards
+      [
+        // Never replace escaped '*'
+        // ignore rule '\*' will match the path '*'
+        // 'abc.*/' -> go
+        // 'abc.*'  -> skip this rule,
+        //    coz trailing single wildcard will be handed by [trailing wildcard]
+        /(^|[^\\]+)(\\\*)+(?=.+)/g,
+        // '*.js' matches '.js'
+        // '*.js' doesn't match 'abc'
+        (_, p1, p2) => {
+          const unescaped = p2.replace(/\\\*/g, "[^\\/]*");
+          return p1 + unescaped;
+        }
+      ],
+      [
+        // unescape, revert step 3 except for back slash
+        // For example, if a user escape a '\\*',
+        // after step 3, the result will be '\\\\\\*'
+        /\\\\\\(?=[$.|*+(){^])/g,
+        () => ESCAPE
+      ],
+      [
+        // '\\\\' -> '\\'
+        /\\\\/g,
+        () => ESCAPE
+      ],
+      [
+        // > The range notation, e.g. [a-zA-Z],
+        // > can be used to match one of the characters in a range.
+        // `\` is escaped by step 3
+        /(\\)?\[([^\]/]*?)(\\*)($|\])/g,
+        (match, leadEscape, range, endEscape, close) => leadEscape === ESCAPE ? `\\[${range}${cleanRangeBackSlash(endEscape)}${close}` : close === "]" ? endEscape.length % 2 === 0 ? `[${sanitizeRange(range)}${endEscape}]` : "[]" : "[]"
+      ],
+      // ending
+      [
+        // 'js' will not match 'js.'
+        // 'ab' will not match 'abc'
+        /(?:[^*])$/,
+        // WTF!
+        // https://git-scm.com/docs/gitignore
+        // changes in [2.22.1](https://git-scm.com/docs/gitignore/2.22.1)
+        // which re-fixes #24, #38
+        // > If there is a separator at the end of the pattern then the pattern
+        // > will only match directories, otherwise the pattern can match both
+        // > files and directories.
+        // 'js*' will not match 'a.js'
+        // 'js/' will not match 'a.js'
+        // 'js' will match 'a.js' and 'a.js/'
+        (match) => /\/$/.test(match) ? `${match}$` : `${match}(?=$|\\/$)`
+      ]
+    ];
+    var REGEX_REPLACE_TRAILING_WILDCARD = /(^|\\\/)?\\\*$/;
+    var MODE_IGNORE = "regex";
+    var MODE_CHECK_IGNORE = "checkRegex";
+    var UNDERSCORE = "_";
+    var TRAILING_WILD_CARD_REPLACERS = {
+      [MODE_IGNORE](_, p1) {
+        const prefix = p1 ? `${p1}[^/]+` : "[^/]*";
+        return `${prefix}(?=$|\\/$)`;
+      },
+      [MODE_CHECK_IGNORE](_, p1) {
+        const prefix = p1 ? `${p1}[^/]*` : "[^/]*";
+        return `${prefix}(?=$|\\/$)`;
+      }
+    };
+    var makeRegexPrefix = (pattern) => REPLACERS.reduce(
+      (prev, [matcher, replacer]) => prev.replace(matcher, replacer.bind(pattern)),
+      pattern
+    );
+    var isString = (subject) => typeof subject === "string";
+    var checkPattern = (pattern) => pattern && isString(pattern) && !REGEX_TEST_BLANK_LINE.test(pattern) && !REGEX_INVALID_TRAILING_BACKSLASH.test(pattern) && pattern.indexOf("#") !== 0;
+    var splitPattern = (pattern) => pattern.split(REGEX_SPLITALL_CRLF).filter(Boolean);
+    var IgnoreRule = class {
+      constructor(pattern, mark, body, ignoreCase, negative, prefix) {
+        this.pattern = pattern;
+        this.mark = mark;
+        this.negative = negative;
+        define(this, "body", body);
+        define(this, "ignoreCase", ignoreCase);
+        define(this, "regexPrefix", prefix);
+      }
+      get regex() {
+        const key = UNDERSCORE + MODE_IGNORE;
+        if (this[key]) {
+          return this[key];
+        }
+        return this._make(MODE_IGNORE, key);
+      }
+      get checkRegex() {
+        const key = UNDERSCORE + MODE_CHECK_IGNORE;
+        if (this[key]) {
+          return this[key];
+        }
+        return this._make(MODE_CHECK_IGNORE, key);
+      }
+      _make(mode, key) {
+        const str = this.regexPrefix.replace(
+          REGEX_REPLACE_TRAILING_WILDCARD,
+          // It does not need to bind pattern
+          TRAILING_WILD_CARD_REPLACERS[mode]
+        );
+        const regex = this.ignoreCase ? new RegExp(str, "i") : new RegExp(str);
+        return define(this, key, regex);
+      }
+    };
+    var createRule = ({
+      pattern,
+      mark
+    }, ignoreCase) => {
+      let negative = false;
+      let body = pattern;
+      if (body.indexOf("!") === 0) {
+        negative = true;
+        body = body.substr(1);
+      }
+      body = body.replace(REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION, "!").replace(REGEX_REPLACE_LEADING_EXCAPED_HASH, "#");
+      const regexPrefix = makeRegexPrefix(body);
+      return new IgnoreRule(
+        pattern,
+        mark,
+        body,
+        ignoreCase,
+        negative,
+        regexPrefix
+      );
+    };
+    var RuleManager = class {
+      constructor(ignoreCase) {
+        this._ignoreCase = ignoreCase;
+        this._rules = [];
+      }
+      _add(pattern) {
+        if (pattern && pattern[KEY_IGNORE]) {
+          this._rules = this._rules.concat(pattern._rules._rules);
+          this._added = true;
+          return;
+        }
+        if (isString(pattern)) {
+          pattern = {
+            pattern
+          };
+        }
+        if (checkPattern(pattern.pattern)) {
+          const rule = createRule(pattern, this._ignoreCase);
+          this._added = true;
+          this._rules.push(rule);
+        }
+      }
+      // @param {Array<string> | string | Ignore} pattern
+      add(pattern) {
+        this._added = false;
+        makeArray(
+          isString(pattern) ? splitPattern(pattern) : pattern
+        ).forEach(this._add, this);
+        return this._added;
+      }
+      // Test one single path without recursively checking parent directories
+      //
+      // - checkUnignored `boolean` whether should check if the path is unignored,
+      //   setting `checkUnignored` to `false` could reduce additional
+      //   path matching.
+      // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
+      // @returns {TestResult} true if a file is ignored
+      test(path14, checkUnignored, mode) {
+        let ignored = false;
+        let unignored = false;
+        let matchedRule;
+        this._rules.forEach((rule) => {
+          const { negative } = rule;
+          if (unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored) {
+            return;
+          }
+          const matched = rule[mode].test(path14);
+          if (!matched) {
+            return;
+          }
+          ignored = !negative;
+          unignored = negative;
+          matchedRule = negative ? UNDEFINED : rule;
+        });
+        const ret = {
+          ignored,
+          unignored
+        };
+        if (matchedRule) {
+          ret.rule = matchedRule;
+        }
+        return ret;
+      }
+    };
+    var throwError = (message, Ctor) => {
+      throw new Ctor(message);
+    };
+    var checkPath = (path14, originalPath, doThrow) => {
+      if (!isString(path14)) {
+        return doThrow(
+          `path must be a string, but got \`${originalPath}\``,
+          TypeError
+        );
+      }
+      if (!path14) {
+        return doThrow(`path must not be empty`, TypeError);
+      }
+      if (checkPath.isNotRelative(path14)) {
+        const r = "`path.relative()`d";
+        return doThrow(
+          `path should be a ${r} string, but got "${originalPath}"`,
+          RangeError
+        );
+      }
+      return true;
+    };
+    var isNotRelative = (path14) => REGEX_TEST_INVALID_PATH.test(path14);
+    checkPath.isNotRelative = isNotRelative;
+    checkPath.convert = (p) => p;
+    var Ignore = class {
+      constructor({
+        ignorecase = true,
+        ignoreCase = ignorecase,
+        allowRelativePaths = false
+      } = {}) {
+        define(this, KEY_IGNORE, true);
+        this._rules = new RuleManager(ignoreCase);
+        this._strictPathCheck = !allowRelativePaths;
+        this._initCache();
+      }
+      _initCache() {
+        this._ignoreCache = /* @__PURE__ */ Object.create(null);
+        this._testCache = /* @__PURE__ */ Object.create(null);
+      }
+      add(pattern) {
+        if (this._rules.add(pattern)) {
+          this._initCache();
+        }
+        return this;
+      }
+      // legacy
+      addPattern(pattern) {
+        return this.add(pattern);
+      }
+      // @returns {TestResult}
+      _test(originalPath, cache, checkUnignored, slices) {
+        const path14 = originalPath && checkPath.convert(originalPath);
+        checkPath(
+          path14,
+          originalPath,
+          this._strictPathCheck ? throwError : RETURN_FALSE
+        );
+        return this._t(path14, cache, checkUnignored, slices);
+      }
+      checkIgnore(path14) {
+        if (!REGEX_TEST_TRAILING_SLASH.test(path14)) {
+          return this.test(path14);
+        }
+        const slices = path14.split(SLASH).filter(Boolean);
+        slices.pop();
+        if (slices.length) {
+          const parent = this._t(
+            slices.join(SLASH) + SLASH,
+            this._testCache,
+            true,
+            slices
+          );
+          if (parent.ignored) {
+            return parent;
+          }
+        }
+        return this._rules.test(path14, false, MODE_CHECK_IGNORE);
+      }
+      _t(path14, cache, checkUnignored, slices) {
+        if (path14 in cache) {
+          return cache[path14];
+        }
+        if (!slices) {
+          slices = path14.split(SLASH).filter(Boolean);
+        }
+        slices.pop();
+        if (!slices.length) {
+          return cache[path14] = this._rules.test(path14, checkUnignored, MODE_IGNORE);
+        }
+        const parent = this._t(
+          slices.join(SLASH) + SLASH,
+          cache,
+          checkUnignored,
+          slices
+        );
+        return cache[path14] = parent.ignored ? parent : this._rules.test(path14, checkUnignored, MODE_IGNORE);
+      }
+      ignores(path14) {
+        return this._test(path14, this._ignoreCache, false).ignored;
+      }
+      createFilter() {
+        return (path14) => !this.ignores(path14);
+      }
+      filter(paths) {
+        return makeArray(paths).filter(this.createFilter());
+      }
+      // @returns {TestResult}
+      test(path14) {
+        return this._test(path14, this._testCache, true);
+      }
+    };
+    var factory = (options) => new Ignore(options);
+    var isPathValid = (path14) => checkPath(path14 && checkPath.convert(path14), path14, RETURN_FALSE);
+    var setupWindows = () => {
+      const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
+      checkPath.convert = makePosix;
+      const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
+      checkPath.isNotRelative = (path14) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path14) || isNotRelative(path14);
+    };
+    if (
+      // Detect `process` so that it can run in browsers.
+      typeof process !== "undefined" && process.platform === "win32"
+    ) {
+      setupWindows();
+    }
+    module.exports = factory;
+    factory.default = factory;
+    module.exports.isPathValid = isPathValid;
+    define(module.exports, /* @__PURE__ */ Symbol.for("setupWindows"), setupWindows);
+  }
+});
+
 // ../../node_modules/.pnpm/picomatch@4.0.5/node_modules/picomatch/lib/constants.js
 var require_constants = __commonJS({
   "../../node_modules/.pnpm/picomatch@4.0.5/node_modules/picomatch/lib/constants.js"(exports, module) {
@@ -279,8 +737,8 @@ var require_utils = __commonJS({
       }
       return output;
     };
-    exports.basename = (path12, { windows } = {}) => {
-      const segs = path12.split(windows ? /[\\/]/ : "/");
+    exports.basename = (path14, { windows } = {}) => {
+      const segs = path14.split(windows ? /[\\/]/ : "/");
       const last = segs[segs.length - 1];
       if (last === "") {
         return segs[segs.length - 2];
@@ -1791,463 +2249,898 @@ var require_picomatch2 = __commonJS({
   }
 });
 
-// ../../node_modules/.pnpm/ignore@7.0.5/node_modules/ignore/index.js
-var require_ignore = __commonJS({
-  "../../node_modules/.pnpm/ignore@7.0.5/node_modules/ignore/index.js"(exports, module) {
-    "use strict";
-    function makeArray(subject) {
-      return Array.isArray(subject) ? subject : [subject];
-    }
-    var UNDEFINED = void 0;
-    var EMPTY = "";
-    var SPACE = " ";
-    var ESCAPE = "\\";
-    var REGEX_TEST_BLANK_LINE = /^\s+$/;
-    var REGEX_INVALID_TRAILING_BACKSLASH = /(?:[^\\]|^)\\$/;
-    var REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION = /^\\!/;
-    var REGEX_REPLACE_LEADING_EXCAPED_HASH = /^\\#/;
-    var REGEX_SPLITALL_CRLF = /\r?\n/g;
-    var REGEX_TEST_INVALID_PATH = /^\.{0,2}\/|^\.{1,2}$/;
-    var REGEX_TEST_TRAILING_SLASH = /\/$/;
-    var SLASH = "/";
-    var TMP_KEY_IGNORE = "node-ignore";
-    if (typeof Symbol !== "undefined") {
-      TMP_KEY_IGNORE = /* @__PURE__ */ Symbol.for("node-ignore");
-    }
-    var KEY_IGNORE = TMP_KEY_IGNORE;
-    var define = (object, key, value) => {
-      Object.defineProperty(object, key, { value });
-      return value;
-    };
-    var REGEX_REGEXP_RANGE = /([0-z])-([0-z])/g;
-    var RETURN_FALSE = () => false;
-    var sanitizeRange = (range) => range.replace(
-      REGEX_REGEXP_RANGE,
-      (match, from, to) => from.charCodeAt(0) <= to.charCodeAt(0) ? match : EMPTY
-    );
-    var cleanRangeBackSlash = (slashes) => {
-      const { length } = slashes;
-      return slashes.slice(0, length - length % 2);
-    };
-    var REPLACERS = [
-      [
-        // Remove BOM
-        // TODO:
-        // Other similar zero-width characters?
-        /^\uFEFF/,
-        () => EMPTY
-      ],
-      // > Trailing spaces are ignored unless they are quoted with backslash ("\")
-      [
-        // (a\ ) -> (a )
-        // (a  ) -> (a)
-        // (a ) -> (a)
-        // (a \ ) -> (a  )
-        /((?:\\\\)*?)(\\?\s+)$/,
-        (_, m1, m2) => m1 + (m2.indexOf("\\") === 0 ? SPACE : EMPTY)
-      ],
-      // Replace (\ ) with ' '
-      // (\ ) -> ' '
-      // (\\ ) -> '\\ '
-      // (\\\ ) -> '\\ '
-      [
-        /(\\+?)\s/g,
-        (_, m1) => {
-          const { length } = m1;
-          return m1.slice(0, length - length % 2) + SPACE;
-        }
-      ],
-      // Escape metacharacters
-      // which is written down by users but means special for regular expressions.
-      // > There are 12 characters with special meanings:
-      // > - the backslash \,
-      // > - the caret ^,
-      // > - the dollar sign $,
-      // > - the period or dot .,
-      // > - the vertical bar or pipe symbol |,
-      // > - the question mark ?,
-      // > - the asterisk or star *,
-      // > - the plus sign +,
-      // > - the opening parenthesis (,
-      // > - the closing parenthesis ),
-      // > - and the opening square bracket [,
-      // > - the opening curly brace {,
-      // > These special characters are often called "metacharacters".
-      [
-        /[\\$.|*+(){^]/g,
-        (match) => `\\${match}`
-      ],
-      [
-        // > a question mark (?) matches a single character
-        /(?!\\)\?/g,
-        () => "[^/]"
-      ],
-      // leading slash
-      [
-        // > A leading slash matches the beginning of the pathname.
-        // > For example, "/*.c" matches "cat-file.c" but not "mozilla-sha1/sha1.c".
-        // A leading slash matches the beginning of the pathname
-        /^\//,
-        () => "^"
-      ],
-      // replace special metacharacter slash after the leading slash
-      [
-        /\//g,
-        () => "\\/"
-      ],
-      [
-        // > A leading "**" followed by a slash means match in all directories.
-        // > For example, "**/foo" matches file or directory "foo" anywhere,
-        // > the same as pattern "foo".
-        // > "**/foo/bar" matches file or directory "bar" anywhere that is directly
-        // >   under directory "foo".
-        // Notice that the '*'s have been replaced as '\\*'
-        /^\^*\\\*\\\*\\\//,
-        // '**/foo' <-> 'foo'
-        () => "^(?:.*\\/)?"
-      ],
-      // starting
-      [
-        // there will be no leading '/'
-        //   (which has been replaced by section "leading slash")
-        // If starts with '**', adding a '^' to the regular expression also works
-        /^(?=[^^])/,
-        function startingReplacer() {
-          return !/\/(?!$)/.test(this) ? "(?:^|\\/)" : "^";
-        }
-      ],
-      // two globstars
-      [
-        // Use lookahead assertions so that we could match more than one `'/**'`
-        /\\\/\\\*\\\*(?=\\\/|$)/g,
-        // Zero, one or several directories
-        // should not use '*', or it will be replaced by the next replacer
-        // Check if it is not the last `'/**'`
-        (_, index, str) => index + 6 < str.length ? "(?:\\/[^\\/]+)*" : "\\/.+"
-      ],
-      // normal intermediate wildcards
-      [
-        // Never replace escaped '*'
-        // ignore rule '\*' will match the path '*'
-        // 'abc.*/' -> go
-        // 'abc.*'  -> skip this rule,
-        //    coz trailing single wildcard will be handed by [trailing wildcard]
-        /(^|[^\\]+)(\\\*)+(?=.+)/g,
-        // '*.js' matches '.js'
-        // '*.js' doesn't match 'abc'
-        (_, p1, p2) => {
-          const unescaped = p2.replace(/\\\*/g, "[^\\/]*");
-          return p1 + unescaped;
-        }
-      ],
-      [
-        // unescape, revert step 3 except for back slash
-        // For example, if a user escape a '\\*',
-        // after step 3, the result will be '\\\\\\*'
-        /\\\\\\(?=[$.|*+(){^])/g,
-        () => ESCAPE
-      ],
-      [
-        // '\\\\' -> '\\'
-        /\\\\/g,
-        () => ESCAPE
-      ],
-      [
-        // > The range notation, e.g. [a-zA-Z],
-        // > can be used to match one of the characters in a range.
-        // `\` is escaped by step 3
-        /(\\)?\[([^\]/]*?)(\\*)($|\])/g,
-        (match, leadEscape, range, endEscape, close) => leadEscape === ESCAPE ? `\\[${range}${cleanRangeBackSlash(endEscape)}${close}` : close === "]" ? endEscape.length % 2 === 0 ? `[${sanitizeRange(range)}${endEscape}]` : "[]" : "[]"
-      ],
-      // ending
-      [
-        // 'js' will not match 'js.'
-        // 'ab' will not match 'abc'
-        /(?:[^*])$/,
-        // WTF!
-        // https://git-scm.com/docs/gitignore
-        // changes in [2.22.1](https://git-scm.com/docs/gitignore/2.22.1)
-        // which re-fixes #24, #38
-        // > If there is a separator at the end of the pattern then the pattern
-        // > will only match directories, otherwise the pattern can match both
-        // > files and directories.
-        // 'js*' will not match 'a.js'
-        // 'js/' will not match 'a.js'
-        // 'js' will match 'a.js' and 'a.js/'
-        (match) => /\/$/.test(match) ? `${match}$` : `${match}(?=$|\\/$)`
-      ]
-    ];
-    var REGEX_REPLACE_TRAILING_WILDCARD = /(^|\\\/)?\\\*$/;
-    var MODE_IGNORE = "regex";
-    var MODE_CHECK_IGNORE = "checkRegex";
-    var UNDERSCORE = "_";
-    var TRAILING_WILD_CARD_REPLACERS = {
-      [MODE_IGNORE](_, p1) {
-        const prefix = p1 ? `${p1}[^/]+` : "[^/]*";
-        return `${prefix}(?=$|\\/$)`;
-      },
-      [MODE_CHECK_IGNORE](_, p1) {
-        const prefix = p1 ? `${p1}[^/]*` : "[^/]*";
-        return `${prefix}(?=$|\\/$)`;
-      }
-    };
-    var makeRegexPrefix = (pattern) => REPLACERS.reduce(
-      (prev, [matcher, replacer]) => prev.replace(matcher, replacer.bind(pattern)),
-      pattern
-    );
-    var isString = (subject) => typeof subject === "string";
-    var checkPattern = (pattern) => pattern && isString(pattern) && !REGEX_TEST_BLANK_LINE.test(pattern) && !REGEX_INVALID_TRAILING_BACKSLASH.test(pattern) && pattern.indexOf("#") !== 0;
-    var splitPattern = (pattern) => pattern.split(REGEX_SPLITALL_CRLF).filter(Boolean);
-    var IgnoreRule = class {
-      constructor(pattern, mark, body, ignoreCase, negative, prefix) {
-        this.pattern = pattern;
-        this.mark = mark;
-        this.negative = negative;
-        define(this, "body", body);
-        define(this, "ignoreCase", ignoreCase);
-        define(this, "regexPrefix", prefix);
-      }
-      get regex() {
-        const key = UNDERSCORE + MODE_IGNORE;
-        if (this[key]) {
-          return this[key];
-        }
-        return this._make(MODE_IGNORE, key);
-      }
-      get checkRegex() {
-        const key = UNDERSCORE + MODE_CHECK_IGNORE;
-        if (this[key]) {
-          return this[key];
-        }
-        return this._make(MODE_CHECK_IGNORE, key);
-      }
-      _make(mode, key) {
-        const str = this.regexPrefix.replace(
-          REGEX_REPLACE_TRAILING_WILDCARD,
-          // It does not need to bind pattern
-          TRAILING_WILD_CARD_REPLACERS[mode]
-        );
-        const regex = this.ignoreCase ? new RegExp(str, "i") : new RegExp(str);
-        return define(this, key, regex);
-      }
-    };
-    var createRule = ({
-      pattern,
-      mark
-    }, ignoreCase) => {
-      let negative = false;
-      let body = pattern;
-      if (body.indexOf("!") === 0) {
-        negative = true;
-        body = body.substr(1);
-      }
-      body = body.replace(REGEX_REPLACE_LEADING_EXCAPED_EXCLAMATION, "!").replace(REGEX_REPLACE_LEADING_EXCAPED_HASH, "#");
-      const regexPrefix = makeRegexPrefix(body);
-      return new IgnoreRule(
-        pattern,
-        mark,
-        body,
-        ignoreCase,
-        negative,
-        regexPrefix
-      );
-    };
-    var RuleManager = class {
-      constructor(ignoreCase) {
-        this._ignoreCase = ignoreCase;
-        this._rules = [];
-      }
-      _add(pattern) {
-        if (pattern && pattern[KEY_IGNORE]) {
-          this._rules = this._rules.concat(pattern._rules._rules);
-          this._added = true;
-          return;
-        }
-        if (isString(pattern)) {
-          pattern = {
-            pattern
-          };
-        }
-        if (checkPattern(pattern.pattern)) {
-          const rule = createRule(pattern, this._ignoreCase);
-          this._added = true;
-          this._rules.push(rule);
-        }
-      }
-      // @param {Array<string> | string | Ignore} pattern
-      add(pattern) {
-        this._added = false;
-        makeArray(
-          isString(pattern) ? splitPattern(pattern) : pattern
-        ).forEach(this._add, this);
-        return this._added;
-      }
-      // Test one single path without recursively checking parent directories
-      //
-      // - checkUnignored `boolean` whether should check if the path is unignored,
-      //   setting `checkUnignored` to `false` could reduce additional
-      //   path matching.
-      // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
-      // @returns {TestResult} true if a file is ignored
-      test(path12, checkUnignored, mode) {
-        let ignored = false;
-        let unignored = false;
-        let matchedRule;
-        this._rules.forEach((rule) => {
-          const { negative } = rule;
-          if (unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored) {
-            return;
-          }
-          const matched = rule[mode].test(path12);
-          if (!matched) {
-            return;
-          }
-          ignored = !negative;
-          unignored = negative;
-          matchedRule = negative ? UNDEFINED : rule;
-        });
-        const ret = {
-          ignored,
-          unignored
-        };
-        if (matchedRule) {
-          ret.rule = matchedRule;
-        }
-        return ret;
-      }
-    };
-    var throwError = (message, Ctor) => {
-      throw new Ctor(message);
-    };
-    var checkPath = (path12, originalPath, doThrow) => {
-      if (!isString(path12)) {
-        return doThrow(
-          `path must be a string, but got \`${originalPath}\``,
-          TypeError
-        );
-      }
-      if (!path12) {
-        return doThrow(`path must not be empty`, TypeError);
-      }
-      if (checkPath.isNotRelative(path12)) {
-        const r = "`path.relative()`d";
-        return doThrow(
-          `path should be a ${r} string, but got "${originalPath}"`,
-          RangeError
-        );
-      }
-      return true;
-    };
-    var isNotRelative = (path12) => REGEX_TEST_INVALID_PATH.test(path12);
-    checkPath.isNotRelative = isNotRelative;
-    checkPath.convert = (p) => p;
-    var Ignore = class {
-      constructor({
-        ignorecase = true,
-        ignoreCase = ignorecase,
-        allowRelativePaths = false
-      } = {}) {
-        define(this, KEY_IGNORE, true);
-        this._rules = new RuleManager(ignoreCase);
-        this._strictPathCheck = !allowRelativePaths;
-        this._initCache();
-      }
-      _initCache() {
-        this._ignoreCache = /* @__PURE__ */ Object.create(null);
-        this._testCache = /* @__PURE__ */ Object.create(null);
-      }
-      add(pattern) {
-        if (this._rules.add(pattern)) {
-          this._initCache();
-        }
-        return this;
-      }
-      // legacy
-      addPattern(pattern) {
-        return this.add(pattern);
-      }
-      // @returns {TestResult}
-      _test(originalPath, cache, checkUnignored, slices) {
-        const path12 = originalPath && checkPath.convert(originalPath);
-        checkPath(
-          path12,
-          originalPath,
-          this._strictPathCheck ? throwError : RETURN_FALSE
-        );
-        return this._t(path12, cache, checkUnignored, slices);
-      }
-      checkIgnore(path12) {
-        if (!REGEX_TEST_TRAILING_SLASH.test(path12)) {
-          return this.test(path12);
-        }
-        const slices = path12.split(SLASH).filter(Boolean);
-        slices.pop();
-        if (slices.length) {
-          const parent = this._t(
-            slices.join(SLASH) + SLASH,
-            this._testCache,
-            true,
-            slices
-          );
-          if (parent.ignored) {
-            return parent;
-          }
-        }
-        return this._rules.test(path12, false, MODE_CHECK_IGNORE);
-      }
-      _t(path12, cache, checkUnignored, slices) {
-        if (path12 in cache) {
-          return cache[path12];
-        }
-        if (!slices) {
-          slices = path12.split(SLASH).filter(Boolean);
-        }
-        slices.pop();
-        if (!slices.length) {
-          return cache[path12] = this._rules.test(path12, checkUnignored, MODE_IGNORE);
-        }
-        const parent = this._t(
-          slices.join(SLASH) + SLASH,
-          cache,
-          checkUnignored,
-          slices
-        );
-        return cache[path12] = parent.ignored ? parent : this._rules.test(path12, checkUnignored, MODE_IGNORE);
-      }
-      ignores(path12) {
-        return this._test(path12, this._ignoreCache, false).ignored;
-      }
-      createFilter() {
-        return (path12) => !this.ignores(path12);
-      }
-      filter(paths) {
-        return makeArray(paths).filter(this.createFilter());
-      }
-      // @returns {TestResult}
-      test(path12) {
-        return this._test(path12, this._testCache, true);
-      }
-    };
-    var factory = (options) => new Ignore(options);
-    var isPathValid = (path12) => checkPath(path12 && checkPath.convert(path12), path12, RETURN_FALSE);
-    var setupWindows = () => {
-      const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
-      checkPath.convert = makePosix;
-      const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
-      checkPath.isNotRelative = (path12) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path12) || isNotRelative(path12);
-    };
-    if (
-      // Detect `process` so that it can run in browsers.
-      typeof process !== "undefined" && process.platform === "win32"
-    ) {
-      setupWindows();
-    }
-    module.exports = factory;
-    factory.default = factory;
-    module.exports.isPathValid = isPathValid;
-    define(module.exports, /* @__PURE__ */ Symbol.for("setupWindows"), setupWindows);
+// src/agents-bridge.ts
+import {
+  chmodSync as chmodSync2,
+  existsSync as existsSync3,
+  lstatSync as lstatSync2,
+  mkdirSync as mkdirSync2,
+  readFileSync as readFileSync3,
+  renameSync as renameSync2,
+  rmSync as rmSync2,
+  statSync as statSync3,
+  writeFileSync as writeFileSync2
+} from "fs";
+import path4 from "path";
+
+// src/errors.ts
+var ERROR_CODES = [
+  "PROJECT_NOT_REGISTERED",
+  "PROJECT_ALREADY_REGISTERED",
+  "RELINK_CONFIRMATION_REQUIRED",
+  "LINK_REQUIRED",
+  "PATH_DENIED",
+  "FILE_NOT_FOUND",
+  "FILE_TOO_LARGE",
+  "BINARY_FILE",
+  "SECRET_DETECTED",
+  "INVALID_INPUT",
+  "STALE_SOURCE",
+  "PROPOSAL_NOT_PENDING",
+  "REVISION_CONFLICT",
+  "PROJECT_LOCKED",
+  "AMBIGUOUS_MEMORY_HOME",
+  "MEMORY_HOME_NOT_ACCESSIBLE",
+  "INTEGRATION_CONFLICT",
+  "STORAGE_ERROR",
+  "DATABASE_ERROR",
+  "POLICY_NOT_CONFIGURED",
+  "POLICY_VERSION_CONFLICT",
+  "POLICY_SOURCE_STALE",
+  "AGENTS_SCOPE_CONFLICT",
+  "AGENTS_MARKERS_INVALID",
+  "AGENTS_DRIFTED",
+  "AGENTS_NOT_WRITABLE",
+  "POLICY_SYNC_FAILED",
+  "POLICY_SYNC_PENDING",
+  "POLICY_FILE_OWNERSHIP_CONFLICT",
+  "CONFIRMATION_REQUIRED"
+];
+var ProjectMemoryError = class extends Error {
+  code;
+  details;
+  constructor(code, message, details = {}) {
+    super(message);
+    this.name = "ProjectMemoryError";
+    this.code = code;
+    this.details = details;
   }
-});
+};
+function normalizeError(error) {
+  if (error instanceof ProjectMemoryError) {
+    return { code: error.code, message: error.message, details: error.details };
+  }
+  const filesystemError = error;
+  if ((filesystemError.code === "EACCES" || filesystemError.code === "EPERM") && typeof filesystemError.path === "string") {
+    return {
+      code: "MEMORY_HOME_NOT_ACCESSIBLE",
+      message: "Talo data directory is not writable.",
+      details: {
+        path: filesystemError.path,
+        cause: filesystemError.code,
+        codexRepairCommand: "project-memory integration repair codex",
+        codexEscalationLauncher: "~/.project-memory/bin/project-memory",
+        sandboxEscalationRequired: true,
+        restartRequired: false
+      }
+    };
+  }
+  return {
+    code: "STORAGE_ERROR",
+    message: error instanceof Error ? error.message : String(error),
+    details: {}
+  };
+}
+
+// src/security.ts
+var import_ignore = __toESM(require_ignore(), 1);
+import { createHash } from "crypto";
+import { existsSync as existsSync2, lstatSync, readdirSync as readdirSync2, readFileSync as readFileSync2, realpathSync as realpathSync2, statSync as statSync2 } from "fs";
+import path3 from "path";
+
+// src/git.ts
+import { execFileSync } from "child_process";
+import { realpathSync, statSync } from "fs";
+import path from "path";
+function git(pathValue, args) {
+  try {
+    return execFileSync("git", ["-C", pathValue, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+function detectGitMetadata(inputPath) {
+  const realInput = realpathSync(path.resolve(inputPath));
+  const directory = statSync(realInput).isDirectory() ? realInput : path.dirname(realInput);
+  const root = git(directory, ["rev-parse", "--show-toplevel"]);
+  if (!root) {
+    return {
+      rootPath: directory,
+      isGit: false,
+      gitCommonDir: null,
+      remoteUrl: null,
+      headCommit: null
+    };
+  }
+  const rootPath = realpathSync(root);
+  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
+  const gitCommonDir = commonDirRaw ? realpathSync(path.resolve(rootPath, commonDirRaw)) : null;
+  return {
+    rootPath,
+    isGit: true,
+    gitCommonDir,
+    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
+    headCommit: git(rootPath, ["rev-parse", "HEAD"])
+  };
+}
+function listGitFiles(rootPath) {
+  try {
+    const output = execFileSync(
+      "git",
+      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
+    );
+    return output.split("\0").filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+// src/paths.ts
+var import_picomatch = __toESM(require_picomatch2(), 1);
+import {
+  chmodSync,
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from "fs";
+import { homedir } from "os";
+import path2 from "path";
+
+// src/types.ts
+var MEMORY_KINDS = [
+  "architecture",
+  "decision",
+  "workflow",
+  "convention",
+  "pitfall",
+  "status"
+];
+var REVIEW_POLICIES = ["manual", "smart"];
+var MEMORY_PHASES = [
+  "context",
+  "data_collection",
+  "analysis",
+  "decision",
+  "execution",
+  "verification",
+  "handoff",
+  "learning",
+  "risk",
+  "next_step",
+  "other"
+];
+var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
+var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
+var RELATION_TYPES = [
+  "related_to",
+  "observes",
+  "causes",
+  "depends_on",
+  "supports",
+  "contradicts",
+  "supersedes",
+  "derived_from"
+];
+
+// src/paths.ts
+function configRoot() {
+  const windowsAppData = process.platform === "win32" ? process.env.APPDATA ?? process.env.LOCALAPPDATA : null;
+  return process.env.PROJECT_MEMORY_CONFIG_HOME ? path2.resolve(process.env.PROJECT_MEMORY_CONFIG_HOME) : path2.join(windowsAppData ?? homedir(), ".project-memory");
+}
+function resolveConfigRoot() {
+  return configRoot();
+}
+function legacyRoot() {
+  const codexHome = process.env.CODEX_HOME ? path2.resolve(process.env.CODEX_HOME) : path2.join(homedir(), ".codex");
+  return path2.join(codexHome, "project-memory", "v1");
+}
+function selectionFile() {
+  return path2.join(configRoot(), "active-home.json");
+}
+function readSelectedHome() {
+  const filePath = selectionFile();
+  if (!existsSync(filePath)) return null;
+  try {
+    const parsed = JSON.parse(readFileSync(filePath, "utf8"));
+    return typeof parsed.activeHome === "string" && parsed.activeHome.trim() ? path2.resolve(parsed.activeHome) : null;
+  } catch (error) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Talo home selection is invalid.", {
+      path: filePath,
+      cause: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+function inspectDataHomes() {
+  const neutralHome = path2.join(configRoot(), "v1");
+  const legacyHome = legacyRoot();
+  const neutralExists = existsSync(neutralHome);
+  const legacyExists = existsSync(legacyHome);
+  const projectEnv = process.env.PROJECT_MEMORY_HOME;
+  const legacyEnv = process.env.CODEX_PROJECT_MEMORY_HOME;
+  const selected = readSelectedHome();
+  let activeHome = null;
+  let selectionSource = null;
+  if (projectEnv) {
+    activeHome = path2.resolve(projectEnv);
+    selectionSource = "project-env";
+  } else if (legacyEnv) {
+    activeHome = path2.resolve(legacyEnv);
+    selectionSource = "legacy-env";
+  } else if (selected) {
+    activeHome = selected;
+    selectionSource = "selection";
+  } else if (neutralExists && legacyExists && neutralHome !== legacyHome) {
+    return {
+      activeHome: null,
+      selectionSource: null,
+      neutralHome,
+      legacyHome,
+      neutralExists,
+      legacyExists,
+      ambiguous: true,
+      selectionPath: selectionFile()
+    };
+  } else if (neutralExists) {
+    activeHome = neutralHome;
+    selectionSource = "neutral";
+  } else if (legacyExists) {
+    activeHome = legacyHome;
+    selectionSource = "legacy";
+  } else {
+    activeHome = neutralHome;
+    selectionSource = "new";
+  }
+  return {
+    activeHome,
+    selectionSource,
+    neutralHome,
+    legacyHome,
+    neutralExists,
+    legacyExists,
+    ambiguous: false,
+    selectionPath: selectionFile()
+  };
+}
+function resolveMemoryHubPath() {
+  return path2.join(configRoot(), "MEMORY_HUB.html");
+}
+function resolveDataDir() {
+  const inspection = inspectDataHomes();
+  if (inspection.ambiguous || !inspection.activeHome) {
+    throw new ProjectMemoryError(
+      "AMBIGUOUS_MEMORY_HOME",
+      "Both the shared and legacy Talo homes exist. Select one explicitly.",
+      { ...inspection }
+    );
+  }
+  return inspection.activeHome;
+}
+function selectDataDir(dataDir) {
+  const selected = path2.resolve(dataDir);
+  if (!existsSync(selected)) {
+    throw new ProjectMemoryError(
+      "MEMORY_HOME_NOT_ACCESSIBLE",
+      "The selected Talo home does not exist.",
+      { path: selected }
+    );
+  }
+  const root = configRoot();
+  mkdirSync(root, { recursive: true, mode: 448 });
+  chmodSync(root, 448);
+  const target = selectionFile();
+  const temporary = `${target}.${process.pid}.tmp`;
+  writeFileSync(temporary, `${JSON.stringify({ activeHome: selected }, null, 2)}
+`, {
+    encoding: "utf8",
+    mode: 384
+  });
+  chmodSync(temporary, 384);
+  renameSync(temporary, target);
+  chmodSync(target, 384);
+  return inspectDataHomes();
+}
+function countMarkdownMemories(filePath) {
+  if (!existsSync(filePath)) return 0;
+  return [...readFileSync(filePath, "utf8").matchAll(/^## \[[0-9a-f-]+\](?: .*)?$/gim)].length;
+}
+function inspectDataHomeCounts(dataDir) {
+  const root = path2.resolve(dataDir);
+  const registryPath = path2.join(root, "registry.json");
+  const registry = existsSync(registryPath) ? JSON.parse(readFileSync(registryPath, "utf8")) : { projects: [] };
+  const ids = (registry.projects ?? []).map((entry) => entry.id).filter((id) => typeof id === "string" && Boolean(id));
+  const counts = {
+    projects: ids.length,
+    memories: 0,
+    relations: 0,
+    proposals: 0,
+    auditEvents: 0
+  };
+  for (const projectId of ids) {
+    const projectDir = path2.join(root, "projects", projectId);
+    counts.memories += countMarkdownMemories(path2.join(projectDir, "MEMORY.md"));
+    const relationsPath = path2.join(projectDir, "RELATIONS.json");
+    if (existsSync(relationsPath)) {
+      const document = JSON.parse(readFileSync(relationsPath, "utf8"));
+      counts.relations += Array.isArray(document.relations) ? document.relations.length : 0;
+    }
+    const proposalsDir = path2.join(projectDir, "proposals");
+    if (existsSync(proposalsDir)) {
+      counts.proposals += readdirSync(proposalsDir).filter((name) => name.endsWith(".json")).length;
+    }
+    const auditPath = path2.join(projectDir, "audit.jsonl");
+    if (existsSync(auditPath)) {
+      counts.auditEvents += readFileSync(auditPath, "utf8").split(/\r?\n/).filter((line) => line.trim()).length;
+    }
+  }
+  return counts;
+}
+function hardenTree(root) {
+  chmodSync(root, 448);
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const target = path2.join(root, entry.name);
+    if (entry.isDirectory()) hardenTree(target);
+    else if (entry.isFile()) chmodSync(target, 384);
+  }
+}
+function migrateDataDir(sourceDir, targetDir) {
+  const source = path2.resolve(sourceDir);
+  const target = path2.resolve(targetDir);
+  if (source === target) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Source and target homes must be different.", {
+      source,
+      target
+    });
+  }
+  if (!existsSync(source)) {
+    throw new ProjectMemoryError("FILE_NOT_FOUND", "Source Talo home does not exist.", {
+      source
+    });
+  }
+  if (existsSync(target) && readdirSync(target).length > 0) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Target Talo home is not empty.", {
+      target
+    });
+  }
+  const parent = path2.dirname(target);
+  mkdirSync(parent, { recursive: true, mode: 448 });
+  const suffix = (/* @__PURE__ */ new Date()).toISOString().replaceAll(/[:.]/g, "-");
+  const backup = `${source}.backup-${suffix}`;
+  const staging = `${target}.migrating-${process.pid}`;
+  const sourceCounts = inspectDataHomeCounts(source);
+  try {
+    cpSync(source, backup, { recursive: true, errorOnExist: true, force: false });
+    hardenTree(backup);
+    cpSync(source, staging, { recursive: true, errorOnExist: true, force: false });
+    hardenTree(staging);
+    const stagedCounts = inspectDataHomeCounts(staging);
+    if (JSON.stringify(sourceCounts) !== JSON.stringify(stagedCounts)) {
+      throw new ProjectMemoryError(
+        "STORAGE_ERROR",
+        "Migrated Talo counts do not match the source.",
+        { sourceCounts, stagedCounts }
+      );
+    }
+    if (existsSync(target)) rmSync(target, { recursive: true, force: true });
+    renameSync(staging, target);
+    const targetCounts = inspectDataHomeCounts(target);
+    selectDataDir(target);
+    return {
+      source,
+      target,
+      backup,
+      preservedSource: true,
+      selected: true,
+      counts: targetCounts
+    };
+  } catch (error) {
+    rmSync(staging, { recursive: true, force: true });
+    throw error;
+  }
+}
+function ensureDataDir(dataDir = resolveDataDir()) {
+  mkdirSync(dataDir, { recursive: true, mode: 448 });
+  return dataDir;
+}
+function loadLocalConfig(dataDir) {
+  const configPath = path2.join(dataDir, "config.json");
+  if (!existsSync(configPath)) {
+    return { denyPatterns: [], reviewPolicy: "manual" };
+  }
+  const raw = JSON.parse(readFileSync(configPath, "utf8"));
+  return {
+    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : [],
+    reviewPolicy: typeof raw.reviewPolicy === "string" && REVIEW_POLICIES.includes(raw.reviewPolicy) ? raw.reviewPolicy : "manual"
+  };
+}
+function setReviewPolicy(dataDir, reviewPolicy) {
+  if (!REVIEW_POLICIES.includes(reviewPolicy)) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.", {
+      reviewPolicy
+    });
+  }
+  ensureDataDir(dataDir);
+  const configPath = path2.join(dataDir, "config.json");
+  const current = existsSync(configPath) ? JSON.parse(readFileSync(configPath, "utf8")) : {};
+  const temporaryPath = `${configPath}.${process.pid}.tmp`;
+  writeFileSync(temporaryPath, `${JSON.stringify({ ...current, reviewPolicy }, null, 2)}
+`, {
+    encoding: "utf8",
+    mode: 384
+  });
+  if (process.platform !== "win32") chmodSync(temporaryPath, 384);
+  renameSync(temporaryPath, configPath);
+  if (process.platform !== "win32") chmodSync(configPath, 384);
+  return loadLocalConfig(dataDir);
+}
+function matchesCustomDeny(relativePath, patterns) {
+  return patterns.some((pattern) => import_picomatch.default.isMatch(relativePath, pattern, { dot: true }));
+}
+
+// src/security.ts
+var MAX_FILE_BYTES = 1024 * 1024;
+var MAX_SEARCH_RESULTS = 50;
+var MAX_SEARCH_FILES = 1e4;
+var MAX_EXCERPT_CHARS = 400;
+var DENIED_SEGMENTS = /* @__PURE__ */ new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "target",
+  ".next",
+  ".turbo",
+  "coverage"
+]);
+var DENIED_BASENAMES = /* @__PURE__ */ new Set([
+  "id_rsa",
+  "id_ed25519",
+  "credentials",
+  "credentials.json",
+  "service-account.json"
+]);
+var DENIED_EXTENSIONS = /* @__PURE__ */ new Set([".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"]);
+var SECRET_PATTERNS = [
+  /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/i,
+  /\bsk-[A-Za-z0-9_-]{20,}\b/,
+  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
+  /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i
+];
+function normalizeRelative(relativePath) {
+  if (!relativePath || path3.isAbsolute(relativePath)) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path must be relative to the project root.", {
+      path: relativePath
+    });
+  }
+  const normalized = relativePath.replaceAll("\\", "/");
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.includes("..")) {
+    throw new ProjectMemoryError("PATH_DENIED", "Parent path traversal is not allowed.", {
+      path: relativePath
+    });
+  }
+  return parts.join("/");
+}
+function isDeniedPath(relativePath, customPatterns = []) {
+  const normalized = relativePath.replaceAll("\\", "/");
+  const parts = normalized.split("/").filter(Boolean);
+  const basename2 = parts.at(-1)?.toLowerCase() ?? "";
+  const extension = path3.extname(basename2);
+  return parts.some((part) => DENIED_SEGMENTS.has(part)) || /^\.env(?:\.|$)/i.test(basename2) || DENIED_BASENAMES.has(basename2) || DENIED_EXTENSIONS.has(extension) || matchesCustomDeny(normalized, customPatterns);
+}
+function containsSecret(text2) {
+  return SECRET_PATTERNS.some((pattern) => pattern.test(text2));
+}
+function assertNoSecret(text2, field) {
+  if (containsSecret(text2)) {
+    throw new ProjectMemoryError("SECRET_DETECTED", `Potential secret detected in ${field}.`, {
+      field
+    });
+  }
+}
+function sha256(data) {
+  return createHash("sha256").update(data).digest("hex");
+}
+function ensureInsideRoot(rootPath, candidatePath) {
+  const relative = path3.relative(rootPath, candidatePath);
+  if (relative === "" || !relative.startsWith("..") && !path3.isAbsolute(relative)) {
+    return;
+  }
+  throw new ProjectMemoryError("PATH_DENIED", "Resolved path escapes the project root.", {
+    path: candidatePath
+  });
+}
+function resolveReadableFile(rootPath, relativePath, customPatterns = []) {
+  const normalized = normalizeRelative(relativePath);
+  if (isDeniedPath(normalized, customPatterns)) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path is blocked by the project memory policy.", {
+      path: normalized
+    });
+  }
+  const realRoot = realpathSync2(rootPath);
+  const candidate = path3.resolve(realRoot, normalized);
+  if (!existsSync2(candidate)) {
+    throw new ProjectMemoryError("FILE_NOT_FOUND", "File does not exist.", { path: normalized });
+  }
+  const realCandidate = realpathSync2(candidate);
+  ensureInsideRoot(realRoot, realCandidate);
+  if (!statSync2(realCandidate).isFile()) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path is not a regular file.", {
+      path: normalized
+    });
+  }
+  return { absolutePath: realCandidate, relativePath: normalized };
+}
+function isBinary(data) {
+  const sample = data.subarray(0, Math.min(data.length, 8192));
+  return sample.includes(0);
+}
+function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
+  const resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
+  const size = statSync2(resolved.absolutePath).size;
+  if (size > MAX_FILE_BYTES) {
+    throw new ProjectMemoryError("FILE_TOO_LARGE", "File exceeds the 1 MiB read limit.", {
+      path: resolved.relativePath,
+      size,
+      limit: MAX_FILE_BYTES
+    });
+  }
+  const buffer = readFileSync2(resolved.absolutePath);
+  if (isBinary(buffer)) {
+    throw new ProjectMemoryError("BINARY_FILE", "Binary files cannot be read.", {
+      path: resolved.relativePath
+    });
+  }
+  return {
+    path: resolved.relativePath,
+    content: buffer.toString("utf8"),
+    truncated: false,
+    size,
+    commit,
+    fileHash: sha256(buffer)
+  };
+}
+function walkNonGitFiles(rootPath) {
+  const matcher = (0, import_ignore.default)();
+  const gitignore = path3.join(rootPath, ".gitignore");
+  if (existsSync2(gitignore)) {
+    matcher.add(readFileSync2(gitignore, "utf8"));
+  }
+  const output = [];
+  const queue = [""];
+  while (queue.length > 0 && output.length < MAX_SEARCH_FILES) {
+    const relativeDir = queue.shift() ?? "";
+    const absoluteDir = path3.join(rootPath, relativeDir);
+    for (const entry of readdirSync2(absoluteDir, { withFileTypes: true })) {
+      const relative = path3.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
+      if (matcher.ignores(relative) || isDeniedPath(relative)) {
+        continue;
+      }
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
+      if (entry.isDirectory()) {
+        queue.push(relative);
+      } else if (entry.isFile()) {
+        output.push(relative);
+      }
+      if (output.length >= MAX_SEARCH_FILES) {
+        break;
+      }
+    }
+  }
+  return output;
+}
+function listSearchableFiles(rootPath, customPatterns = []) {
+  const gitFiles = listGitFiles(rootPath);
+  const files = gitFiles ?? walkNonGitFiles(rootPath);
+  return files.filter((relativePath) => !isDeniedPath(relativePath, customPatterns)).slice(0, MAX_SEARCH_FILES);
+}
+function excerpt(line, matchIndex, queryLength) {
+  const half = Math.floor((MAX_EXCERPT_CHARS - queryLength) / 2);
+  const start = Math.max(0, matchIndex - half);
+  const end = Math.min(line.length, matchIndex + queryLength + half);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < line.length ? "..." : "";
+  return `${prefix}${line.slice(start, end)}${suffix}`;
+}
+function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
+  const needle = query.trim().toLocaleLowerCase();
+  if (!needle) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Search query cannot be empty.");
+  }
+  const results = [];
+  for (const relativePath of listSearchableFiles(rootPath, customPatterns)) {
+    if (results.length >= MAX_SEARCH_RESULTS) {
+      break;
+    }
+    let resolved;
+    try {
+      resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
+    } catch {
+      continue;
+    }
+    const stats = lstatSync(resolved.absolutePath);
+    if (stats.size > MAX_FILE_BYTES) {
+      continue;
+    }
+    const buffer = readFileSync2(resolved.absolutePath);
+    if (isBinary(buffer)) {
+      continue;
+    }
+    const text2 = buffer.toString("utf8");
+    const lines = text2.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? "";
+      const matchIndex = line.toLocaleLowerCase().indexOf(needle);
+      if (matchIndex === -1) {
+        continue;
+      }
+      results.push({
+        path: resolved.relativePath,
+        line: index + 1,
+        excerpt: excerpt(line, matchIndex, needle.length),
+        commit,
+        fileHash: sha256(buffer)
+      });
+      if (results.length >= MAX_SEARCH_RESULTS) {
+        break;
+      }
+    }
+  }
+  return results;
+}
+
+// src/agents-bridge.ts
+var POLICY_START = "<!-- TALO_MANAGED_POLICY_START -->";
+var POLICY_END = "<!-- TALO_MANAGED_POLICY_END -->";
+function hashFile(filePath) {
+  return sha256(readFileSync3(filePath));
+}
+function parseManagedBlock(content) {
+  const positions = (marker) => {
+    const found = [];
+    let offset = 0;
+    while (true) {
+      const index = content.indexOf(marker, offset);
+      if (index < 0) return found;
+      found.push(index);
+      offset = index + marker.length;
+    }
+  };
+  const starts = positions(POLICY_START);
+  const ends = positions(POLICY_END);
+  if (starts.length === 0 && ends.length === 0) return null;
+  const start = starts[0];
+  const endMarker = ends[0];
+  if (starts.length !== 1 || ends.length !== 1 || start === void 0 || endMarker === void 0 || start > endMarker) {
+    throw new ProjectMemoryError(
+      "AGENTS_MARKERS_INVALID",
+      "Talo Policy markers are incomplete, repeated, or nested."
+    );
+  }
+  const end = endMarker + POLICY_END.length;
+  return { start, end, block: content.slice(start, end) };
+}
+function fileInfo(filePath, root, ownership) {
+  const exists = existsSync3(filePath);
+  const scope = path4.resolve(filePath) === path4.join(path4.resolve(root), "AGENTS.md") ? "project-root" : "ancestor";
+  if (!exists)
+    return {
+      path: filePath,
+      exists: false,
+      scope,
+      ownership,
+      wholeFileHash: null,
+      managedBlockHash: null,
+      managedBlock: null
+    };
+  if (!lstatSync2(filePath).isFile())
+    throw new ProjectMemoryError("AGENTS_NOT_WRITABLE", "AGENTS.md must be a regular file.", {
+      path: filePath
+    });
+  const content = readFileSync3(filePath, "utf8");
+  const block = parseManagedBlock(content);
+  return {
+    path: filePath,
+    exists: true,
+    scope,
+    ownership,
+    wholeFileHash: hashFile(filePath),
+    managedBlockHash: block ? sha256(block.block) : null,
+    managedBlock: block?.block ?? null
+  };
+}
+function discoverAgents(projectRoot, currentPath = projectRoot, ownership = "unknown") {
+  const root = path4.resolve(projectRoot);
+  const targetPath = path4.join(root, "AGENTS.md");
+  const affected = [];
+  let cursor = path4.resolve(currentPath);
+  while (true) {
+    const candidate = path4.join(cursor, "AGENTS.md");
+    if (existsSync3(candidate) && path4.resolve(candidate) !== path4.resolve(targetPath)) {
+      const info = fileInfo(candidate, root, "unknown");
+      info.scope = cursor === root ? "project-root" : path4.relative(root, cursor).startsWith("..") ? "ancestor" : "nested";
+      affected.push(info);
+    }
+    const parent = path4.dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+    if (path4.relative(root, cursor).startsWith("..")) {
+      const candidateAbove = path4.join(cursor, "AGENTS.md");
+      if (existsSync3(candidateAbove)) affected.push(fileInfo(candidateAbove, root, "unknown"));
+      break;
+    }
+  }
+  const target = fileInfo(targetPath, root, ownership);
+  const potentialConflicts = affected.length > 0 ? affected.map((info) => `AGENTS.md may also apply: ${info.path}`) : [];
+  return { projectRoot: root, target, affected, potentialConflicts };
+}
+function renderPolicyBlock(policy) {
+  const lines = [
+    POLICY_START,
+    "\u7531 Talo \u7BA1\u7406\u3002\u8BF7\u52FF\u624B\u5DE5\u4FEE\u6539\u672C\u533A\u5757\u3002",
+    `Project: ${policy.projectId}`,
+    `Policy: ${policy.policyId}`,
+    `Policy version: ${policy.version}`,
+    `Synced at: ${policy.bridge.lastSyncedAt ?? (/* @__PURE__ */ new Date()).toISOString()}`,
+    `Source fingerprint: ${policy.sourceFingerprint}`,
+    "",
+    "## Required actions",
+    ...policy.rules.flatMap((rule) => rule.requiredActions.map((item) => `- ${item}`)),
+    "",
+    "## Forbidden actions",
+    ...policy.rules.flatMap((rule) => rule.forbiddenActions.map((item) => `- ${item}`)),
+    "",
+    "## Trigger topics",
+    ...policy.rules.flatMap((rule) => rule.triggerTopics.map((item) => `- ${item}`)),
+    POLICY_END
+  ];
+  return lines.join("\n");
+}
+function replaceBlock(content, block) {
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const normalized = block.replaceAll("\n", newline);
+  const located = parseManagedBlock(content);
+  if (located)
+    return `${content.slice(0, located.start)}${normalized}${content.slice(located.end)}`;
+  const prefix = content.trimEnd();
+  return prefix ? `${prefix}${newline}${newline}${normalized}${newline}` : `${normalized}${newline}`;
+}
+function writeAtomic(filePath, content, mode) {
+  mkdirSync2(path4.dirname(filePath), { recursive: true });
+  const temporary = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync2(temporary, content, { encoding: "utf8", mode });
+    if (process.platform !== "win32") chmodSync2(temporary, mode);
+    renameSync2(temporary, filePath);
+    if (process.platform !== "win32") chmodSync2(filePath, mode);
+  } finally {
+    rmSync2(temporary, { force: true });
+  }
+}
+function withAgentsLock(projectRoot, action) {
+  const lockPath = `${path4.join(path4.resolve(projectRoot), "AGENTS.md")}.talo.lock`;
+  try {
+    mkdirSync2(lockPath, { mode: 448 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    try {
+      if (Date.now() - statSync3(lockPath).mtimeMs > 5 * 60 * 1e3) {
+        rmSync2(lockPath, { recursive: true, force: true });
+        mkdirSync2(lockPath, { mode: 448 });
+      } else {
+        throw new ProjectMemoryError(
+          "PROJECT_LOCKED",
+          "Another Talo process is synchronizing AGENTS.md.",
+          { lockPath }
+        );
+      }
+    } catch (lockError) {
+      if (lockError instanceof ProjectMemoryError) throw lockError;
+      throw new ProjectMemoryError(
+        "PROJECT_LOCKED",
+        "Another Talo process is synchronizing AGENTS.md.",
+        { lockPath }
+      );
+    }
+  }
+  try {
+    return action();
+  } finally {
+    rmSync2(lockPath, { recursive: true, force: true });
+  }
+}
+function syncAgentsPolicy(projectRoot, policy, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path4.join(path4.resolve(projectRoot), "AGENTS.md");
+    if (existsSync3(targetPath) && lstatSync2(targetPath).isSymbolicLink()) {
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not write through an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    }
+    const discovery = discoverAgents(projectRoot, projectRoot, ownership);
+    const existedBefore = existsSync3(targetPath);
+    const previous = existsSync3(targetPath) ? readFileSync3(targetPath, "utf8") : "";
+    const currentHash = existsSync3(targetPath) ? hashFile(targetPath) : null;
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash) {
+      throw new ProjectMemoryError("AGENTS_DRIFTED", "AGENTS.md changed before synchronization.", {
+        path: targetPath,
+        expectedWholeFileHash,
+        currentWholeFileHash: currentHash
+      });
+    }
+    const block = renderPolicyBlock(policy);
+    const next = replaceBlock(previous, block);
+    const mode = existsSync3(targetPath) ? statSync3(targetPath).mode & 511 : 420;
+    const changed = next !== previous;
+    if (changed) writeAtomic(targetPath, next, mode);
+    const wholeFileHash = hashFile(targetPath);
+    const managedBlockHash = sha256(block.replaceAll("\n", next.includes("\r\n") ? "\r\n" : "\n"));
+    return {
+      path: targetPath,
+      changed,
+      wholeFileHash,
+      managedBlockHash,
+      ownership: existedBefore ? ownership : "talo_created",
+      potentialConflicts: discovery.potentialConflicts
+    };
+  });
+}
+function removeAgentsPolicy(projectRoot, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path4.join(path4.resolve(projectRoot), "AGENTS.md");
+    if (!existsSync3(targetPath)) return { removedBlock: false, deletedFile: false };
+    if (lstatSync2(targetPath).isSymbolicLink())
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not remove an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    const currentHash = hashFile(targetPath);
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash)
+      throw new ProjectMemoryError(
+        "AGENTS_DRIFTED",
+        "AGENTS.md changed before disabling the bridge.",
+        { path: targetPath }
+      );
+    const content = readFileSync3(targetPath, "utf8");
+    const located = parseManagedBlock(content);
+    if (!located) return { removedBlock: false, deletedFile: false };
+    const before = content.slice(0, located.start);
+    const after = content.slice(located.end);
+    const newline = content.includes("\r\n") ? "\r\n" : "\n";
+    const next = `${before.trimEnd()}${before.trim() && after.trim() ? newline : ""}${after.trimStart()}`;
+    if (ownership === "talo_created" && !next.trim()) {
+      rmSync2(targetPath);
+      return { removedBlock: true, deletedFile: true };
+    }
+    writeAtomic(targetPath, next ? `${next}${newline}` : "", statSync3(targetPath).mode & 511);
+    return { removedBlock: true, deletedFile: false };
+  });
+}
 
 // src/display-title.ts
 var FALLBACK_ROLES = {
@@ -2806,77 +3699,17 @@ function buildProjectBrief(projectId, projectName, graph, guide, generatedAt = (
 
 // src/codex-access.ts
 import {
-  chmodSync,
+  chmodSync as chmodSync3,
   copyFileSync,
-  existsSync,
-  mkdirSync,
-  readFileSync,
-  renameSync,
-  statSync,
-  writeFileSync
+  existsSync as existsSync4,
+  mkdirSync as mkdirSync3,
+  readFileSync as readFileSync4,
+  renameSync as renameSync3,
+  statSync as statSync4,
+  writeFileSync as writeFileSync3
 } from "fs";
-import { homedir } from "os";
-import path from "path";
-
-// src/errors.ts
-var ERROR_CODES = [
-  "PROJECT_NOT_REGISTERED",
-  "PROJECT_ALREADY_REGISTERED",
-  "RELINK_CONFIRMATION_REQUIRED",
-  "LINK_REQUIRED",
-  "PATH_DENIED",
-  "FILE_NOT_FOUND",
-  "FILE_TOO_LARGE",
-  "BINARY_FILE",
-  "SECRET_DETECTED",
-  "INVALID_INPUT",
-  "STALE_SOURCE",
-  "PROPOSAL_NOT_PENDING",
-  "REVISION_CONFLICT",
-  "PROJECT_LOCKED",
-  "AMBIGUOUS_MEMORY_HOME",
-  "MEMORY_HOME_NOT_ACCESSIBLE",
-  "INTEGRATION_CONFLICT",
-  "STORAGE_ERROR",
-  "DATABASE_ERROR"
-];
-var ProjectMemoryError = class extends Error {
-  code;
-  details;
-  constructor(code, message, details = {}) {
-    super(message);
-    this.name = "ProjectMemoryError";
-    this.code = code;
-    this.details = details;
-  }
-};
-function normalizeError(error) {
-  if (error instanceof ProjectMemoryError) {
-    return { code: error.code, message: error.message, details: error.details };
-  }
-  const filesystemError = error;
-  if ((filesystemError.code === "EACCES" || filesystemError.code === "EPERM") && typeof filesystemError.path === "string") {
-    return {
-      code: "MEMORY_HOME_NOT_ACCESSIBLE",
-      message: "Talo data directory is not writable.",
-      details: {
-        path: filesystemError.path,
-        cause: filesystemError.code,
-        codexRepairCommand: "project-memory integration repair codex",
-        codexEscalationLauncher: "~/.project-memory/bin/project-memory",
-        sandboxEscalationRequired: true,
-        restartRequired: false
-      }
-    };
-  }
-  return {
-    code: "STORAGE_ERROR",
-    message: error instanceof Error ? error.message : String(error),
-    details: {}
-  };
-}
-
-// src/codex-access.ts
+import { homedir as homedir2 } from "os";
+import path5 from "path";
 var ESCALATED_MEMORY_COMMANDS = [
   "detect",
   "recall",
@@ -2899,23 +3732,23 @@ var ESCALATED_MEMORY_COMMANDS = [
 ];
 function codexConfigPath(options) {
   const env = { ...process.env, ...options.env };
-  const codexHome = env.CODEX_HOME ? path.resolve(env.CODEX_HOME) : path.join(options.homeDir ?? homedir(), ".codex");
-  return path.join(codexHome, "config.toml");
+  const codexHome = env.CODEX_HOME ? path5.resolve(env.CODEX_HOME) : path5.join(options.homeDir ?? homedir2(), ".codex");
+  return path5.join(codexHome, "config.toml");
 }
 function managedAccessPaths(options) {
-  const dataRoot = path.resolve(options.dataRoot);
-  const codexHome = path.dirname(codexConfigPath(options));
+  const dataRoot = path5.resolve(options.dataRoot);
+  const codexHome = path5.dirname(codexConfigPath(options));
   return {
-    launcherPath: path.join(path.dirname(dataRoot), "bin", "project-memory"),
-    rulesPath: path.join(codexHome, "rules", "project-memory.rules")
+    launcherPath: path5.join(path5.dirname(dataRoot), "bin", "project-memory"),
+    rulesPath: path5.join(codexHome, "rules", "project-memory.rules")
   };
 }
 function shellQuote(value) {
   return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 function launcherContent(options) {
-  const nodePath = path.resolve(options.nodePath ?? process.execPath);
-  const cliPath = path.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
+  const nodePath = path5.resolve(options.nodePath ?? process.execPath);
+  const cliPath = path5.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
   const appNode = "/Applications/Talo.app/Contents/MacOS/project-memory-node";
   const appCli = "/Applications/Talo.app/Contents/Resources/resources/runtime/project-memory.mjs";
   const legacyAppNode = "/Applications/Project Memory.app/Contents/MacOS/project-memory-node";
@@ -2940,18 +3773,18 @@ ${rules.join("\n")}
 `;
 }
 function writeManagedFile(filePath, content, mode) {
-  if (existsSync(filePath) && readFileSync(filePath, "utf8") === content) return false;
-  mkdirSync(path.dirname(filePath), { recursive: true, mode: 448 });
+  if (existsSync4(filePath) && readFileSync4(filePath, "utf8") === content) return false;
+  mkdirSync3(path5.dirname(filePath), { recursive: true, mode: 448 });
   const temporaryPath = `${filePath}.${process.pid}.tmp`;
-  writeFileSync(temporaryPath, content, { encoding: "utf8", mode });
-  if (process.platform !== "win32") chmodSync(temporaryPath, mode);
-  renameSync(temporaryPath, filePath);
-  if (process.platform !== "win32") chmodSync(filePath, mode);
+  writeFileSync3(temporaryPath, content, { encoding: "utf8", mode });
+  if (process.platform !== "win32") chmodSync3(temporaryPath, mode);
+  renameSync3(temporaryPath, filePath);
+  if (process.platform !== "win32") chmodSync3(filePath, mode);
   return true;
 }
 function managedFallbackConfigured(options) {
   const { launcherPath, rulesPath } = managedAccessPaths(options);
-  return existsSync(launcherPath) && readFileSync(launcherPath, "utf8") === launcherContent(options) && existsSync(rulesPath) && readFileSync(rulesPath, "utf8") === rulesContent(launcherPath);
+  return existsSync4(launcherPath) && readFileSync4(launcherPath, "utf8") === launcherContent(options) && existsSync4(rulesPath) && readFileSync4(rulesPath, "utf8") === rulesContent(launcherPath);
 }
 function ensureManagedFallback(options) {
   const { launcherPath, rulesPath } = managedAccessPaths(options);
@@ -3065,7 +3898,7 @@ function addWritableRoot(source, dataRoot) {
     );
   }
   if (assignment) {
-    if (assignment.values.some((value) => path.resolve(value) === dataRoot)) return source;
+    if (assignment.values.some((value) => path5.resolve(value) === dataRoot)) return source;
     const replacement = renderArray([...assignment.values, dataRoot], assignment);
     return `${source.slice(0, assignment.arrayStart)}${replacement}${source.slice(assignment.arrayEnd)}`;
   }
@@ -3083,12 +3916,12 @@ function addWritableRoot(source, dataRoot) {
 }
 function inspectCodexMemoryAccess(options) {
   const configPath = codexConfigPath(options);
-  const dataRoot = path.resolve(options.dataRoot);
+  const dataRoot = path5.resolve(options.dataRoot);
   const { launcherPath, rulesPath } = managedAccessPaths(options);
-  if (!existsSync(configPath)) {
+  if (!existsSync4(configPath)) {
     return { state: "missing", configPath, dataRoot, launcherPath, rulesPath, issue: null };
   }
-  const source = readFileSync(configPath, "utf8");
+  const source = readFileSync4(configPath, "utf8");
   const assignment = findWritableRootsAssignment(source);
   if (assignment === "conflict") {
     return {
@@ -3100,7 +3933,7 @@ function inspectCodexMemoryAccess(options) {
       issue: "Codex writable_roots \u4E0D\u662F\u53EF\u5B89\u5168\u66F4\u65B0\u7684\u5B57\u7B26\u4E32\u6570\u7EC4\u3002"
     };
   }
-  if (assignment?.values.some((value) => path.resolve(value) === dataRoot)) {
+  if (assignment?.values.some((value) => path5.resolve(value) === dataRoot)) {
     if (managedFallbackConfigured(options)) {
       return { state: "configured", configPath, dataRoot, launcherPath, rulesPath, issue: null };
     }
@@ -3127,23 +3960,23 @@ function ensureCodexMemoryAccess(options) {
       { configPath: inspected.configPath, dataRoot: inspected.dataRoot }
     );
   }
-  const source = existsSync(inspected.configPath) ? readFileSync(inspected.configPath, "utf8") : "";
+  const source = existsSync4(inspected.configPath) ? readFileSync4(inspected.configPath, "utf8") : "";
   const updated = addWritableRoot(source, inspected.dataRoot);
   const configChanged = updated !== source;
   let backupPath = null;
   if (configChanged) {
-    const directory = path.dirname(inspected.configPath);
-    mkdirSync(directory, { recursive: true, mode: 448 });
+    const directory = path5.dirname(inspected.configPath);
+    mkdirSync3(directory, { recursive: true, mode: 448 });
     backupPath = `${inspected.configPath}.project-memory-backup`;
-    if (source && !existsSync(backupPath)) {
+    if (source && !existsSync4(backupPath)) {
       copyFileSync(inspected.configPath, backupPath);
-      if (process.platform !== "win32") chmodSync(backupPath, 384);
+      if (process.platform !== "win32") chmodSync3(backupPath, 384);
     }
     const temporaryPath = `${inspected.configPath}.${process.pid}.tmp`;
-    const existingMode = existsSync(inspected.configPath) ? statSync(inspected.configPath).mode & 511 : 384;
-    writeFileSync(temporaryPath, updated, { encoding: "utf8", mode: existingMode });
-    if (process.platform !== "win32") chmodSync(temporaryPath, existingMode);
-    renameSync(temporaryPath, inspected.configPath);
+    const existingMode = existsSync4(inspected.configPath) ? statSync4(inspected.configPath).mode & 511 : 384;
+    writeFileSync3(temporaryPath, updated, { encoding: "utf8", mode: existingMode });
+    if (process.platform !== "win32") chmodSync3(temporaryPath, existingMode);
+    renameSync3(temporaryPath, inspected.configPath);
   }
   const fallbackChanged = ensureManagedFallback(options);
   return {
@@ -3162,616 +3995,35 @@ function ensureCodexMemoryAccess(options) {
 // src/desktop-integration.ts
 import { spawnSync } from "child_process";
 import {
-  chmodSync as chmodSync4,
+  chmodSync as chmodSync5,
   copyFileSync as copyFileSync2,
-  existsSync as existsSync5,
+  existsSync as existsSync6,
   readdirSync as readdirSync4,
-  readFileSync as readFileSync5,
-  renameSync as renameSync4,
-  statSync as statSync4,
-  writeFileSync as writeFileSync4
+  readFileSync as readFileSync6,
+  renameSync as renameSync5,
+  statSync as statSync5,
+  writeFileSync as writeFileSync5
 } from "fs";
 import { homedir as homedir4 } from "os";
-import path6 from "path";
+import path7 from "path";
 
 // src/integration.ts
 import {
-  chmodSync as chmodSync3,
+  chmodSync as chmodSync4,
   cpSync as cpSync2,
-  existsSync as existsSync4,
-  lstatSync as lstatSync2,
-  mkdirSync as mkdirSync3,
+  existsSync as existsSync5,
+  lstatSync as lstatSync3,
+  mkdirSync as mkdirSync4,
   readdirSync as readdirSync3,
-  readFileSync as readFileSync4,
+  readFileSync as readFileSync5,
   realpathSync as realpathSync3,
-  renameSync as renameSync3,
-  rmSync as rmSync2,
-  writeFileSync as writeFileSync3
+  renameSync as renameSync4,
+  rmSync as rmSync3,
+  writeFileSync as writeFileSync4
 } from "fs";
 import { homedir as homedir3 } from "os";
-import path5 from "path";
-
-// src/paths.ts
-var import_picomatch = __toESM(require_picomatch2(), 1);
-import {
-  chmodSync as chmodSync2,
-  cpSync,
-  existsSync as existsSync2,
-  mkdirSync as mkdirSync2,
-  readdirSync,
-  readFileSync as readFileSync2,
-  renameSync as renameSync2,
-  rmSync,
-  writeFileSync as writeFileSync2
-} from "fs";
-import { homedir as homedir2 } from "os";
-import path2 from "path";
-
-// src/types.ts
-var MEMORY_KINDS = [
-  "architecture",
-  "decision",
-  "workflow",
-  "convention",
-  "pitfall",
-  "status"
-];
-var REVIEW_POLICIES = ["manual", "smart"];
-var MEMORY_PHASES = [
-  "context",
-  "data_collection",
-  "analysis",
-  "decision",
-  "execution",
-  "verification",
-  "handoff",
-  "learning",
-  "risk",
-  "next_step",
-  "other"
-];
-var BRIEF_ROLES = ["conclusion", "progress", "risk", "next_step", "reference"];
-var CITATION_ROLES = ["evidence", "report", "workflow", "reference"];
-var RELATION_TYPES = [
-  "related_to",
-  "observes",
-  "causes",
-  "depends_on",
-  "supports",
-  "contradicts",
-  "supersedes",
-  "derived_from"
-];
-
-// src/paths.ts
-function configRoot() {
-  const windowsAppData = process.platform === "win32" ? process.env.APPDATA ?? process.env.LOCALAPPDATA : null;
-  return process.env.PROJECT_MEMORY_CONFIG_HOME ? path2.resolve(process.env.PROJECT_MEMORY_CONFIG_HOME) : path2.join(windowsAppData ?? homedir2(), ".project-memory");
-}
-function resolveConfigRoot() {
-  return configRoot();
-}
-function legacyRoot() {
-  const codexHome = process.env.CODEX_HOME ? path2.resolve(process.env.CODEX_HOME) : path2.join(homedir2(), ".codex");
-  return path2.join(codexHome, "project-memory", "v1");
-}
-function selectionFile() {
-  return path2.join(configRoot(), "active-home.json");
-}
-function readSelectedHome() {
-  const filePath = selectionFile();
-  if (!existsSync2(filePath)) return null;
-  try {
-    const parsed = JSON.parse(readFileSync2(filePath, "utf8"));
-    return typeof parsed.activeHome === "string" && parsed.activeHome.trim() ? path2.resolve(parsed.activeHome) : null;
-  } catch (error) {
-    throw new ProjectMemoryError("STORAGE_ERROR", "Talo home selection is invalid.", {
-      path: filePath,
-      cause: error instanceof Error ? error.message : String(error)
-    });
-  }
-}
-function inspectDataHomes() {
-  const neutralHome = path2.join(configRoot(), "v1");
-  const legacyHome = legacyRoot();
-  const neutralExists = existsSync2(neutralHome);
-  const legacyExists = existsSync2(legacyHome);
-  const projectEnv = process.env.PROJECT_MEMORY_HOME;
-  const legacyEnv = process.env.CODEX_PROJECT_MEMORY_HOME;
-  const selected = readSelectedHome();
-  let activeHome = null;
-  let selectionSource = null;
-  if (projectEnv) {
-    activeHome = path2.resolve(projectEnv);
-    selectionSource = "project-env";
-  } else if (legacyEnv) {
-    activeHome = path2.resolve(legacyEnv);
-    selectionSource = "legacy-env";
-  } else if (selected) {
-    activeHome = selected;
-    selectionSource = "selection";
-  } else if (neutralExists && legacyExists && neutralHome !== legacyHome) {
-    return {
-      activeHome: null,
-      selectionSource: null,
-      neutralHome,
-      legacyHome,
-      neutralExists,
-      legacyExists,
-      ambiguous: true,
-      selectionPath: selectionFile()
-    };
-  } else if (neutralExists) {
-    activeHome = neutralHome;
-    selectionSource = "neutral";
-  } else if (legacyExists) {
-    activeHome = legacyHome;
-    selectionSource = "legacy";
-  } else {
-    activeHome = neutralHome;
-    selectionSource = "new";
-  }
-  return {
-    activeHome,
-    selectionSource,
-    neutralHome,
-    legacyHome,
-    neutralExists,
-    legacyExists,
-    ambiguous: false,
-    selectionPath: selectionFile()
-  };
-}
-function resolveMemoryHubPath() {
-  return path2.join(configRoot(), "MEMORY_HUB.html");
-}
-function resolveDataDir() {
-  const inspection = inspectDataHomes();
-  if (inspection.ambiguous || !inspection.activeHome) {
-    throw new ProjectMemoryError(
-      "AMBIGUOUS_MEMORY_HOME",
-      "Both the shared and legacy Talo homes exist. Select one explicitly.",
-      { ...inspection }
-    );
-  }
-  return inspection.activeHome;
-}
-function selectDataDir(dataDir) {
-  const selected = path2.resolve(dataDir);
-  if (!existsSync2(selected)) {
-    throw new ProjectMemoryError(
-      "MEMORY_HOME_NOT_ACCESSIBLE",
-      "The selected Talo home does not exist.",
-      { path: selected }
-    );
-  }
-  const root = configRoot();
-  mkdirSync2(root, { recursive: true, mode: 448 });
-  chmodSync2(root, 448);
-  const target = selectionFile();
-  const temporary = `${target}.${process.pid}.tmp`;
-  writeFileSync2(temporary, `${JSON.stringify({ activeHome: selected }, null, 2)}
-`, {
-    encoding: "utf8",
-    mode: 384
-  });
-  chmodSync2(temporary, 384);
-  renameSync2(temporary, target);
-  chmodSync2(target, 384);
-  return inspectDataHomes();
-}
-function countMarkdownMemories(filePath) {
-  if (!existsSync2(filePath)) return 0;
-  return [...readFileSync2(filePath, "utf8").matchAll(/^## \[[0-9a-f-]+\](?: .*)?$/gim)].length;
-}
-function inspectDataHomeCounts(dataDir) {
-  const root = path2.resolve(dataDir);
-  const registryPath = path2.join(root, "registry.json");
-  const registry = existsSync2(registryPath) ? JSON.parse(readFileSync2(registryPath, "utf8")) : { projects: [] };
-  const ids = (registry.projects ?? []).map((entry) => entry.id).filter((id) => typeof id === "string" && Boolean(id));
-  const counts = {
-    projects: ids.length,
-    memories: 0,
-    relations: 0,
-    proposals: 0,
-    auditEvents: 0
-  };
-  for (const projectId of ids) {
-    const projectDir = path2.join(root, "projects", projectId);
-    counts.memories += countMarkdownMemories(path2.join(projectDir, "MEMORY.md"));
-    const relationsPath = path2.join(projectDir, "RELATIONS.json");
-    if (existsSync2(relationsPath)) {
-      const document = JSON.parse(readFileSync2(relationsPath, "utf8"));
-      counts.relations += Array.isArray(document.relations) ? document.relations.length : 0;
-    }
-    const proposalsDir = path2.join(projectDir, "proposals");
-    if (existsSync2(proposalsDir)) {
-      counts.proposals += readdirSync(proposalsDir).filter((name) => name.endsWith(".json")).length;
-    }
-    const auditPath = path2.join(projectDir, "audit.jsonl");
-    if (existsSync2(auditPath)) {
-      counts.auditEvents += readFileSync2(auditPath, "utf8").split(/\r?\n/).filter((line) => line.trim()).length;
-    }
-  }
-  return counts;
-}
-function hardenTree(root) {
-  chmodSync2(root, 448);
-  for (const entry of readdirSync(root, { withFileTypes: true })) {
-    const target = path2.join(root, entry.name);
-    if (entry.isDirectory()) hardenTree(target);
-    else if (entry.isFile()) chmodSync2(target, 384);
-  }
-}
-function migrateDataDir(sourceDir, targetDir) {
-  const source = path2.resolve(sourceDir);
-  const target = path2.resolve(targetDir);
-  if (source === target) {
-    throw new ProjectMemoryError("INVALID_INPUT", "Source and target homes must be different.", {
-      source,
-      target
-    });
-  }
-  if (!existsSync2(source)) {
-    throw new ProjectMemoryError("FILE_NOT_FOUND", "Source Talo home does not exist.", {
-      source
-    });
-  }
-  if (existsSync2(target) && readdirSync(target).length > 0) {
-    throw new ProjectMemoryError("STORAGE_ERROR", "Target Talo home is not empty.", {
-      target
-    });
-  }
-  const parent = path2.dirname(target);
-  mkdirSync2(parent, { recursive: true, mode: 448 });
-  const suffix = (/* @__PURE__ */ new Date()).toISOString().replaceAll(/[:.]/g, "-");
-  const backup = `${source}.backup-${suffix}`;
-  const staging = `${target}.migrating-${process.pid}`;
-  const sourceCounts = inspectDataHomeCounts(source);
-  try {
-    cpSync(source, backup, { recursive: true, errorOnExist: true, force: false });
-    hardenTree(backup);
-    cpSync(source, staging, { recursive: true, errorOnExist: true, force: false });
-    hardenTree(staging);
-    const stagedCounts = inspectDataHomeCounts(staging);
-    if (JSON.stringify(sourceCounts) !== JSON.stringify(stagedCounts)) {
-      throw new ProjectMemoryError(
-        "STORAGE_ERROR",
-        "Migrated Talo counts do not match the source.",
-        { sourceCounts, stagedCounts }
-      );
-    }
-    if (existsSync2(target)) rmSync(target, { recursive: true, force: true });
-    renameSync2(staging, target);
-    const targetCounts = inspectDataHomeCounts(target);
-    selectDataDir(target);
-    return {
-      source,
-      target,
-      backup,
-      preservedSource: true,
-      selected: true,
-      counts: targetCounts
-    };
-  } catch (error) {
-    rmSync(staging, { recursive: true, force: true });
-    throw error;
-  }
-}
-function ensureDataDir(dataDir = resolveDataDir()) {
-  mkdirSync2(dataDir, { recursive: true, mode: 448 });
-  return dataDir;
-}
-function loadLocalConfig(dataDir) {
-  const configPath = path2.join(dataDir, "config.json");
-  if (!existsSync2(configPath)) {
-    return { denyPatterns: [], reviewPolicy: "manual" };
-  }
-  const raw = JSON.parse(readFileSync2(configPath, "utf8"));
-  return {
-    denyPatterns: Array.isArray(raw.denyPatterns) ? raw.denyPatterns.filter((value) => typeof value === "string") : [],
-    reviewPolicy: typeof raw.reviewPolicy === "string" && REVIEW_POLICIES.includes(raw.reviewPolicy) ? raw.reviewPolicy : "manual"
-  };
-}
-function setReviewPolicy(dataDir, reviewPolicy) {
-  if (!REVIEW_POLICIES.includes(reviewPolicy)) {
-    throw new ProjectMemoryError("INVALID_INPUT", "Review policy must be manual or smart.", {
-      reviewPolicy
-    });
-  }
-  ensureDataDir(dataDir);
-  const configPath = path2.join(dataDir, "config.json");
-  const current = existsSync2(configPath) ? JSON.parse(readFileSync2(configPath, "utf8")) : {};
-  const temporaryPath = `${configPath}.${process.pid}.tmp`;
-  writeFileSync2(temporaryPath, `${JSON.stringify({ ...current, reviewPolicy }, null, 2)}
-`, {
-    encoding: "utf8",
-    mode: 384
-  });
-  if (process.platform !== "win32") chmodSync2(temporaryPath, 384);
-  renameSync2(temporaryPath, configPath);
-  if (process.platform !== "win32") chmodSync2(configPath, 384);
-  return loadLocalConfig(dataDir);
-}
-function matchesCustomDeny(relativePath, patterns) {
-  return patterns.some((pattern) => import_picomatch.default.isMatch(relativePath, pattern, { dot: true }));
-}
-
-// src/security.ts
-var import_ignore = __toESM(require_ignore(), 1);
-import { createHash } from "crypto";
-import { existsSync as existsSync3, lstatSync, readdirSync as readdirSync2, readFileSync as readFileSync3, realpathSync as realpathSync2, statSync as statSync3 } from "fs";
-import path4 from "path";
-
-// src/git.ts
-import { execFileSync } from "child_process";
-import { realpathSync, statSync as statSync2 } from "fs";
-import path3 from "path";
-function git(pathValue, args) {
-  try {
-    return execFileSync("git", ["-C", pathValue, ...args], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    }).trim();
-  } catch {
-    return null;
-  }
-}
-function detectGitMetadata(inputPath) {
-  const realInput = realpathSync(path3.resolve(inputPath));
-  const directory = statSync2(realInput).isDirectory() ? realInput : path3.dirname(realInput);
-  const root = git(directory, ["rev-parse", "--show-toplevel"]);
-  if (!root) {
-    return {
-      rootPath: directory,
-      isGit: false,
-      gitCommonDir: null,
-      remoteUrl: null,
-      headCommit: null
-    };
-  }
-  const rootPath = realpathSync(root);
-  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
-  const gitCommonDir = commonDirRaw ? realpathSync(path3.resolve(rootPath, commonDirRaw)) : null;
-  return {
-    rootPath,
-    isGit: true,
-    gitCommonDir,
-    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
-    headCommit: git(rootPath, ["rev-parse", "HEAD"])
-  };
-}
-function listGitFiles(rootPath) {
-  try {
-    const output = execFileSync(
-      "git",
-      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
-    );
-    return output.split("\0").filter(Boolean);
-  } catch {
-    return null;
-  }
-}
-
-// src/security.ts
-var MAX_FILE_BYTES = 1024 * 1024;
-var MAX_SEARCH_RESULTS = 50;
-var MAX_SEARCH_FILES = 1e4;
-var MAX_EXCERPT_CHARS = 400;
-var DENIED_SEGMENTS = /* @__PURE__ */ new Set([
-  ".git",
-  "node_modules",
-  "dist",
-  "build",
-  "target",
-  ".next",
-  ".turbo",
-  "coverage"
-]);
-var DENIED_BASENAMES = /* @__PURE__ */ new Set([
-  "id_rsa",
-  "id_ed25519",
-  "credentials",
-  "credentials.json",
-  "service-account.json"
-]);
-var DENIED_EXTENSIONS = /* @__PURE__ */ new Set([".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"]);
-var SECRET_PATTERNS = [
-  /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/i,
-  /\bsk-[A-Za-z0-9_-]{20,}\b/,
-  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
-  /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/,
-  /\bAKIA[0-9A-Z]{16}\b/,
-  /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i
-];
-function normalizeRelative(relativePath) {
-  if (!relativePath || path4.isAbsolute(relativePath)) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path must be relative to the project root.", {
-      path: relativePath
-    });
-  }
-  const normalized = relativePath.replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  if (parts.includes("..")) {
-    throw new ProjectMemoryError("PATH_DENIED", "Parent path traversal is not allowed.", {
-      path: relativePath
-    });
-  }
-  return parts.join("/");
-}
-function isDeniedPath(relativePath, customPatterns = []) {
-  const normalized = relativePath.replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  const basename2 = parts.at(-1)?.toLowerCase() ?? "";
-  const extension = path4.extname(basename2);
-  return parts.some((part) => DENIED_SEGMENTS.has(part)) || /^\.env(?:\.|$)/i.test(basename2) || DENIED_BASENAMES.has(basename2) || DENIED_EXTENSIONS.has(extension) || matchesCustomDeny(normalized, customPatterns);
-}
-function containsSecret(text2) {
-  return SECRET_PATTERNS.some((pattern) => pattern.test(text2));
-}
-function assertNoSecret(text2, field) {
-  if (containsSecret(text2)) {
-    throw new ProjectMemoryError("SECRET_DETECTED", `Potential secret detected in ${field}.`, {
-      field
-    });
-  }
-}
-function sha256(data) {
-  return createHash("sha256").update(data).digest("hex");
-}
-function ensureInsideRoot(rootPath, candidatePath) {
-  const relative = path4.relative(rootPath, candidatePath);
-  if (relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative)) {
-    return;
-  }
-  throw new ProjectMemoryError("PATH_DENIED", "Resolved path escapes the project root.", {
-    path: candidatePath
-  });
-}
-function resolveReadableFile(rootPath, relativePath, customPatterns = []) {
-  const normalized = normalizeRelative(relativePath);
-  if (isDeniedPath(normalized, customPatterns)) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path is blocked by the project memory policy.", {
-      path: normalized
-    });
-  }
-  const realRoot = realpathSync2(rootPath);
-  const candidate = path4.resolve(realRoot, normalized);
-  if (!existsSync3(candidate)) {
-    throw new ProjectMemoryError("FILE_NOT_FOUND", "File does not exist.", { path: normalized });
-  }
-  const realCandidate = realpathSync2(candidate);
-  ensureInsideRoot(realRoot, realCandidate);
-  if (!statSync3(realCandidate).isFile()) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path is not a regular file.", {
-      path: normalized
-    });
-  }
-  return { absolutePath: realCandidate, relativePath: normalized };
-}
-function isBinary(data) {
-  const sample = data.subarray(0, Math.min(data.length, 8192));
-  return sample.includes(0);
-}
-function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
-  const resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
-  const size = statSync3(resolved.absolutePath).size;
-  if (size > MAX_FILE_BYTES) {
-    throw new ProjectMemoryError("FILE_TOO_LARGE", "File exceeds the 1 MiB read limit.", {
-      path: resolved.relativePath,
-      size,
-      limit: MAX_FILE_BYTES
-    });
-  }
-  const buffer = readFileSync3(resolved.absolutePath);
-  if (isBinary(buffer)) {
-    throw new ProjectMemoryError("BINARY_FILE", "Binary files cannot be read.", {
-      path: resolved.relativePath
-    });
-  }
-  return {
-    path: resolved.relativePath,
-    content: buffer.toString("utf8"),
-    truncated: false,
-    size,
-    commit,
-    fileHash: sha256(buffer)
-  };
-}
-function walkNonGitFiles(rootPath) {
-  const matcher = (0, import_ignore.default)();
-  const gitignore = path4.join(rootPath, ".gitignore");
-  if (existsSync3(gitignore)) {
-    matcher.add(readFileSync3(gitignore, "utf8"));
-  }
-  const output = [];
-  const queue = [""];
-  while (queue.length > 0 && output.length < MAX_SEARCH_FILES) {
-    const relativeDir = queue.shift() ?? "";
-    const absoluteDir = path4.join(rootPath, relativeDir);
-    for (const entry of readdirSync2(absoluteDir, { withFileTypes: true })) {
-      const relative = path4.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
-      if (matcher.ignores(relative) || isDeniedPath(relative)) {
-        continue;
-      }
-      if (entry.isSymbolicLink()) {
-        continue;
-      }
-      if (entry.isDirectory()) {
-        queue.push(relative);
-      } else if (entry.isFile()) {
-        output.push(relative);
-      }
-      if (output.length >= MAX_SEARCH_FILES) {
-        break;
-      }
-    }
-  }
-  return output;
-}
-function listSearchableFiles(rootPath, customPatterns = []) {
-  const gitFiles = listGitFiles(rootPath);
-  const files = gitFiles ?? walkNonGitFiles(rootPath);
-  return files.filter((relativePath) => !isDeniedPath(relativePath, customPatterns)).slice(0, MAX_SEARCH_FILES);
-}
-function excerpt(line, matchIndex, queryLength) {
-  const half = Math.floor((MAX_EXCERPT_CHARS - queryLength) / 2);
-  const start = Math.max(0, matchIndex - half);
-  const end = Math.min(line.length, matchIndex + queryLength + half);
-  const prefix = start > 0 ? "..." : "";
-  const suffix = end < line.length ? "..." : "";
-  return `${prefix}${line.slice(start, end)}${suffix}`;
-}
-function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
-  const needle = query.trim().toLocaleLowerCase();
-  if (!needle) {
-    throw new ProjectMemoryError("INVALID_INPUT", "Search query cannot be empty.");
-  }
-  const results = [];
-  for (const relativePath of listSearchableFiles(rootPath, customPatterns)) {
-    if (results.length >= MAX_SEARCH_RESULTS) {
-      break;
-    }
-    let resolved;
-    try {
-      resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
-    } catch {
-      continue;
-    }
-    const stats = lstatSync(resolved.absolutePath);
-    if (stats.size > MAX_FILE_BYTES) {
-      continue;
-    }
-    const buffer = readFileSync3(resolved.absolutePath);
-    if (isBinary(buffer)) {
-      continue;
-    }
-    const text2 = buffer.toString("utf8");
-    const lines = text2.split(/\r?\n/);
-    for (let index = 0; index < lines.length; index += 1) {
-      const line = lines[index] ?? "";
-      const matchIndex = line.toLocaleLowerCase().indexOf(needle);
-      if (matchIndex === -1) {
-        continue;
-      }
-      results.push({
-        path: resolved.relativePath,
-        line: index + 1,
-        excerpt: excerpt(line, matchIndex, needle.length),
-        commit,
-        fileHash: sha256(buffer)
-      });
-      if (results.length >= MAX_SEARCH_RESULTS) {
-        break;
-      }
-    }
-  }
-  return results;
-}
-
-// src/integration.ts
-var INTEGRATION_VERSION = "0.14.4";
+import path6 from "path";
+var INTEGRATION_VERSION = "0.14.5";
 var INTEGRATION_SCHEMA_VERSION = 1;
 var RULE_START = "<!-- project-memory:start -->";
 var RULE_END = "<!-- project-memory:end -->";
@@ -3779,20 +4031,20 @@ var ANTIGRAVITY_RULE = `${RULE_START}
 Before substantial work in a local workspace, use the global Talo Skill to detect the current project. If the project is registered, recall only task-relevant reviewed memories and deep-read only the recommended memory IDs. If the project is not registered and the user did not explicitly ask about Talo, continue silently without registering or relinking it. Propose durable updates with actor.platform set to antigravity and resolve them through the shared review workflow. Never parse or edit Talo storage files directly.
 ${RULE_END}`;
 function integrationPaths(options = {}) {
-  const antigravityHome = path5.resolve(
-    options.antigravityHome ?? process.env.PROJECT_MEMORY_ANTIGRAVITY_HOME ?? path5.join(homedir3(), ".gemini")
+  const antigravityHome = path6.resolve(
+    options.antigravityHome ?? process.env.PROJECT_MEMORY_ANTIGRAVITY_HOME ?? path6.join(homedir3(), ".gemini")
   );
-  const configHome = path5.resolve(options.configHome ?? resolveConfigRoot());
+  const configHome = path6.resolve(options.configHome ?? resolveConfigRoot());
   return {
     antigravityHome,
     configHome,
-    skillPath: path5.join(antigravityHome, "config", "skills", "project-memory"),
-    rulePath: path5.join(antigravityHome, "GEMINI.md"),
-    manifestPath: path5.join(configHome, "integrations", "antigravity.json")
+    skillPath: path6.join(antigravityHome, "config", "skills", "project-memory"),
+    rulePath: path6.join(antigravityHome, "GEMINI.md"),
+    manifestPath: path6.join(configHome, "integrations", "antigravity.json")
   };
 }
 function firstExisting(candidates, label) {
-  const match = candidates.filter((candidate) => Boolean(candidate)).find(existsSync4);
+  const match = candidates.filter((candidate) => Boolean(candidate)).find(existsSync5);
   if (!match) {
     throw new ProjectMemoryError("STORAGE_ERROR", `${label} is not available for installation.`, {
       candidates: candidates.filter(Boolean)
@@ -3805,15 +4057,15 @@ function integrationSources(options = {}) {
     [options.sourceCliPath, process.env.PROJECT_MEMORY_CLI_SOURCE, process.argv[1]],
     "Talo CLI"
   );
-  const cliDir = path5.dirname(cliPath);
+  const cliDir = path6.dirname(cliPath);
   const skillDir = firstExisting(
     [
       options.sourceSkillDir,
       process.env.PROJECT_MEMORY_SKILL_SOURCE,
-      path5.resolve(cliDir, "skills/project-memory"),
-      path5.resolve(cliDir, "../skills/project-memory"),
-      path5.resolve(cliDir, "../project-memory"),
-      path5.resolve(cliDir, "../../../skills/project-memory")
+      path6.resolve(cliDir, "skills/project-memory"),
+      path6.resolve(cliDir, "../skills/project-memory"),
+      path6.resolve(cliDir, "../project-memory"),
+      path6.resolve(cliDir, "../../../skills/project-memory")
     ],
     "Talo Skill source"
   );
@@ -3821,39 +4073,39 @@ function integrationSources(options = {}) {
     [
       options.sourceBrowserDir,
       process.env.PROJECT_MEMORY_BROWSER_SOURCE,
-      path5.resolve(cliDir, "browser"),
-      path5.resolve(cliDir, "../dist/browser"),
-      path5.resolve(cliDir, "../../../packages/project-memory-core/dist/browser")
+      path6.resolve(cliDir, "browser"),
+      path6.resolve(cliDir, "../dist/browser"),
+      path6.resolve(cliDir, "../../../packages/project-memory-core/dist/browser")
     ],
     "Talo browser assets"
   );
   return { skillDir, cliPath, browserDir };
 }
 function claudeIntegrationPaths(options = {}) {
-  const claudeHome = path5.resolve(
-    options.claudeHome ?? process.env.CLAUDE_HOME ?? path5.join(homedir3(), ".claude")
+  const claudeHome = path6.resolve(
+    options.claudeHome ?? process.env.CLAUDE_HOME ?? path6.join(homedir3(), ".claude")
   );
-  const configHome = path5.resolve(options.configHome ?? resolveConfigRoot());
+  const configHome = path6.resolve(options.configHome ?? resolveConfigRoot());
   return {
-    skillPath: path5.join(claudeHome, "skills", "project-memory"),
-    manifestPath: path5.join(configHome, "integrations", "claude.json")
+    skillPath: path6.join(claudeHome, "skills", "project-memory"),
+    manifestPath: path6.join(configHome, "integrations", "claude.json")
   };
 }
 function claudeIntegrationSources(options = {}) {
   return integrationSources(options);
 }
-function writeAtomic(filePath, content, mode = 384) {
-  mkdirSync3(path5.dirname(filePath), { recursive: true, mode: 448 });
+function writeAtomic2(filePath, content, mode = 384) {
+  mkdirSync4(path6.dirname(filePath), { recursive: true, mode: 448 });
   const temporary = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  writeFileSync3(temporary, content, { encoding: "utf8", mode });
-  if (process.platform !== "win32") chmodSync3(temporary, mode);
-  renameSync3(temporary, filePath);
-  if (process.platform !== "win32") chmodSync3(filePath, mode);
+  writeFileSync4(temporary, content, { encoding: "utf8", mode });
+  if (process.platform !== "win32") chmodSync4(temporary, mode);
+  renameSync4(temporary, filePath);
+  if (process.platform !== "win32") chmodSync4(filePath, mode);
 }
 function readManifest(manifestPath) {
-  if (!existsSync4(manifestPath)) return null;
+  if (!existsSync5(manifestPath)) return null;
   try {
-    const manifest = JSON.parse(readFileSync4(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
     if (manifest.schemaVersion !== INTEGRATION_SCHEMA_VERSION || manifest.platform !== "antigravity" || typeof manifest.version !== "string" || typeof manifest.skillPath !== "string" || typeof manifest.rulePath !== "string" || !manifest.files || typeof manifest.files !== "object" || typeof manifest.ruleHash !== "string") {
       throw new Error("invalid manifest shape");
     }
@@ -3870,9 +4122,9 @@ function readManifest(manifestPath) {
   }
 }
 function readClaudeManifest(manifestPath) {
-  if (!existsSync4(manifestPath)) return null;
+  if (!existsSync5(manifestPath)) return null;
   try {
-    const manifest = JSON.parse(readFileSync4(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
     if (manifest.schemaVersion !== INTEGRATION_SCHEMA_VERSION || manifest.platform !== "claude" || !manifest.version || !manifest.skillPath || !manifest.files) {
       return null;
     }
@@ -3919,11 +4171,11 @@ function removeManagedBlock(content) {
 ${after.trimStart()}`;
 }
 function walkFiles(root, current = "") {
-  const directory = path5.join(root, current);
+  const directory = path6.join(root, current);
   const files = [];
   for (const entry of readdirSync3(directory, { withFileTypes: true })) {
-    const relative = path5.join(current, entry.name);
-    const absolute = path5.join(root, relative);
+    const relative = path6.join(current, entry.name);
+    const absolute = path6.join(root, relative);
     if (entry.isSymbolicLink()) {
       throw new ProjectMemoryError(
         "INTEGRATION_CONFLICT",
@@ -3942,20 +4194,20 @@ function hashFiles(root) {
   return Object.fromEntries(
     walkFiles(root).map((relative) => [
       relative.replaceAll("\\", "/"),
-      sha256(readFileSync4(path5.join(root, relative)))
+      sha256(readFileSync5(path6.join(root, relative)))
     ])
   );
 }
 function compareManagedFiles(skillPath, files) {
   const issues = [];
-  if (!existsSync4(skillPath)) return ["managed Skill directory is missing"];
+  if (!existsSync5(skillPath)) return ["managed Skill directory is missing"];
   for (const [relative, expectedHash] of Object.entries(files)) {
-    const target = path5.join(skillPath, relative);
-    if (!existsSync4(target)) issues.push(`managed file is missing: ${relative}`);
-    else if (lstatSync2(target).isSymbolicLink())
+    const target = path6.join(skillPath, relative);
+    if (!existsSync5(target)) issues.push(`managed file is missing: ${relative}`);
+    else if (lstatSync3(target).isSymbolicLink())
       issues.push(`managed file became a symbolic link: ${relative}`);
-    else if (!lstatSync2(target).isFile()) issues.push(`managed path is not a file: ${relative}`);
-    else if (sha256(readFileSync4(target)) !== expectedHash)
+    else if (!lstatSync3(target).isFile()) issues.push(`managed path is not a file: ${relative}`);
+    else if (sha256(readFileSync5(target)) !== expectedHash)
       issues.push(`managed file changed: ${relative}`);
   }
   if (issues.length === 0) {
@@ -3967,8 +4219,8 @@ function compareManagedFiles(skillPath, files) {
   return issues;
 }
 function inspectRule(rulePath, expectedHash) {
-  if (!existsSync4(rulePath)) return ["managed Antigravity rule is missing"];
-  const located = locateManagedBlock(readFileSync4(rulePath, "utf8"));
+  if (!existsSync5(rulePath)) return ["managed Antigravity rule is missing"];
+  const located = locateManagedBlock(readFileSync5(rulePath, "utf8"));
   if (!located) return ["managed Antigravity rule is missing"];
   if (expectedHash && sha256(located.block) !== expectedHash) {
     return ["managed Antigravity rule changed"];
@@ -3977,21 +4229,21 @@ function inspectRule(rulePath, expectedHash) {
 }
 function prepareSkill(target, sources) {
   cpSync2(sources.skillDir, target, { recursive: true, errorOnExist: true });
-  const binDir = path5.join(target, "bin");
-  rmSync2(binDir, { recursive: true, force: true });
-  mkdirSync3(path5.join(binDir, "browser"), { recursive: true, mode: 448 });
-  cpSync2(sources.cliPath, path5.join(binDir, "project-memory.mjs"));
+  const binDir = path6.join(target, "bin");
+  rmSync3(binDir, { recursive: true, force: true });
+  mkdirSync4(path6.join(binDir, "browser"), { recursive: true, mode: 448 });
+  cpSync2(sources.cliPath, path6.join(binDir, "project-memory.mjs"));
   cpSync2(
-    path5.join(sources.browserDir, "graph-app.js"),
-    path5.join(binDir, "browser", "graph-app.js")
+    path6.join(sources.browserDir, "graph-app.js"),
+    path6.join(binDir, "browser", "graph-app.js")
   );
   cpSync2(
-    path5.join(sources.browserDir, "graph-app.css"),
-    path5.join(binDir, "browser", "graph-app.css")
+    path6.join(sources.browserDir, "graph-app.css"),
+    path6.join(binDir, "browser", "graph-app.css")
   );
   if (process.platform !== "win32") {
-    chmodSync3(path5.join(target, "scripts", "project-memory.mjs"), 493);
-    chmodSync3(path5.join(binDir, "project-memory.mjs"), 493);
+    chmodSync4(path6.join(target, "scripts", "project-memory.mjs"), 493);
+    chmodSync4(path6.join(binDir, "project-memory.mjs"), 493);
   }
   return hashFiles(target);
 }
@@ -4001,9 +4253,9 @@ function antigravityIntegrationStatus(options = {}) {
   const manifest = readManifest(paths.manifestPath);
   if (!manifest) {
     const issues2 = [];
-    if (existsSync4(paths.skillPath)) issues2.push("an unmanaged Talo Skill already exists");
-    if (existsSync4(paths.rulePath)) {
-      const located = locateManagedBlock(readFileSync4(paths.rulePath, "utf8"));
+    if (existsSync5(paths.skillPath)) issues2.push("an unmanaged Talo Skill already exists");
+    if (existsSync5(paths.rulePath)) {
+      const located = locateManagedBlock(readFileSync5(paths.rulePath, "utf8"));
       if (located) issues2.push("an unmanaged Talo rule block already exists");
     }
     return {
@@ -4018,8 +4270,8 @@ function antigravityIntegrationStatus(options = {}) {
     };
   }
   const issues = [
-    ...path5.resolve(manifest.skillPath) === paths.skillPath ? [] : ["manifest Skill path does not match"],
-    ...path5.resolve(manifest.rulePath) === paths.rulePath ? [] : ["manifest rule path does not match"],
+    ...path6.resolve(manifest.skillPath) === paths.skillPath ? [] : ["manifest Skill path does not match"],
+    ...path6.resolve(manifest.rulePath) === paths.rulePath ? [] : ["manifest rule path does not match"],
     ...compareManagedFiles(paths.skillPath, manifest.files),
     ...inspectRule(paths.rulePath, manifest.ruleHash)
   ];
@@ -4051,23 +4303,23 @@ function installAntigravityIntegration(options = {}) {
       }
     );
   }
-  mkdirSync3(path5.dirname(paths.skillPath), { recursive: true, mode: 448 });
+  mkdirSync4(path6.dirname(paths.skillPath), { recursive: true, mode: 448 });
   const temporarySkill = `${paths.skillPath}.${process.pid}.${Date.now()}.tmp`;
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  rmSync2(temporarySkill, { recursive: true, force: true });
+  rmSync3(temporarySkill, { recursive: true, force: true });
   let desiredFiles;
   try {
     desiredFiles = prepareSkill(temporarySkill, sources);
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     throw error;
   }
-  const previousRule = existsSync4(paths.rulePath) ? readFileSync4(paths.rulePath, "utf8") : null;
-  const previousManifest = existsSync4(paths.manifestPath) ? readFileSync4(paths.manifestPath, "utf8") : null;
+  const previousRule = existsSync5(paths.rulePath) ? readFileSync5(paths.rulePath, "utf8") : null;
+  const previousManifest = existsSync5(paths.manifestPath) ? readFileSync5(paths.manifestPath, "utf8") : null;
   const nextRule = upsertManagedBlock(previousRule ?? "");
   const desiredRuleHash = sha256(ANTIGRAVITY_RULE);
   if (existingManifest && existingManifest.version === version && JSON.stringify(existingManifest.files) === JSON.stringify(desiredFiles) && existingManifest.ruleHash === desiredRuleHash && previousRule === nextRule) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     return { ...status, changed: false, action: "unchanged", restartRequired: false };
   }
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
@@ -4084,23 +4336,23 @@ function installAntigravityIntegration(options = {}) {
   };
   let movedExistingSkill = false;
   try {
-    if (existsSync4(paths.skillPath)) {
-      renameSync3(paths.skillPath, backupSkill);
+    if (existsSync5(paths.skillPath)) {
+      renameSync4(paths.skillPath, backupSkill);
       movedExistingSkill = true;
     }
-    renameSync3(temporarySkill, paths.skillPath);
-    writeAtomic(paths.rulePath, nextRule);
-    writeAtomic(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
+    renameSync4(temporarySkill, paths.skillPath);
+    writeAtomic2(paths.rulePath, nextRule);
+    writeAtomic2(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
 `);
-    rmSync2(backupSkill, { recursive: true, force: true });
+    rmSync3(backupSkill, { recursive: true, force: true });
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
-    rmSync2(paths.skillPath, { recursive: true, force: true });
-    if (movedExistingSkill && existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
-    if (previousRule === null) rmSync2(paths.rulePath, { force: true });
-    else writeAtomic(paths.rulePath, previousRule);
-    if (previousManifest === null) rmSync2(paths.manifestPath, { force: true });
-    else writeAtomic(paths.manifestPath, previousManifest);
+    rmSync3(temporarySkill, { recursive: true, force: true });
+    rmSync3(paths.skillPath, { recursive: true, force: true });
+    if (movedExistingSkill && existsSync5(backupSkill)) renameSync4(backupSkill, paths.skillPath);
+    if (previousRule === null) rmSync3(paths.rulePath, { force: true });
+    else writeAtomic2(paths.rulePath, previousRule);
+    if (previousManifest === null) rmSync3(paths.manifestPath, { force: true });
+    else writeAtomic2(paths.manifestPath, previousManifest);
     throw error;
   }
   return {
@@ -4136,22 +4388,22 @@ function removeAntigravityIntegration(options = {}) {
       }
     );
   }
-  const ruleContent = readFileSync4(paths.rulePath, "utf8");
-  const manifestContent = readFileSync4(paths.manifestPath, "utf8");
+  const ruleContent = readFileSync5(paths.rulePath, "utf8");
+  const manifestContent = readFileSync5(paths.manifestPath, "utf8");
   const nextRule = removeManagedBlock(ruleContent);
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  renameSync3(paths.skillPath, backupSkill);
+  renameSync4(paths.skillPath, backupSkill);
   try {
-    if (nextRule) writeAtomic(paths.rulePath, nextRule);
-    else rmSync2(paths.rulePath, { force: true });
-    rmSync2(paths.manifestPath, { force: true });
+    if (nextRule) writeAtomic2(paths.rulePath, nextRule);
+    else rmSync3(paths.rulePath, { force: true });
+    rmSync3(paths.manifestPath, { force: true });
   } catch (error) {
-    writeAtomic(paths.rulePath, ruleContent);
-    writeAtomic(paths.manifestPath, manifestContent);
-    if (existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
+    writeAtomic2(paths.rulePath, ruleContent);
+    writeAtomic2(paths.manifestPath, manifestContent);
+    if (existsSync5(backupSkill)) renameSync4(backupSkill, paths.skillPath);
     throw error;
   }
-  rmSync2(backupSkill, { recursive: true, force: true });
+  rmSync3(backupSkill, { recursive: true, force: true });
   return {
     ...antigravityIntegrationStatus(options),
     changed: true,
@@ -4164,7 +4416,7 @@ function claudeIntegrationStatus(options = {}) {
   const currentVersion = options.version ?? INTEGRATION_VERSION;
   const manifest = readClaudeManifest(paths.manifestPath);
   if (!manifest) {
-    const issues2 = existsSync4(paths.skillPath) ? ["an unmanaged Talo Skill already exists"] : [];
+    const issues2 = existsSync5(paths.skillPath) ? ["an unmanaged Talo Skill already exists"] : [];
     return {
       platform: "claude",
       state: issues2.length > 0 ? "conflict" : "absent",
@@ -4176,7 +4428,7 @@ function claudeIntegrationStatus(options = {}) {
     };
   }
   const issues = [
-    ...path5.resolve(manifest.skillPath) === paths.skillPath ? [] : ["manifest Skill path does not match"],
+    ...path6.resolve(manifest.skillPath) === paths.skillPath ? [] : ["manifest Skill path does not match"],
     ...compareManagedFiles(paths.skillPath, manifest.files)
   ];
   return {
@@ -4204,19 +4456,19 @@ function installClaudeIntegration(options = {}) {
       { ...status }
     );
   }
-  mkdirSync3(path5.dirname(paths.skillPath), { recursive: true, mode: 448 });
+  mkdirSync4(path6.dirname(paths.skillPath), { recursive: true, mode: 448 });
   const temporarySkill = `${paths.skillPath}.${process.pid}.${Date.now()}.tmp`;
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  rmSync2(temporarySkill, { recursive: true, force: true });
+  rmSync3(temporarySkill, { recursive: true, force: true });
   let desiredFiles;
   try {
     desiredFiles = prepareSkill(temporarySkill, sources);
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     throw error;
   }
   if (existingManifest && existingManifest.version === version && JSON.stringify(existingManifest.files) === JSON.stringify(desiredFiles)) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     return { ...status, changed: false, action: "unchanged", restartRequired: false };
   }
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
@@ -4229,23 +4481,23 @@ function installClaudeIntegration(options = {}) {
     skillPath: paths.skillPath,
     files: desiredFiles
   };
-  const previousManifest = existsSync4(paths.manifestPath) ? readFileSync4(paths.manifestPath, "utf8") : null;
+  const previousManifest = existsSync5(paths.manifestPath) ? readFileSync5(paths.manifestPath, "utf8") : null;
   let movedExistingSkill = false;
   try {
-    if (existsSync4(paths.skillPath)) {
-      renameSync3(paths.skillPath, backupSkill);
+    if (existsSync5(paths.skillPath)) {
+      renameSync4(paths.skillPath, backupSkill);
       movedExistingSkill = true;
     }
-    renameSync3(temporarySkill, paths.skillPath);
-    writeAtomic(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
+    renameSync4(temporarySkill, paths.skillPath);
+    writeAtomic2(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
 `);
-    rmSync2(backupSkill, { recursive: true, force: true });
+    rmSync3(backupSkill, { recursive: true, force: true });
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
-    rmSync2(paths.skillPath, { recursive: true, force: true });
-    if (movedExistingSkill && existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
-    if (previousManifest === null) rmSync2(paths.manifestPath, { force: true });
-    else writeAtomic(paths.manifestPath, previousManifest);
+    rmSync3(temporarySkill, { recursive: true, force: true });
+    rmSync3(paths.skillPath, { recursive: true, force: true });
+    if (movedExistingSkill && existsSync5(backupSkill)) renameSync4(backupSkill, paths.skillPath);
+    if (previousManifest === null) rmSync3(paths.manifestPath, { force: true });
+    else writeAtomic2(paths.manifestPath, previousManifest);
     throw error;
   }
   return {
@@ -4277,17 +4529,17 @@ function removeClaudeIntegration(options = {}) {
       { ...status }
     );
   }
-  const manifestContent = readFileSync4(paths.manifestPath, "utf8");
+  const manifestContent = readFileSync5(paths.manifestPath, "utf8");
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  renameSync3(paths.skillPath, backupSkill);
+  renameSync4(paths.skillPath, backupSkill);
   try {
-    rmSync2(paths.manifestPath, { force: true });
+    rmSync3(paths.manifestPath, { force: true });
   } catch (error) {
-    writeAtomic(paths.manifestPath, manifestContent);
-    if (existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
+    writeAtomic2(paths.manifestPath, manifestContent);
+    if (existsSync5(backupSkill)) renameSync4(backupSkill, paths.skillPath);
     throw error;
   }
-  rmSync2(backupSkill, { recursive: true, force: true });
+  rmSync3(backupSkill, { recursive: true, force: true });
   return {
     ...claudeIntegrationStatus(options),
     changed: true,
@@ -4299,13 +4551,13 @@ function removeClaudeIntegration(options = {}) {
 // src/desktop-integration.ts
 var DESKTOP_MARKETPLACE = "project-memory-desktop";
 var PLUGIN_NAME = "codex-project-memory";
-var DEFAULT_VERSION = "0.14.4";
+var DEFAULT_VERSION = "0.14.5";
 function integrationDataRoot(options) {
-  if (options.dataRoot) return path6.resolve(options.dataRoot);
+  if (options.dataRoot) return path7.resolve(options.dataRoot);
   if (options.homeDir) {
     const env = { ...process.env, ...options.env };
-    const windowsAppData = options.platform === "win32" ? env.APPDATA ?? env.LOCALAPPDATA ?? path6.join(path6.resolve(options.homeDir), "AppData", "Roaming") : null;
-    return path6.join(windowsAppData ?? path6.resolve(options.homeDir), ".project-memory", "v1");
+    const windowsAppData = options.platform === "win32" ? env.APPDATA ?? env.LOCALAPPDATA ?? path7.join(path7.resolve(options.homeDir), "AppData", "Roaming") : null;
+    return path7.join(windowsAppData ?? path7.resolve(options.homeDir), ".project-memory", "v1");
   }
   return resolveDataDir();
 }
@@ -4327,19 +4579,19 @@ function runCommand(command, args, env, runner) {
 }
 function executableOnPath(name, env, platform) {
   const pathValue = env.PATH ?? env.Path ?? env.path ?? "";
-  const delimiter = platform === "win32" ? ";" : path6.delimiter;
+  const delimiter = platform === "win32" ? ";" : path7.delimiter;
   const extensions = platform === "win32" ? (env.PATHEXT ?? ".EXE;.CMD;.BAT").split(";").filter(Boolean) : [""];
   for (const directory of pathValue.split(delimiter).filter(Boolean)) {
     for (const extension of extensions) {
-      const candidate = path6.join(directory, platform === "win32" ? `${name}${extension}` : name);
-      if (existsSync5(candidate)) return path6.resolve(candidate);
+      const candidate = path7.join(directory, platform === "win32" ? `${name}${extension}` : name);
+      if (existsSync6(candidate)) return path7.resolve(candidate);
       if (platform === "win32") {
         try {
-          const expectedName = path6.basename(candidate).toLocaleLowerCase();
+          const expectedName = path7.basename(candidate).toLocaleLowerCase();
           const matchedName = readdirSync4(directory).find(
             (entry) => entry.toLocaleLowerCase() === expectedName
           );
-          if (matchedName) return path6.resolve(directory, matchedName);
+          if (matchedName) return path7.resolve(directory, matchedName);
         } catch {
         }
       }
@@ -4349,9 +4601,9 @@ function executableOnPath(name, env, platform) {
 }
 function firstExisting2(candidates) {
   const match = candidates.find(
-    (candidate) => Boolean(candidate && existsSync5(candidate))
+    (candidate) => Boolean(candidate && existsSync6(candidate))
   );
-  return match ? path6.resolve(match) : null;
+  return match ? path7.resolve(match) : null;
 }
 function windowsAppxInstallLocation(packageName, env, runner) {
   const result = runCommand(
@@ -4368,7 +4620,7 @@ function windowsAppxInstallLocation(packageName, env, runner) {
   );
   if (result.status !== 0) return null;
   const installLocation = result.stdout.split(/\r?\n/).map((line) => line.trim()).find(Boolean);
-  return installLocation ? path6.resolve(installLocation) : null;
+  return installLocation ? path7.resolve(installLocation) : null;
 }
 function compatibleIntegrationVersion(installedVersion, currentVersion) {
   if (!installedVersion) return false;
@@ -4379,16 +4631,16 @@ function codexCandidates(platform, homeDir, env) {
     return [
       "/Applications/ChatGPT.app/Contents/Resources/codex",
       "/Applications/Codex.app/Contents/Resources/codex",
-      path6.join(homeDir, "Applications/ChatGPT.app/Contents/Resources/codex"),
-      path6.join(homeDir, "Applications/Codex.app/Contents/Resources/codex")
+      path7.join(homeDir, "Applications/ChatGPT.app/Contents/Resources/codex"),
+      path7.join(homeDir, "Applications/Codex.app/Contents/Resources/codex")
     ];
   }
   if (platform === "win32") {
-    const local = env.LOCALAPPDATA ?? path6.join(homeDir, "AppData", "Local");
-    const desktopBin = path6.join(local, "OpenAI", "Codex", "bin");
+    const local = env.LOCALAPPDATA ?? path7.join(homeDir, "AppData", "Local");
+    const desktopBin = path7.join(local, "OpenAI", "Codex", "bin");
     let desktopCliCandidates = [];
     try {
-      desktopCliCandidates = readdirSync4(desktopBin, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => path6.join(desktopBin, entry.name, "codex.exe")).filter((candidate) => existsSync5(candidate)).sort((left, right) => statSync4(right).mtimeMs - statSync4(left).mtimeMs);
+      desktopCliCandidates = readdirSync4(desktopBin, { withFileTypes: true }).filter((entry) => entry.isDirectory()).map((entry) => path7.join(desktopBin, entry.name, "codex.exe")).filter((candidate) => existsSync6(candidate)).sort((left, right) => statSync5(right).mtimeMs - statSync5(left).mtimeMs);
     } catch {
     }
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
@@ -4396,11 +4648,11 @@ function codexCandidates(platform, homeDir, env) {
     );
     return [
       ...desktopCliCandidates,
-      path6.join(local, "Programs", "Codex", "codex.exe"),
-      path6.join(local, "Programs", "ChatGPT", "resources", "codex.exe"),
+      path7.join(local, "Programs", "Codex", "codex.exe"),
+      path7.join(local, "Programs", "ChatGPT", "resources", "codex.exe"),
       ...programFiles.flatMap((root) => [
-        path6.join(root, "Codex", "codex.exe"),
-        path6.join(root, "ChatGPT", "resources", "codex.exe")
+        path7.join(root, "Codex", "codex.exe"),
+        path7.join(root, "ChatGPT", "resources", "codex.exe")
       ])
     ];
   }
@@ -4410,17 +4662,17 @@ function antigravityCandidates(platform, homeDir, env) {
   if (platform === "darwin") {
     return [
       "/Applications/Antigravity.app/Contents/MacOS/Antigravity",
-      path6.join(homeDir, "Applications/Antigravity.app/Contents/MacOS/Antigravity")
+      path7.join(homeDir, "Applications/Antigravity.app/Contents/MacOS/Antigravity")
     ];
   }
   if (platform === "win32") {
-    const local = env.LOCALAPPDATA ?? path6.join(homeDir, "AppData", "Local");
+    const local = env.LOCALAPPDATA ?? path7.join(homeDir, "AppData", "Local");
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value) => Boolean(value)
     );
     return [
-      path6.join(local, "Programs", "Antigravity", "Antigravity.exe"),
-      ...programFiles.map((root) => path6.join(root, "Antigravity", "Antigravity.exe"))
+      path7.join(local, "Programs", "Antigravity", "Antigravity.exe"),
+      ...programFiles.map((root) => path7.join(root, "Antigravity", "Antigravity.exe"))
     ];
   }
   return [];
@@ -4428,35 +4680,35 @@ function antigravityCandidates(platform, homeDir, env) {
 function claudeCandidates(platform, homeDir) {
   if (platform === "darwin") {
     return [
-      path6.join(homeDir, ".local", "bin", "claude"),
-      path6.join(homeDir, ".npm-global", "bin", "claude")
+      path7.join(homeDir, ".local", "bin", "claude"),
+      path7.join(homeDir, ".npm-global", "bin", "claude")
     ];
   }
   if (platform === "win32") {
     return [
-      path6.join(homeDir, "AppData", "Roaming", "npm", "claude.cmd"),
-      path6.join(homeDir, "AppData", "Local", "Programs", "Claude", "claude.exe")
+      path7.join(homeDir, "AppData", "Roaming", "npm", "claude.cmd"),
+      path7.join(homeDir, "AppData", "Local", "Programs", "Claude", "claude.exe")
     ];
   }
-  return [path6.join(homeDir, ".local", "bin", "claude")];
+  return [path7.join(homeDir, ".local", "bin", "claude")];
 }
 function claudeAppCandidates(platform, homeDir, env, runner) {
   if (platform === "darwin") {
     return [
       "/Applications/Claude.app/Contents/MacOS/Claude",
-      path6.join(homeDir, "Applications", "Claude.app", "Contents", "MacOS", "Claude")
+      path7.join(homeDir, "Applications", "Claude.app", "Contents", "MacOS", "Claude")
     ];
   }
   if (platform === "win32") {
-    const local = env.LOCALAPPDATA ?? path6.join(homeDir, "AppData", "Local");
+    const local = env.LOCALAPPDATA ?? path7.join(homeDir, "AppData", "Local");
     const appxRoot = windowsAppxInstallLocation("Claude", env, runner);
     const programFiles = [env.ProgramFiles, env["ProgramFiles(x86)"]].filter(
       (value) => Boolean(value)
     );
     return [
-      ...appxRoot ? [path6.join(appxRoot, "app", "Claude.exe")] : [],
-      path6.join(local, "Programs", "Claude", "Claude.exe"),
-      ...programFiles.map((root) => path6.join(root, "Claude", "Claude.exe"))
+      ...appxRoot ? [path7.join(appxRoot, "app", "Claude.exe")] : [],
+      path7.join(local, "Programs", "Claude", "Claude.exe"),
+      ...programFiles.map((root) => path7.join(root, "Claude", "Claude.exe"))
     ];
   }
   return [];
@@ -4473,11 +4725,11 @@ function detectProduct(platformName, options) {
     options.claudeAppPath,
     ...claudeAppCandidates(platform, homeDir, env, options.commandRunner)
   ]) : commandPath;
-  const configPath = path6.join(
+  const configPath = path7.join(
     homeDir,
     platformName === "codex" ? ".codex" : platformName === "claude" ? ".claude" : ".gemini"
   );
-  const state = executablePath ? "found" : existsSync5(configPath) ? "config_only" : "not_found";
+  const state = executablePath ? "found" : existsSync6(configPath) ? "config_only" : "not_found";
   if (!executablePath) return { state, executablePath: null, commandPath: null, version: null };
   if (platformName === "antigravity") {
     return { state, executablePath, commandPath, version: null };
@@ -4489,16 +4741,16 @@ function detectProduct(platformName, options) {
 }
 function readBundledPluginVersion(marketplaceRoot, fallback) {
   if (!marketplaceRoot) return fallback;
-  const manifestPath = path6.join(
+  const manifestPath = path7.join(
     marketplaceRoot,
     "plugins",
     PLUGIN_NAME,
     ".codex-plugin",
     "plugin.json"
   );
-  if (!existsSync5(manifestPath)) return fallback;
+  if (!existsSync6(manifestPath)) return fallback;
   try {
-    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync6(manifestPath, "utf8"));
     return manifest.version?.trim() || fallback;
   } catch {
     return fallback;
@@ -4506,16 +4758,16 @@ function readBundledPluginVersion(marketplaceRoot, fallback) {
 }
 function readBundledClaudePluginVersion(marketplaceRoot, fallback) {
   if (!marketplaceRoot) return fallback;
-  const manifestPath = path6.join(
+  const manifestPath = path7.join(
     marketplaceRoot,
     "adapters",
     "claude-code",
     ".claude-plugin",
     "plugin.json"
   );
-  if (!existsSync5(manifestPath)) return fallback;
+  if (!existsSync6(manifestPath)) return fallback;
   try {
-    const manifest = JSON.parse(readFileSync5(manifestPath, "utf8"));
+    const manifest = JSON.parse(readFileSync6(manifestPath, "utf8"));
     return manifest.version?.trim() || fallback;
   } catch {
     return fallback;
@@ -4538,11 +4790,11 @@ function parseJson(result, label) {
 }
 function codexConfigPath2(options) {
   const env = { ...process.env, ...options.env };
-  const codexHome = env.CODEX_HOME ? path6.resolve(env.CODEX_HOME) : path6.join(options.homeDir ?? homedir4(), ".codex");
-  return path6.join(codexHome, "config.toml");
+  const codexHome = env.CODEX_HOME ? path7.resolve(env.CODEX_HOME) : path7.join(options.homeDir ?? homedir4(), ".codex");
+  return path7.join(codexHome, "config.toml");
 }
 function hasMarketplaceManifest(root) {
-  return existsSync5(path6.join(root, ".agents", "plugins", "marketplace.json"));
+  return existsSync6(path7.join(root, ".agents", "plugins", "marketplace.json"));
 }
 function normalizeBrokenLocalPath(source, platform) {
   if (platform === "win32" || source.length < 4) return source;
@@ -4553,21 +4805,21 @@ function normalizeBrokenLocalPath(source, platform) {
   return source;
 }
 function repairedMarketplaceSource(marketplaceName, source, options) {
-  const bundledRoot = options.marketplaceRoot ? path6.resolve(options.marketplaceRoot) : null;
+  const bundledRoot = options.marketplaceRoot ? path7.resolve(options.marketplaceRoot) : null;
   if (marketplaceName === DESKTOP_MARKETPLACE && bundledRoot && bundledRoot !== source && hasMarketplaceManifest(bundledRoot)) {
     return bundledRoot;
   }
   const normalized = normalizeBrokenLocalPath(source, options.platform ?? process.platform);
   if (normalized === source) return null;
-  const resolved = path6.resolve(normalized);
+  const resolved = path7.resolve(normalized);
   return hasMarketplaceManifest(resolved) ? resolved : null;
 }
 function repairCodexMarketplaceConfig(options = {}) {
   const configPath = codexConfigPath2(options);
-  if (!existsSync5(configPath)) {
+  if (!existsSync6(configPath)) {
     return { changed: false, configPath, backupPath: null, repairedMarketplaces: [] };
   }
-  const source = readFileSync5(configPath, "utf8");
+  const source = readFileSync6(configPath, "utf8");
   const newline = source.includes("\r\n") ? "\r\n" : "\n";
   const lines = source.split(/\r?\n/);
   const repairedMarketplaces = [];
@@ -4596,15 +4848,15 @@ function repairCodexMarketplaceConfig(options = {}) {
   }
   const updated = lines.join(newline);
   const backupPath = `${configPath}.project-memory-marketplace-backup`;
-  if (!existsSync5(backupPath)) {
+  if (!existsSync6(backupPath)) {
     copyFileSync2(configPath, backupPath);
-    if ((options.platform ?? process.platform) !== "win32") chmodSync4(backupPath, 384);
+    if ((options.platform ?? process.platform) !== "win32") chmodSync5(backupPath, 384);
   }
-  const existingMode = statSync4(configPath).mode & 511;
+  const existingMode = statSync5(configPath).mode & 511;
   const temporaryPath = `${configPath}.${process.pid}.tmp`;
-  writeFileSync4(temporaryPath, updated, { encoding: "utf8", mode: existingMode });
-  if ((options.platform ?? process.platform) !== "win32") chmodSync4(temporaryPath, existingMode);
-  renameSync4(temporaryPath, configPath);
+  writeFileSync5(temporaryPath, updated, { encoding: "utf8", mode: existingMode });
+  if ((options.platform ?? process.platform) !== "win32") chmodSync5(temporaryPath, existingMode);
+  renameSync5(temporaryPath, configPath);
   return { changed: true, configPath, backupPath, repairedMarketplaces };
 }
 function codexPluginList(executablePath, options) {
@@ -4668,7 +4920,7 @@ function statusActions(productState, integrationState, memoryAccessState = "not_
 }
 function codexStatus(options) {
   const product = detectProduct("codex", options);
-  const marketplaceRoot = options.marketplaceRoot ? path6.resolve(options.marketplaceRoot) : null;
+  const marketplaceRoot = options.marketplaceRoot ? path7.resolve(options.marketplaceRoot) : null;
   const currentVersion = readBundledPluginVersion(
     marketplaceRoot,
     options.version ?? DEFAULT_VERSION
@@ -4760,7 +5012,7 @@ function antigravityStatus(options) {
 }
 function claudeStatus(options) {
   const product = detectProduct("claude", options);
-  const marketplaceRoot = options.marketplaceRoot ? path6.resolve(options.marketplaceRoot) : null;
+  const marketplaceRoot = options.marketplaceRoot ? path7.resolve(options.marketplaceRoot) : null;
   const currentVersion = readBundledClaudePluginVersion(
     marketplaceRoot,
     options.version ?? DEFAULT_VERSION
@@ -4891,8 +5143,8 @@ function installDesktopIntegration(platformName, options = {}) {
       });
     }
     const executablePath2 = product.commandPath;
-    const marketplaceRoot2 = options.marketplaceRoot ? path6.resolve(options.marketplaceRoot) : null;
-    if (!marketplaceRoot2 || !existsSync5(path6.join(marketplaceRoot2, ".claude-plugin", "marketplace.json"))) {
+    const marketplaceRoot2 = options.marketplaceRoot ? path7.resolve(options.marketplaceRoot) : null;
+    if (!marketplaceRoot2 || !existsSync6(path7.join(marketplaceRoot2, ".claude-plugin", "marketplace.json"))) {
       throw new ProjectMemoryError(
         "FILE_NOT_FOUND",
         "Bundled Claude Code marketplace is missing.",
@@ -4946,8 +5198,8 @@ function installDesktopIntegration(platformName, options = {}) {
   }
   const status = codexStatus(options);
   const executablePath = requireDetected(status);
-  const marketplaceRoot = options.marketplaceRoot ? path6.resolve(options.marketplaceRoot) : null;
-  if (!marketplaceRoot || !existsSync5(path6.join(marketplaceRoot, ".agents", "plugins", "marketplace.json"))) {
+  const marketplaceRoot = options.marketplaceRoot ? path7.resolve(options.marketplaceRoot) : null;
+  if (!marketplaceRoot || !existsSync6(path7.join(marketplaceRoot, ".agents", "plugins", "marketplace.json"))) {
     throw new ProjectMemoryError("FILE_NOT_FOUND", "Bundled Codex marketplace is missing.", {
       marketplaceRoot
     });
@@ -5701,16 +5953,16 @@ function renderMemoryHubHtml(hub) {
 // src/launcher.ts
 import { spawnSync as spawnSync2 } from "child_process";
 import {
-  chmodSync as chmodSync5,
+  chmodSync as chmodSync6,
   copyFileSync as copyFileSync3,
-  existsSync as existsSync6,
-  mkdirSync as mkdirSync4,
-  renameSync as renameSync5,
-  rmSync as rmSync3,
-  writeFileSync as writeFileSync5
+  existsSync as existsSync7,
+  mkdirSync as mkdirSync5,
+  renameSync as renameSync6,
+  rmSync as rmSync4,
+  writeFileSync as writeFileSync6
 } from "fs";
 import { homedir as homedir5 } from "os";
-import path7 from "path";
+import path8 from "path";
 function shellQuote2(value) {
   return `'${value.replaceAll("'", `'\\''`)}'`;
 }
@@ -5718,16 +5970,16 @@ function xmlText(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&apos;");
 }
 function browserAssetPath(cliPath, name) {
-  const cliDir = path7.dirname(cliPath);
+  const cliDir = path8.dirname(cliPath);
   const candidates = [
-    path7.join(cliDir, "browser", name),
-    path7.resolve(cliDir, "..", "dist", "browser", name),
-    path7.resolve(cliDir, "../../../plugins/codex-project-memory/dist/browser", name),
-    path7.resolve(process.cwd(), "dist", "browser", name),
-    path7.resolve(process.cwd(), "packages/project-memory-core/dist/browser", name),
-    path7.resolve(process.cwd(), "plugins/codex-project-memory/dist/browser", name)
+    path8.join(cliDir, "browser", name),
+    path8.resolve(cliDir, "..", "dist", "browser", name),
+    path8.resolve(cliDir, "../../../plugins/codex-project-memory/dist/browser", name),
+    path8.resolve(process.cwd(), "dist", "browser", name),
+    path8.resolve(process.cwd(), "packages/project-memory-core/dist/browser", name),
+    path8.resolve(process.cwd(), "plugins/codex-project-memory/dist/browser", name)
   ];
-  const resolved = candidates.find((candidate) => existsSync6(candidate));
+  const resolved = candidates.find((candidate) => existsSync7(candidate));
   if (!resolved) {
     throw new ProjectMemoryError(
       "FILE_NOT_FOUND",
@@ -5738,16 +5990,16 @@ function browserAssetPath(cliPath, name) {
   return resolved;
 }
 function launcherIconPath(cliPath, explicitPath) {
-  const cliDir = path7.dirname(cliPath);
+  const cliDir = path8.dirname(cliPath);
   const candidates = [
     explicitPath,
     process.env.PROJECT_MEMORY_APP_ICON,
-    path7.resolve(cliDir, "../assets/logo.png"),
-    path7.resolve(cliDir, "../../assets/logo.png"),
-    path7.resolve(cliDir, "../../../plugins/codex-project-memory/assets/logo.png"),
-    path7.resolve(process.cwd(), "plugins/codex-project-memory/assets/logo.png")
+    path8.resolve(cliDir, "../assets/logo.png"),
+    path8.resolve(cliDir, "../../assets/logo.png"),
+    path8.resolve(cliDir, "../../../plugins/codex-project-memory/assets/logo.png"),
+    path8.resolve(process.cwd(), "plugins/codex-project-memory/assets/logo.png")
   ].filter((candidate) => Boolean(candidate));
-  const resolved = candidates.find((candidate) => existsSync6(candidate));
+  const resolved = candidates.find((candidate) => existsSync7(candidate));
   if (!resolved) {
     throw new ProjectMemoryError("FILE_NOT_FOUND", "Talo application icon is missing.", {
       candidates
@@ -5757,13 +6009,13 @@ function launcherIconPath(cliPath, explicitPath) {
 }
 function compileMacIcon(sourcePath, targetPath) {
   const iconsetPath = `${targetPath}.iconset`;
-  rmSync3(iconsetPath, { recursive: true, force: true });
-  mkdirSync4(iconsetPath, { recursive: true, mode: 448 });
+  rmSync4(iconsetPath, { recursive: true, force: true });
+  mkdirSync5(iconsetPath, { recursive: true, mode: 448 });
   const sizes = [16, 32, 128, 256, 512];
   try {
     for (const size of sizes) {
-      const regular = path7.join(iconsetPath, `icon_${size}x${size}.png`);
-      const retina = path7.join(iconsetPath, `icon_${size}x${size}@2x.png`);
+      const regular = path8.join(iconsetPath, `icon_${size}x${size}.png`);
+      const retina = path8.join(iconsetPath, `icon_${size}x${size}@2x.png`);
       const regularResult = spawnSync2(
         "sips",
         ["-z", String(size), String(size), sourcePath, "--out", regular],
@@ -5792,57 +6044,57 @@ function compileMacIcon(sourcePath, targetPath) {
         "Unable to compile the macOS application icon."
       );
     }
-    chmodSync5(targetPath, 384);
+    chmodSync6(targetPath, 384);
   } finally {
-    rmSync3(iconsetPath, { recursive: true, force: true });
+    rmSync4(iconsetPath, { recursive: true, force: true });
   }
 }
 function macApplicationPath(homeDir) {
-  return path7.join(homeDir, "Applications", "Talo.app");
+  return path8.join(homeDir, "Applications", "Talo.app");
 }
 function legacyMacApplicationPath(homeDir) {
-  return path7.join(homeDir, "Applications", "Project Memory.app");
+  return path8.join(homeDir, "Applications", "Project Memory.app");
 }
 function legacyMacShortcutPath(homeDir) {
-  return path7.join(homeDir, "Desktop", "Project Memory.command");
+  return path8.join(homeDir, "Desktop", "Project Memory.command");
 }
 function installMacApplication(options) {
   const target = macApplicationPath(options.homeDir);
   const legacyApplication = legacyMacApplicationPath(options.homeDir);
   const staging = `${target}.installing-${process.pid}`;
   const previous = `${target}.previous-${process.pid}`;
-  const contents = path7.join(staging, "Contents");
-  const macos = path7.join(contents, "MacOS");
-  const resources = path7.join(contents, "Resources");
-  const browser = path7.join(resources, "browser");
-  const embeddedCli = path7.join(resources, "project-memory.mjs");
-  const executable = path7.join(macos, "project-memory-launcher");
-  const iconTarget = path7.join(resources, "Talo.icns");
+  const contents = path8.join(staging, "Contents");
+  const macos = path8.join(contents, "MacOS");
+  const resources = path8.join(contents, "Resources");
+  const browser = path8.join(resources, "browser");
+  const embeddedCli = path8.join(resources, "project-memory.mjs");
+  const executable = path8.join(macos, "project-memory-launcher");
+  const iconTarget = path8.join(resources, "Talo.icns");
   const legacyShortcut = legacyMacShortcutPath(options.homeDir);
-  rmSync3(staging, { recursive: true, force: true });
-  rmSync3(previous, { recursive: true, force: true });
-  mkdirSync4(macos, { recursive: true, mode: 448 });
-  mkdirSync4(browser, { recursive: true, mode: 448 });
+  rmSync4(staging, { recursive: true, force: true });
+  rmSync4(previous, { recursive: true, force: true });
+  mkdirSync5(macos, { recursive: true, mode: 448 });
+  mkdirSync5(browser, { recursive: true, mode: 448 });
   copyFileSync3(options.cliPath, embeddedCli);
   copyFileSync3(
     browserAssetPath(options.cliPath, "graph-app.js"),
-    path7.join(browser, "graph-app.js")
+    path8.join(browser, "graph-app.js")
   );
   copyFileSync3(
     browserAssetPath(options.cliPath, "graph-app.css"),
-    path7.join(browser, "graph-app.css")
+    path8.join(browser, "graph-app.css")
   );
-  chmodSync5(embeddedCli, 384);
-  chmodSync5(path7.join(browser, "graph-app.js"), 384);
-  chmodSync5(path7.join(browser, "graph-app.css"), 384);
+  chmodSync6(embeddedCli, 384);
+  chmodSync6(path8.join(browser, "graph-app.js"), 384);
+  chmodSync6(path8.join(browser, "graph-app.css"), 384);
   const compileIcon = options.iconCompiler ?? compileMacIcon;
   compileIcon(launcherIconPath(options.cliPath, options.iconPath), iconTarget);
   const launcher = `#!/bin/sh
 APP_ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)"
 exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memory.mjs" open
 `;
-  writeFileSync5(executable, launcher, { encoding: "utf8", mode: 448 });
-  chmodSync5(executable, 448);
+  writeFileSync6(executable, launcher, { encoding: "utf8", mode: 448 });
+  chmodSync6(executable, 448);
   const plist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -5853,29 +6105,29 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   <key>CFBundleIdentifier</key><string>com.wangxuezhi.talo</string>
   <key>CFBundleName</key><string>Talo</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleShortVersionString</key><string>0.14.4</string>
-  <key>CFBundleVersion</key><string>1404</string>
+  <key>CFBundleShortVersionString</key><string>0.14.5</string>
+  <key>CFBundleVersion</key><string>1405</string>
   <key>LSMinimumSystemVersion</key><string>12.0</string>
   <key>NSHighResolutionCapable</key><true/>
   <key>TaloCLI</key><string>${xmlText(options.cliPath)}</string>
 </dict>
 </plist>
 `;
-  writeFileSync5(path7.join(contents, "Info.plist"), plist, { encoding: "utf8", mode: 384 });
-  mkdirSync4(path7.dirname(target), { recursive: true, mode: 448 });
+  writeFileSync6(path8.join(contents, "Info.plist"), plist, { encoding: "utf8", mode: 384 });
+  mkdirSync5(path8.dirname(target), { recursive: true, mode: 448 });
   try {
-    if (existsSync6(target)) renameSync5(target, previous);
-    renameSync5(staging, target);
-    rmSync3(previous, { recursive: true, force: true });
+    if (existsSync7(target)) renameSync6(target, previous);
+    renameSync6(staging, target);
+    rmSync4(previous, { recursive: true, force: true });
   } catch (error) {
-    rmSync3(staging, { recursive: true, force: true });
-    if (!existsSync6(target) && existsSync6(previous)) renameSync5(previous, target);
+    rmSync4(staging, { recursive: true, force: true });
+    if (!existsSync7(target) && existsSync7(previous)) renameSync6(previous, target);
     throw error;
   }
-  const legacyShortcutRemoved = existsSync6(legacyShortcut);
-  rmSync3(legacyShortcut, { force: true });
-  const legacyApplicationRemoved = existsSync6(legacyApplication);
-  rmSync3(legacyApplication, { recursive: true, force: true });
+  const legacyShortcutRemoved = existsSync7(legacyShortcut);
+  rmSync4(legacyShortcut, { force: true });
+  const legacyApplicationRemoved = existsSync7(legacyApplication);
+  rmSync4(legacyApplication, { recursive: true, force: true });
   return {
     installed: true,
     shortcutPath: target,
@@ -5883,19 +6135,19 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
     opens: "memory-hub",
     legacyShortcutRemoved,
     legacyApplicationRemoved,
-    embeddedCli: path7.join(target, "Contents", "Resources", "project-memory.mjs")
+    embeddedCli: path8.join(target, "Contents", "Resources", "project-memory.mjs")
   };
 }
 function installShortcut(options = {}) {
   const platform = options.platform ?? process.platform;
   const homeDir = options.homeDir ?? homedir5();
-  const cliPath = path7.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
-  const nodePath = path7.resolve(options.nodePath ?? process.execPath);
+  const cliPath = path8.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
+  const nodePath = path8.resolve(options.nodePath ?? process.execPath);
   if (platform === "darwin") {
     return installMacApplication({ ...options, homeDir, cliPath, nodePath });
   }
-  const target = platform === "win32" ? path7.join(homeDir, "Desktop", "Talo.cmd") : path7.join(homeDir, ".local", "share", "applications", "project-memory.desktop");
-  mkdirSync4(path7.dirname(target), { recursive: true });
+  const target = platform === "win32" ? path8.join(homeDir, "Desktop", "Talo.cmd") : path8.join(homeDir, ".local", "share", "applications", "project-memory.desktop");
+  mkdirSync5(path8.dirname(target), { recursive: true });
   const command = `${JSON.stringify(nodePath)} ${JSON.stringify(cliPath)} open`;
   const content = platform === "win32" ? `@echo off\r
 ${command}\r
@@ -5906,8 +6158,8 @@ Exec=${command}
 Terminal=false
 Categories=Utility;Development;
 `;
-  writeFileSync5(target, content, { encoding: "utf8", mode: 448 });
-  if (platform !== "win32") chmodSync5(target, 448);
+  writeFileSync6(target, content, { encoding: "utf8", mode: 448 });
+  if (platform !== "win32") chmodSync6(target, 448);
   return { installed: true, shortcutPath: target, command };
 }
 function removeShortcut(options = {}) {
@@ -5917,28 +6169,28 @@ function removeShortcut(options = {}) {
     const appPath = macApplicationPath(homeDir);
     const legacyAppPath = legacyMacApplicationPath(homeDir);
     const legacyShortcutPath = legacyMacShortcutPath(homeDir);
-    rmSync3(appPath, { recursive: true, force: true });
-    rmSync3(legacyAppPath, { recursive: true, force: true });
-    rmSync3(legacyShortcutPath, { force: true });
+    rmSync4(appPath, { recursive: true, force: true });
+    rmSync4(legacyAppPath, { recursive: true, force: true });
+    rmSync4(legacyShortcutPath, { force: true });
     return { removed: true, shortcutPath: appPath, appPath, legacyAppPath, legacyShortcutPath };
   }
-  const target = platform === "win32" ? path7.join(homeDir, "Desktop", "Talo.cmd") : path7.join(homeDir, ".local", "share", "applications", "project-memory.desktop");
-  rmSync3(target, { force: true });
+  const target = platform === "win32" ? path8.join(homeDir, "Desktop", "Talo.cmd") : path8.join(homeDir, ".local", "share", "applications", "project-memory.desktop");
+  rmSync4(target, { force: true });
   return { removed: true, shortcutPath: target };
 }
 
 // src/platform-projects.ts
 import {
   closeSync,
-  existsSync as existsSync7,
+  existsSync as existsSync8,
   openSync,
   readdirSync as readdirSync5,
-  readFileSync as readFileSync6,
+  readFileSync as readFileSync7,
   readSync,
-  statSync as statSync5
+  statSync as statSync6
 } from "fs";
 import { homedir as homedir6 } from "os";
-import path8 from "path";
+import path9 from "path";
 import { fileURLToPath } from "url";
 var MAX_CODEX_SESSION_FILES = 2e3;
 var MAX_SESSION_META_BYTES = 256 * 1024;
@@ -5957,7 +6209,7 @@ function readFirstLine(filePath) {
   }
 }
 function listFiles(root, depth = 0, result = []) {
-  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync7(root)) return result;
+  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync8(root)) return result;
   let entries;
   try {
     entries = readdirSync5(root, { encoding: "utf8", withFileTypes: true });
@@ -5966,16 +6218,16 @@ function listFiles(root, depth = 0, result = []) {
   }
   for (const entry of entries) {
     if (result.length >= MAX_CODEX_SESSION_FILES) break;
-    const entryPath = path8.join(root, entry.name);
+    const entryPath = path9.join(root, entry.name);
     if (entry.isDirectory()) listFiles(entryPath, depth + 1, result);
     else if (entry.isFile() && entry.name.endsWith(".jsonl")) result.push(entryPath);
   }
   return result;
 }
-function normalizeProjectPath(inputPath) {
+function normalizeProject(inputPath) {
   try {
-    if (!existsSync7(inputPath) || !statSync5(inputPath).isDirectory()) return null;
-    return detectGitMetadata(inputPath).rootPath;
+    if (!existsSync8(inputPath) || !statSync6(inputPath).isDirectory()) return null;
+    return detectGitMetadata(inputPath);
   } catch {
     return null;
   }
@@ -5989,8 +6241,8 @@ function addCandidate(candidates, candidate) {
 }
 function scanCodexProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path8.join(homeDir, ".codex");
-  const sessionRoot = path8.join(codexHome, "sessions");
+  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path9.join(homeDir, ".codex");
+  const sessionRoot = path9.join(codexHome, "sessions");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -6010,23 +6262,25 @@ function scanCodexProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "codex",
       platformProjectId: session.platformProjectId,
-      name: path8.basename(projectPath),
-      path: projectPath,
+      name: path9.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "codex-session"
+      source: "codex-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
 }
 function scanAntigravityProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path8.join(homeDir, ".gemini");
-  const configRoot2 = path8.join(geminiHome, "config", "projects");
+  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path9.join(homeDir, ".gemini");
+  const configRoot2 = path9.join(geminiHome, "config", "projects");
   const candidates = /* @__PURE__ */ new Map();
   let entries;
   try {
@@ -6036,9 +6290,9 @@ function scanAntigravityProjects(options) {
   }
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
-    const filePath = path8.join(configRoot2, entry.name);
+    const filePath = path9.join(configRoot2, entry.name);
     try {
-      const config = JSON.parse(readFileSync6(filePath, "utf8"));
+      const config = JSON.parse(readFileSync7(filePath, "utf8"));
       for (const resource of config.projectResources?.resources ?? []) {
         if (typeof resource.folderUri !== "string") continue;
         let requestedPath;
@@ -6047,15 +6301,17 @@ function scanAntigravityProjects(options) {
         } catch {
           continue;
         }
-        const projectPath = normalizeProjectPath(requestedPath);
-        if (!projectPath) continue;
+        const project = normalizeProject(requestedPath);
+        if (!project) continue;
         addCandidate(candidates, {
           platform: "antigravity",
-          platformProjectId: config.id ?? path8.basename(entry.name, ".json"),
-          name: config.name?.trim() || path8.basename(projectPath),
-          path: projectPath,
+          platformProjectId: config.id ?? path9.basename(entry.name, ".json"),
+          name: config.name?.trim() || path9.basename(project.rootPath),
+          path: project.rootPath,
           lastSeenAt: config.updatedAt ?? null,
-          source: "antigravity-config"
+          source: "antigravity-config",
+          gitCommonDir: project.gitCommonDir,
+          remoteUrl: project.remoteUrl
         });
       }
     } catch {
@@ -6065,8 +6321,8 @@ function scanAntigravityProjects(options) {
 }
 function scanClaudeProjects(options) {
   const homeDir = options.homeDir ?? homedir6();
-  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path8.join(homeDir, ".claude");
-  const sessionRoot = path8.join(claudeHome, "projects");
+  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path9.join(homeDir, ".claude");
+  const sessionRoot = path9.join(claudeHome, "projects");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -6096,15 +6352,17 @@ function scanClaudeProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "claude",
       platformProjectId: session.platformProjectId,
-      name: path8.basename(projectPath),
-      path: projectPath,
+      name: path9.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "claude-session"
+      source: "claude-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
@@ -6121,11 +6379,19 @@ function discoverDesktopPlatformProjects(options = {}) {
 }
 function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjects) {
   const hubById = new Map(hubProjects.map((project) => [project.projectId, project]));
-  const registeredByPath = new Map(
-    registeredProjects.map((project) => [project.primaryPath, project])
-  );
-  const projects = candidates.map((candidate) => {
-    const registered = registeredByPath.get(candidate.path) ?? null;
+  const uniqueCandidates = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const identity = candidate.gitCommonDir ? `git:${candidate.gitCommonDir}` : candidate.remoteUrl ? `remote:${candidate.remoteUrl}` : `path:${candidate.path}`;
+    const key = `${candidate.platform}:${identity}`;
+    const existing = uniqueCandidates.get(key);
+    if (!existing || (candidate.lastSeenAt ?? "") > (existing.lastSeenAt ?? "")) {
+      uniqueCandidates.set(key, candidate);
+    }
+  }
+  const projects = [...uniqueCandidates.values()].map((candidate) => {
+    const registered = registeredProjects.find(
+      (project) => project.primaryPath === candidate.path || candidate.gitCommonDir !== null && project.gitCommonDir === candidate.gitCommonDir || candidate.remoteUrl !== null && project.remoteUrl === candidate.remoteUrl
+    ) ?? null;
     const hubProject = registered ? hubById.get(registered.id) : null;
     return {
       ...candidate,
@@ -6150,14 +6416,173 @@ function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjec
   return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), platforms: groups };
 }
 
+// src/policy.ts
+import { randomUUID } from "crypto";
+import {
+  chmodSync as chmodSync7,
+  existsSync as existsSync9,
+  lstatSync as lstatSync4,
+  mkdirSync as mkdirSync6,
+  readFileSync as readFileSync8,
+  renameSync as renameSync7,
+  rmSync as rmSync5,
+  writeFileSync as writeFileSync7
+} from "fs";
+import path10 from "path";
+var POLICY_SCHEMA_VERSION = 1;
+function policyPath(projectDir) {
+  return path10.join(projectDir, "policy.json");
+}
+function emptyPolicy(projectId, targetPath) {
+  return {
+    schemaVersion: POLICY_SCHEMA_VERSION,
+    policyId: randomUUID(),
+    projectId,
+    version: 0,
+    status: "unconfigured",
+    summary: "",
+    rules: [],
+    sources: [],
+    sourceFingerprint: sha256(""),
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    updatedAt: (/* @__PURE__ */ new Date()).toISOString(),
+    updatedBy: { platform: "system", adapterVersion: null },
+    bridge: {
+      enabled: false,
+      consentAt: null,
+      targetPath,
+      fileOwnership: "preexisting",
+      createdFileHash: null,
+      lastWholeFileHash: null,
+      lastManagedBlockHash: null,
+      lastSyncedPolicyVersion: null,
+      lastSyncedAt: null,
+      syncStatus: "disabled",
+      lastError: null
+    }
+  };
+}
+function readPolicy(filePath) {
+  if (!existsSync9(filePath)) return null;
+  try {
+    const value = JSON.parse(readFileSync8(filePath, "utf8"));
+    if (value.schemaVersion !== POLICY_SCHEMA_VERSION || typeof value.policyId !== "string" || typeof value.projectId !== "string" || !Number.isInteger(value.version) || !Array.isArray(value.rules) || !Array.isArray(value.sources) || !value.bridge) {
+      throw new Error("invalid policy shape");
+    }
+    return value;
+  } catch (error) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy is invalid.", {
+      path: filePath,
+      cause: error instanceof Error ? error.message : String(error)
+    });
+  }
+}
+function writePolicy(filePath, policy) {
+  mkdirSync6(path10.dirname(filePath), { recursive: true, mode: 448 });
+  const temporary = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    writeFileSync7(temporary, `${JSON.stringify(policy, null, 2)}
+`, {
+      encoding: "utf8",
+      mode: 384
+    });
+    chmodSync7(temporary, 384);
+    renameSync7(temporary, filePath);
+    chmodSync7(filePath, 384);
+  } finally {
+    rmSync5(temporary, { force: true });
+  }
+}
+function validatePolicyInput(input) {
+  if (!input.summary.trim() || input.summary.length > 1e3) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Policy summary must be 1-1000 characters.");
+  }
+  if (input.rules.length > 50) {
+    throw new ProjectMemoryError("INVALID_INPUT", "A Policy can contain at most 50 rules.");
+  }
+  for (const rule of input.rules) {
+    if (!rule.id.trim() || rule.id.length > 120 || !Number.isInteger(rule.priority)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Policy rule metadata is invalid.");
+    }
+    for (const text2 of [...rule.triggerTopics, ...rule.requiredActions, ...rule.forbiddenActions]) {
+      assertNoSecret(text2, "policy rule");
+      if (text2.length > 500)
+        throw new ProjectMemoryError("INVALID_INPUT", "Policy rule text is too long.");
+    }
+  }
+}
+function updatePolicyRecord(current, project, input) {
+  validatePolicyInput(input);
+  if (current && input.expectedVersion !== void 0 && input.expectedVersion !== current.version) {
+    throw new ProjectMemoryError(
+      "POLICY_VERSION_CONFLICT",
+      "Policy version changed before this edit was saved.",
+      {
+        expectedVersion: input.expectedVersion,
+        currentVersion: current.version
+      }
+    );
+  }
+  const now2 = (/* @__PURE__ */ new Date()).toISOString();
+  const sources = input.sources ?? [];
+  const sourceFingerprint = sha256(JSON.stringify(sources));
+  return {
+    schemaVersion: POLICY_SCHEMA_VERSION,
+    policyId: current?.policyId ?? randomUUID(),
+    projectId: current?.projectId ?? project.registeredProject?.id ?? "",
+    version: (current?.version ?? 0) + 1,
+    status: current?.bridge.enabled ? "pending_sync" : "disabled",
+    summary: input.summary.trim(),
+    rules: input.rules,
+    sources,
+    sourceFingerprint,
+    createdAt: current?.createdAt ?? now2,
+    updatedAt: now2,
+    updatedBy: input.actor,
+    bridge: current?.bridge ?? {
+      enabled: false,
+      consentAt: null,
+      targetPath: path10.join(project.rootPath, "AGENTS.md"),
+      fileOwnership: "preexisting",
+      createdFileHash: null,
+      lastWholeFileHash: null,
+      lastManagedBlockHash: null,
+      lastSyncedPolicyVersion: null,
+      lastSyncedAt: null,
+      syncStatus: "disabled",
+      lastError: null
+    }
+  };
+}
+function policySourceIsCurrent(project, source) {
+  if (source.kind !== "file" || !source.path) return true;
+  const target = path10.resolve(project.rootPath, source.path);
+  if (path10.isAbsolute(source.path) || path10.relative(project.rootPath, target).startsWith(".."))
+    return false;
+  if (!existsSync9(target) || !lstatSync4(target).isFile()) return false;
+  return sha256(readFileSync8(target)) === source.fileHash;
+}
+function assertPolicySourcesCurrent(project, policy) {
+  const stale = policy.sources.filter((source) => !policySourceIsCurrent(project, source));
+  if (stale.length > 0) {
+    throw new ProjectMemoryError(
+      "POLICY_SOURCE_STALE",
+      "A Policy source file changed or was removed.",
+      {
+        sources: stale.map((source) => ({ path: source.path, fileHash: source.fileHash }))
+      }
+    );
+  }
+}
+
 // src/service.ts
-import path10, { basename } from "path";
+import path12, { basename } from "path";
 import { pathToFileURL as pathToFileURL2 } from "url";
 
 // src/view.ts
 import { createHash as createHash4 } from "crypto";
-import { existsSync as existsSync8, readFileSync as readFileSync7 } from "fs";
-import path9 from "path";
+import { existsSync as existsSync10, readFileSync as readFileSync9 } from "fs";
+import path11 from "path";
 import { fileURLToPath as fileURLToPath2, pathToFileURL } from "url";
 var RELATION_LABELS2 = {
   related_to: "\u76F8\u5173",
@@ -6420,18 +6845,18 @@ function htmlAttribute(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 function browserAsset(name) {
-  const moduleDir = path9.dirname(fileURLToPath2(import.meta.url));
+  const moduleDir = path11.dirname(fileURLToPath2(import.meta.url));
   const candidates = [
-    path9.join(moduleDir, "browser", name),
-    path9.resolve(moduleDir, "..", "dist", "browser", name),
-    path9.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
-    path9.resolve(process.cwd(), "dist", "browser", name)
+    path11.join(moduleDir, "browser", name),
+    path11.resolve(moduleDir, "..", "dist", "browser", name),
+    path11.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
+    path11.resolve(process.cwd(), "dist", "browser", name)
   ];
-  const assetPath = candidates.find((candidate) => existsSync8(candidate));
+  const assetPath = candidates.find((candidate) => existsSync10(candidate));
   if (!assetPath) {
     throw new Error(`Browser asset ${name} is missing. Run pnpm build:browser first.`);
   }
-  return readFileSync7(assetPath, "utf8");
+  return readFileSync9(assetPath, "utf8");
 }
 function contentHash(value) {
   return createHash4("sha256").update(value).digest("base64");
@@ -6621,8 +7046,8 @@ var ProjectMemoryService = class {
       name: projectName,
       primaryPath: detected.rootPath,
       isGit: detected.isGit,
-      gitCommonDir: detected.gitCommonDir,
-      remoteUrl: detected.remoteUrl,
+      gitCommonDir: detected.gitCommonDir ?? null,
+      remoteUrl: detected.remoteUrl ?? null,
       headCommit: detected.headCommit,
       ...relinkProjectId ? { relinkProjectId } : {}
     });
@@ -6643,8 +7068,190 @@ var ProjectMemoryService = class {
       currentDetection: current,
       pendingProposals: this.store.countPendingProposals(projectId),
       memoryCount: memories.length,
-      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null
+      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null,
+      policy: this.policyStatus(projectId)
     };
+  }
+  policyStatus(projectId) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy)
+      return { status: "unconfigured", policy: null, agents: discoverAgents(project.primaryPath) };
+    let sourceStatus = "current";
+    try {
+      assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    } catch {
+      sourceStatus = "stale";
+    }
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const drifted = policy.bridge.lastWholeFileHash && agents.target.wholeFileHash !== policy.bridge.lastWholeFileHash;
+    return {
+      status: sourceStatus === "stale" ? "stale" : drifted ? "drifted" : policy.status,
+      policy,
+      agents
+    };
+  }
+  updatePolicy(projectId, input) {
+    const project = this.store.requireProject(projectId);
+    const detected = this.detectProject(project.primaryPath);
+    const next = updatePolicyRecord(this.store.getPolicy(projectId), detected, input);
+    const saved = this.store.savePolicy(projectId, next);
+    if (saved.bridge.enabled) {
+      this.syncPolicyBridge(projectId);
+      return this.store.getPolicy(projectId) ?? saved;
+    }
+    return saved;
+  }
+  enablePolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Enabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy || policy.version < 1)
+      throw new ProjectMemoryError(
+        "POLICY_NOT_CONFIGURED",
+        "Create a Project Policy before enabling the bridge."
+      );
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const ownership = agents.target.exists ? policy.bridge.fileOwnership === "talo_created" ? "talo_created" : "preexisting" : "talo_created";
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        enabled: true,
+        consentAt: policy.bridge.consentAt ?? (/* @__PURE__ */ new Date()).toISOString(),
+        fileOwnership: ownership,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    const result = syncAgentsPolicy(
+      project.primaryPath,
+      pending,
+      ownership,
+      agents.target.wholeFileHash
+    );
+    const effective = {
+      ...pending,
+      status: "effective",
+      bridge: {
+        ...pending.bridge,
+        syncStatus: "in_sync",
+        lastWholeFileHash: result.wholeFileHash,
+        lastManagedBlockHash: result.managedBlockHash,
+        lastSyncedPolicyVersion: pending.version,
+        lastSyncedAt: pending.bridge.lastSyncedAt
+      }
+    };
+    this.store.savePolicy(projectId, effective, "policy_bridge_enabled");
+    return { policy: effective, sync: result };
+  }
+  syncPolicyBridge(projectId, acceptDrift = false) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy?.bridge.enabled)
+      throw new ProjectMemoryError("POLICY_NOT_CONFIGURED", "Policy bridge is not enabled.");
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: policy.bridge.lastSyncedPolicyVersion === policy.version ? policy.bridge.lastSyncedAt : (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    this.store.savePolicy(projectId, pending, "policy_sync_started");
+    try {
+      const result = syncAgentsPolicy(
+        project.primaryPath,
+        pending,
+        pending.bridge.fileOwnership,
+        acceptDrift ? null : pending.bridge.lastWholeFileHash
+      );
+      const effective = {
+        ...pending,
+        status: "effective",
+        bridge: {
+          ...pending.bridge,
+          syncStatus: "in_sync",
+          lastWholeFileHash: result.wholeFileHash,
+          lastManagedBlockHash: result.managedBlockHash,
+          lastSyncedPolicyVersion: pending.version
+        }
+      };
+      this.store.savePolicy(projectId, effective, "policy_synced");
+      return { policy: effective, sync: result };
+    } catch (error) {
+      const normalized = error instanceof ProjectMemoryError ? { code: error.code, message: error.message, details: error.details } : { code: "STORAGE_ERROR", message: String(error), details: {} };
+      const failed = {
+        ...pending,
+        status: "failed",
+        bridge: { ...pending.bridge, syncStatus: "failed", lastError: normalized }
+      };
+      this.store.savePolicy(projectId, failed, "policy_sync_failed");
+      throw error;
+    }
+  }
+  repairPolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Repairing the Policy bridge requires explicit confirmation."
+      );
+    return this.syncPolicyBridge(projectId, true);
+  }
+  disablePolicyBridge(projectId, confirmed, removeCreatedFile = false) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Disabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy) return { status: "unconfigured", disabled: false };
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const currentHash = agents.target.wholeFileHash;
+    const userChanged = Boolean(
+      policy.bridge.lastWholeFileHash && currentHash && currentHash !== policy.bridge.lastWholeFileHash
+    );
+    const ownership = userChanged ? "user_claimed" : policy.bridge.fileOwnership;
+    const removed = userChanged ? { removedBlock: false, deletedFile: false } : removeAgentsPolicy(
+      project.primaryPath,
+      ownership === "talo_created" && removeCreatedFile ? "talo_created" : "preexisting",
+      currentHash
+    );
+    const disabled = {
+      ...policy,
+      status: "disabled",
+      bridge: {
+        ...policy.bridge,
+        enabled: false,
+        fileOwnership: ownership,
+        syncStatus: "disabled"
+      }
+    };
+    this.store.savePolicy(projectId, disabled, "policy_bridge_disabled");
+    return { policy: disabled, removed };
   }
   linkProjects(sourceProjectId, targetProjectId) {
     this.store.linkProjects(sourceProjectId, targetProjectId);
@@ -6735,7 +7342,7 @@ var ProjectMemoryService = class {
         stale,
         staleReason: stale ? "source_file_changed" : null,
         accessible: true,
-        fileUrl: pathToFileURL2(path10.resolve(metadata.rootPath, current.path)).href
+        fileUrl: pathToFileURL2(path12.resolve(metadata.rootPath, current.path)).href
       };
     } catch {
       return {
@@ -7741,6 +8348,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview: brief.handoff.coverage,
         latestActivityAt: latest?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest?.displayTitle ?? null,
@@ -7814,6 +8423,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview,
         latestActivityAt: latest?.narrative?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest ? buildMemoryDisplayTitle(latest) : null,
@@ -7866,7 +8477,7 @@ var ProjectMemoryService = class {
     return hub;
   }
   registerDesktopPlatformProject(platform, projectPath) {
-    const resolvedPath = path10.resolve(projectPath);
+    const resolvedPath = path12.resolve(projectPath);
     const candidate = discoverDesktopPlatformProjects().find(
       (project) => project.platform === platform && project.path === resolvedPath
     );
@@ -7877,7 +8488,8 @@ var ProjectMemoryService = class {
         { platform, path: resolvedPath }
       );
     }
-    this.registerProject(candidate.path, candidate.name);
+    const existing = this.store.getProjectByPath(candidate.path);
+    if (!existing) this.registerProject(candidate.path, candidate.name);
     return this.buildDesktopHubSnapshot();
   }
   buildDesktopProjectView(projectId) {
@@ -7886,7 +8498,8 @@ var ProjectMemoryService = class {
     const graph = this.buildGraph(projectId, null, 1, false);
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
     const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
-    return buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    const view = buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    return { ...view, policy: this.policyStatus(projectId) };
   }
   writeMemoryHub(regenerateProjectPages = true) {
     const hub = this.buildMemoryHub(regenerateProjectPages);
@@ -7960,43 +8573,43 @@ ${instruction}
 };
 
 // src/store.ts
-import { createHash as createHash5, randomUUID } from "crypto";
+import { createHash as createHash5, randomUUID as randomUUID2 } from "crypto";
 import {
   appendFileSync,
-  chmodSync as chmodSync6,
-  existsSync as existsSync9,
-  mkdirSync as mkdirSync5,
+  chmodSync as chmodSync8,
+  existsSync as existsSync11,
+  mkdirSync as mkdirSync7,
   readdirSync as readdirSync6,
-  readFileSync as readFileSync8,
-  renameSync as renameSync6,
-  rmSync as rmSync4,
-  statSync as statSync6,
-  writeFileSync as writeFileSync6
+  readFileSync as readFileSync10,
+  renameSync as renameSync8,
+  rmSync as rmSync6,
+  statSync as statSync7,
+  writeFileSync as writeFileSync8
 } from "fs";
-import path11 from "path";
+import path13 from "path";
 var SCHEMA_VERSION = 1;
 var MEMORY_SCHEMA_VERSION = 6;
 function now() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function ensurePrivateDirectory(directory) {
-  mkdirSync5(directory, { recursive: true, mode: 448 });
-  chmodSync6(directory, 448);
+  mkdirSync7(directory, { recursive: true, mode: 448 });
+  chmodSync8(directory, 448);
 }
 function writePrivateFile(filePath, content, hardenDirectory = true) {
   if (hardenDirectory) {
-    ensurePrivateDirectory(path11.dirname(filePath));
+    ensurePrivateDirectory(path13.dirname(filePath));
   } else {
-    mkdirSync5(path11.dirname(filePath), { recursive: true, mode: 448 });
+    mkdirSync7(path13.dirname(filePath), { recursive: true, mode: 448 });
   }
-  const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  const temporaryPath = `${filePath}.${process.pid}.${randomUUID2()}.tmp`;
   try {
-    writeFileSync6(temporaryPath, content, { encoding: "utf8", mode: 384 });
-    chmodSync6(temporaryPath, 384);
-    renameSync6(temporaryPath, filePath);
-    chmodSync6(filePath, 384);
+    writeFileSync8(temporaryPath, content, { encoding: "utf8", mode: 384 });
+    chmodSync8(temporaryPath, 384);
+    renameSync8(temporaryPath, filePath);
+    chmodSync8(filePath, 384);
   } finally {
-    rmSync4(temporaryPath, { force: true });
+    rmSync6(temporaryPath, { force: true });
   }
 }
 function writeJson(filePath, value) {
@@ -8005,7 +8618,7 @@ function writeJson(filePath, value) {
 }
 function readJson(filePath) {
   try {
-    return JSON.parse(readFileSync8(filePath, "utf8"));
+    return JSON.parse(readFileSync10(filePath, "utf8"));
   } catch (error) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Unable to read project memory state.", {
       path: filePath,
@@ -8074,10 +8687,10 @@ ${JSON.stringify(metadata, null, 2)}
 ${sections.join("\n")}`;
 }
 function parseMemoryDocument(filePath, project) {
-  if (!existsSync9(filePath)) {
+  if (!existsSync11(filePath)) {
     return [];
   }
-  const text2 = readFileSync8(filePath, "utf8");
+  const text2 = readFileSync10(filePath, "utf8");
   const frontMatter = text2.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontMatter) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Project MEMORY.md has invalid front matter.", {
@@ -8313,16 +8926,16 @@ var MemoryStore = class {
   locksRoot;
   constructor(dataDir) {
     this.storageRoot = dataDir;
-    this.registryPath = path11.join(dataDir, "registry.json");
-    this.linksPath = path11.join(dataDir, "links.json");
-    this.projectsRoot = path11.join(dataDir, "projects");
-    this.locksRoot = path11.join(dataDir, "locks");
+    this.registryPath = path13.join(dataDir, "registry.json");
+    this.linksPath = path13.join(dataDir, "links.json");
+    this.projectsRoot = path13.join(dataDir, "projects");
+    this.locksRoot = path13.join(dataDir, "locks");
     ensurePrivateDirectory(this.projectsRoot);
     ensurePrivateDirectory(this.locksRoot);
-    if (!existsSync9(this.registryPath)) {
+    if (!existsSync11(this.registryPath)) {
       writeJson(this.registryPath, { schemaVersion: SCHEMA_VERSION, projects: [] });
     }
-    if (!existsSync9(this.linksPath)) {
+    if (!existsSync11(this.linksPath)) {
       writeJson(this.linksPath, { schemaVersion: SCHEMA_VERSION, links: [] });
     }
     this.readRegistry();
@@ -8331,12 +8944,12 @@ var MemoryStore = class {
   close() {
   }
   acquireProjectLock(projectId) {
-    const lockPath = path11.join(this.locksRoot, `${projectId}.lock`);
+    const lockPath = path13.join(this.locksRoot, `${projectId}.lock`);
     const acquire = () => {
       try {
-        mkdirSync5(lockPath, { mode: 448 });
+        mkdirSync7(lockPath, { mode: 448 });
         writePrivateFile(
-          path11.join(lockPath, "owner.json"),
+          path13.join(lockPath, "owner.json"),
           `${JSON.stringify({ pid: process.pid, acquiredAt: now() }, null, 2)}
 `,
           false
@@ -8344,12 +8957,12 @@ var MemoryStore = class {
       } catch (error) {
         const code = error.code;
         if (code !== "EEXIST") throw error;
-        const age = Date.now() - statSync6(lockPath).mtimeMs;
+        const age = Date.now() - statSync7(lockPath).mtimeMs;
         if (age > 5 * 60 * 1e3) {
-          rmSync4(lockPath, { recursive: true, force: true });
-          mkdirSync5(lockPath, { mode: 448 });
+          rmSync6(lockPath, { recursive: true, force: true });
+          mkdirSync7(lockPath, { mode: 448 });
           writePrivateFile(
-            path11.join(lockPath, "owner.json"),
+            path13.join(lockPath, "owner.json"),
             `${JSON.stringify({ pid: process.pid, acquiredAt: now(), recovered: true }, null, 2)}
 `,
             false
@@ -8364,7 +8977,7 @@ var MemoryStore = class {
       }
     };
     acquire();
-    return () => rmSync4(lockPath, { recursive: true, force: true });
+    return () => rmSync6(lockPath, { recursive: true, force: true });
   }
   projectRevision(projectId) {
     const hash2 = createHash5("sha256");
@@ -8373,50 +8986,84 @@ var MemoryStore = class {
       this.relationsPath(projectId),
       this.linksPath
     ]) {
-      hash2.update(path11.basename(filePath));
-      hash2.update(existsSync9(filePath) ? readFileSync8(filePath) : Buffer.from("<missing>"));
+      hash2.update(path13.basename(filePath));
+      hash2.update(existsSync11(filePath) ? readFileSync10(filePath) : Buffer.from("<missing>"));
     }
     return hash2.digest("hex");
   }
   projectDir(projectId) {
-    return path11.join(this.projectsRoot, projectId);
+    return path13.join(this.projectsRoot, projectId);
   }
   projectPath(projectId) {
-    return path11.join(this.projectDir(projectId), "project.json");
+    return path13.join(this.projectDir(projectId), "project.json");
   }
   memoryPath(projectId) {
-    return path11.join(this.projectDir(projectId), "MEMORY.md");
+    return path13.join(this.projectDir(projectId), "MEMORY.md");
+  }
+  policyPath(projectId) {
+    return policyPath(this.projectDir(projectId));
+  }
+  getPolicy(projectId) {
+    this.requireProject(projectId);
+    const current = readPolicy(this.policyPath(projectId));
+    if (current && current.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy belongs to another project.", {
+        path: this.policyPath(projectId),
+        projectId
+      });
+    }
+    return current;
+  }
+  savePolicy(projectId, policy, eventType = "policy_updated") {
+    this.requireProject(projectId);
+    if (policy.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy identity is invalid.", {
+        projectId
+      });
+    }
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      writePolicy(this.policyPath(projectId), policy);
+      this.audit(eventType, projectId, policy.policyId, {
+        version: policy.version,
+        status: policy.status,
+        syncStatus: policy.bridge.syncStatus
+      });
+      return policy;
+    } finally {
+      releaseLock();
+    }
   }
   writeKnowledgeGraph(projectId, content, outputPath) {
     this.requireProject(projectId);
-    const target = outputPath ? path11.resolve(outputPath) : path11.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    const target = outputPath ? path13.resolve(outputPath) : path13.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
     writePrivateFile(target, content, outputPath === void 0);
     return target;
   }
   knowledgeGraphPath(projectId) {
     this.requireProject(projectId);
-    return path11.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    return path13.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
   }
   writeMemoryHub(content, outputPath) {
-    writePrivateFile(path11.resolve(outputPath), content);
-    return path11.resolve(outputPath);
+    writePrivateFile(path13.resolve(outputPath), content);
+    return path13.resolve(outputPath);
   }
   relationsPath(projectId) {
-    return path11.join(this.projectDir(projectId), "RELATIONS.json");
+    return path13.join(this.projectDir(projectId), "RELATIONS.json");
   }
   proposalsDir(projectId) {
-    return path11.join(this.projectDir(projectId), "proposals");
+    return path13.join(this.projectDir(projectId), "proposals");
   }
   proposalPath(projectId, proposalId) {
-    return path11.join(this.proposalsDir(projectId), `${proposalId}.json`);
+    return path13.join(this.proposalsDir(projectId), `${proposalId}.json`);
   }
   auditPath(projectId) {
-    return path11.join(this.projectDir(projectId), "audit.jsonl");
+    return path13.join(this.projectDir(projectId), "audit.jsonl");
   }
   readRelationsDocument(projectId) {
     this.requireProject(projectId);
     const relationsPath = this.relationsPath(projectId);
-    if (!existsSync9(relationsPath)) {
+    if (!existsSync11(relationsPath)) {
       return { schemaVersion: SCHEMA_VERSION, projectId, relations: [] };
     }
     const document = readJson(relationsPath);
@@ -8467,14 +9114,14 @@ var MemoryStore = class {
     }
     const event = { eventType, projectId, subjectId, details, createdAt: now() };
     const auditPath = this.auditPath(projectId);
-    ensurePrivateDirectory(path11.dirname(auditPath));
+    ensurePrivateDirectory(path13.dirname(auditPath));
     appendFileSync(auditPath, `${JSON.stringify(event)}
 `, { encoding: "utf8", mode: 384 });
-    chmodSync6(auditPath, 384);
+    chmodSync8(auditPath, 384);
   }
   getProject(projectId) {
     const projectPath = this.projectPath(projectId);
-    return existsSync9(projectPath) ? readJson(projectPath) : null;
+    return existsSync11(projectPath) ? readJson(projectPath) : null;
   }
   listProjects() {
     return this.readRegistry().projects.map((entry) => this.getProject(entry.id)).filter((project) => Boolean(project)).sort(
@@ -8537,7 +9184,7 @@ var MemoryStore = class {
         this.audit("project_relinked", project2.id, project2.id, { path: input.primaryPath });
         return updated;
       }
-      const id = randomUUID();
+      const id = randomUUID2();
       const project = {
         id,
         name: input.name,
@@ -8645,7 +9292,7 @@ var MemoryStore = class {
     this.requireProject(projectId);
     const releaseLock = this.acquireProjectLock(projectId);
     try {
-      const proposalId = randomUUID();
+      const proposalId = randomUUID2();
       const baseMemorySnapshots = {};
       for (const update of updates) {
         const memory = this.getMemory(update.memoryId);
@@ -8662,20 +9309,20 @@ var MemoryStore = class {
         createdAt: now(),
         reviewedAt: null,
         items: candidates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending"
         })),
         updateItems: updates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
           rejectionReason: null
         })),
         relationItems: relations.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
@@ -8699,7 +9346,7 @@ var MemoryStore = class {
   findProposalPath(proposalId) {
     for (const entry of this.readRegistry().projects) {
       const proposalPath = this.proposalPath(entry.id, proposalId);
-      if (existsSync9(proposalPath)) {
+      if (existsSync11(proposalPath)) {
         return proposalPath;
       }
     }
@@ -8992,7 +9639,7 @@ ${item.candidate.content.trim()}`;
         }
         const candidate = item.candidate;
         const memory = {
-          id: randomUUID(),
+          id: randomUUID2(),
           projectId: project.id,
           projectName: project.name,
           kind: candidate.kind,
@@ -9130,7 +9777,7 @@ ${item.candidate.content.trim()}`;
           continue;
         }
         const relation = {
-          id: randomUUID(),
+          id: randomUUID2(),
           ownerProjectId: project.id,
           fromMemoryId: fromMemory.id,
           fromProjectId: fromMemory.projectId,
@@ -9233,9 +9880,9 @@ ${item.candidate.content.trim()}`;
     if (unresolved.length === 0) return memories;
     const candidatesByKey = /* @__PURE__ */ new Map();
     const directory = this.proposalsDir(projectId);
-    if (existsSync9(directory)) {
+    if (existsSync11(directory)) {
       for (const file of readdirSync6(directory).filter((name) => name.endsWith(".json"))) {
-        const proposal = readJson(path11.join(directory, file));
+        const proposal = readJson(path13.join(directory, file));
         for (const item of proposal.items) {
           if (item.status !== "accepted") continue;
           const key = memoryIdentityKey(item.candidate.title, item.candidate.content);
@@ -9344,16 +9991,16 @@ ${memory.content}`.toLocaleLowerCase();
   countPendingProposals(projectId) {
     this.requireProject(projectId);
     const directory = this.proposalsDir(projectId);
-    if (!existsSync9(directory)) {
+    if (!existsSync11(directory)) {
       return 0;
     }
-    return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path11.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+    return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path13.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
   }
   listProposals(status) {
     return this.listProjects().flatMap((project) => {
       const directory = this.proposalsDir(project.id);
-      if (!existsSync9(directory)) return [];
-      return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path11.join(directory, file))));
+      if (!existsSync11(directory)) return [];
+      return readdirSync6(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path13.join(directory, file))));
     }).filter((proposal) => !status || proposal.status === status).sort(
       (left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)
     );
@@ -9469,6 +10116,9 @@ export {
   MEMORY_KINDS,
   MEMORY_PHASES,
   MemoryStore,
+  POLICY_END,
+  POLICY_SCHEMA_VERSION,
+  POLICY_START,
   ProjectMemoryError,
   ProjectMemoryService,
   RELATION_TYPES,
@@ -9476,6 +10126,7 @@ export {
   TOKEN_ESTIMATION_NOTE,
   analyzeKnowledgeGraph,
   antigravityIntegrationStatus,
+  assertPolicySourcesCurrent,
   buildContextualMemoryDisplayTitles,
   buildDesktopPlatformInventory,
   buildGetResult,
@@ -9484,7 +10135,9 @@ export {
   buildProjectBrief,
   buildRecallResult,
   claudeIntegrationStatus,
+  discoverAgents,
   discoverDesktopPlatformProjects,
+  emptyPolicy,
   ensureCodexMemoryAccess,
   ensureDataDir,
   estimateTokens,
@@ -9503,7 +10156,11 @@ export {
   migrateDataDir,
   normalizeError,
   normalizeRecallText,
+  policyPath,
+  policySourceIsCurrent,
   rankMemories,
+  readPolicy,
+  removeAgentsPolicy,
   removeAntigravityIntegration,
   removeClaudeIntegration,
   removeDesktopIntegration,
@@ -9511,6 +10168,7 @@ export {
   renderGraphHtml,
   renderGraphMarkdown,
   renderMemoryHubHtml,
+  renderPolicyBlock,
   repairCodexMarketplaceConfig,
   repairDesktopIntegration,
   resolveConfigRoot,
@@ -9523,6 +10181,10 @@ export {
   selectDataDir,
   setReviewPolicy,
   statusActions,
+  syncAgentsPolicy,
   temporarySummary,
-  tokenizeRecallText
+  tokenizeRecallText,
+  updatePolicyRecord,
+  validatePolicyInput,
+  writePolicy
 };

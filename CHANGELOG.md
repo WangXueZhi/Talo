@@ -8,6 +8,15 @@ All notable changes to this project are documented in this file.
 
 - No unreleased changes.
 
+## 0.14.5 - 2026-09-19
+
+- Added project policy records and an opt-in bridge for synchronizing reviewed project guidance
+  with agent instruction files.
+- Improved Desktop project discovery by matching Git worktrees and remotes across Codex,
+  Claude Code, and Antigravity sessions.
+- Added policy status, update, bridge lifecycle commands, and regression coverage for the new
+  project-level workflow.
+
 ## 0.14.4 - 2026-08-19
 
 - Added configurable `manual` and `smart` memory review policies, with smart mode automatically

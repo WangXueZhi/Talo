@@ -154,12 +154,19 @@ recall / get / search / load   retrieve bounded project context
 brief / story / guide          read current state and chronological work
 relations / graph / path       trace reviewed cause and effect
 propose / commit / reject      review durable memory changes
+policy / integration           inspect, edit, and sync project rules
 hub / open / shortcut          browse every registered project offline
 integration / home             manage platforms and storage
 ```
 
 Adapter Protocol v1 remains backward compatible with the original project-memory commands. Both
 `talo` and `project-memory` launchers are included during the transition.
+
+The project-rules bridge is disabled by default. After explicit enablement, Talo synchronizes the
+minimal Project Policy summary into the `TALO_MANAGED_POLICY` block of the project-root `AGENTS.md`.
+User-authored content is preserved, and later Policy edits synchronize before the next task. Use
+`policy show|update` and project-scoped `integration status|enable|disable|sync|repair`; writes return
+structured diagnostics and request confirmation where required.
 
 The public product and repository are named **Talo**. The Codex plugin ID
 `codex-project-memory`, Skill name `project-memory`, legacy CLI alias, and existing storage paths

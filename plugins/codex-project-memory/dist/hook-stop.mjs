@@ -279,8 +279,8 @@ var require_utils = __commonJS({
       }
       return output;
     };
-    exports.basename = (path8, { windows } = {}) => {
-      const segs = path8.split(windows ? /[\\/]/ : "/");
+    exports.basename = (path10, { windows } = {}) => {
+      const segs = path10.split(windows ? /[\\/]/ : "/");
       const last = segs[segs.length - 1];
       if (last === "") {
         return segs[segs.length - 2];
@@ -2089,7 +2089,7 @@ var require_ignore = __commonJS({
       //   path matching.
       // - check `string` either `MODE_IGNORE` or `MODE_CHECK_IGNORE`
       // @returns {TestResult} true if a file is ignored
-      test(path8, checkUnignored, mode) {
+      test(path10, checkUnignored, mode) {
         let ignored = false;
         let unignored = false;
         let matchedRule;
@@ -2098,7 +2098,7 @@ var require_ignore = __commonJS({
           if (unignored === negative && ignored !== unignored || negative && !ignored && !unignored && !checkUnignored) {
             return;
           }
-          const matched = rule[mode].test(path8);
+          const matched = rule[mode].test(path10);
           if (!matched) {
             return;
           }
@@ -2119,17 +2119,17 @@ var require_ignore = __commonJS({
     var throwError = (message, Ctor) => {
       throw new Ctor(message);
     };
-    var checkPath = (path8, originalPath, doThrow) => {
-      if (!isString(path8)) {
+    var checkPath = (path10, originalPath, doThrow) => {
+      if (!isString(path10)) {
         return doThrow(
           `path must be a string, but got \`${originalPath}\``,
           TypeError
         );
       }
-      if (!path8) {
+      if (!path10) {
         return doThrow(`path must not be empty`, TypeError);
       }
-      if (checkPath.isNotRelative(path8)) {
+      if (checkPath.isNotRelative(path10)) {
         const r = "`path.relative()`d";
         return doThrow(
           `path should be a ${r} string, but got "${originalPath}"`,
@@ -2138,7 +2138,7 @@ var require_ignore = __commonJS({
       }
       return true;
     };
-    var isNotRelative = (path8) => REGEX_TEST_INVALID_PATH.test(path8);
+    var isNotRelative = (path10) => REGEX_TEST_INVALID_PATH.test(path10);
     checkPath.isNotRelative = isNotRelative;
     checkPath.convert = (p) => p;
     var Ignore = class {
@@ -2168,19 +2168,19 @@ var require_ignore = __commonJS({
       }
       // @returns {TestResult}
       _test(originalPath, cache, checkUnignored, slices) {
-        const path8 = originalPath && checkPath.convert(originalPath);
+        const path10 = originalPath && checkPath.convert(originalPath);
         checkPath(
-          path8,
+          path10,
           originalPath,
           this._strictPathCheck ? throwError : RETURN_FALSE
         );
-        return this._t(path8, cache, checkUnignored, slices);
+        return this._t(path10, cache, checkUnignored, slices);
       }
-      checkIgnore(path8) {
-        if (!REGEX_TEST_TRAILING_SLASH.test(path8)) {
-          return this.test(path8);
+      checkIgnore(path10) {
+        if (!REGEX_TEST_TRAILING_SLASH.test(path10)) {
+          return this.test(path10);
         }
-        const slices = path8.split(SLASH).filter(Boolean);
+        const slices = path10.split(SLASH).filter(Boolean);
         slices.pop();
         if (slices.length) {
           const parent = this._t(
@@ -2193,18 +2193,18 @@ var require_ignore = __commonJS({
             return parent;
           }
         }
-        return this._rules.test(path8, false, MODE_CHECK_IGNORE);
+        return this._rules.test(path10, false, MODE_CHECK_IGNORE);
       }
-      _t(path8, cache, checkUnignored, slices) {
-        if (path8 in cache) {
-          return cache[path8];
+      _t(path10, cache, checkUnignored, slices) {
+        if (path10 in cache) {
+          return cache[path10];
         }
         if (!slices) {
-          slices = path8.split(SLASH).filter(Boolean);
+          slices = path10.split(SLASH).filter(Boolean);
         }
         slices.pop();
         if (!slices.length) {
-          return cache[path8] = this._rules.test(path8, checkUnignored, MODE_IGNORE);
+          return cache[path10] = this._rules.test(path10, checkUnignored, MODE_IGNORE);
         }
         const parent = this._t(
           slices.join(SLASH) + SLASH,
@@ -2212,29 +2212,29 @@ var require_ignore = __commonJS({
           checkUnignored,
           slices
         );
-        return cache[path8] = parent.ignored ? parent : this._rules.test(path8, checkUnignored, MODE_IGNORE);
+        return cache[path10] = parent.ignored ? parent : this._rules.test(path10, checkUnignored, MODE_IGNORE);
       }
-      ignores(path8) {
-        return this._test(path8, this._ignoreCache, false).ignored;
+      ignores(path10) {
+        return this._test(path10, this._ignoreCache, false).ignored;
       }
       createFilter() {
-        return (path8) => !this.ignores(path8);
+        return (path10) => !this.ignores(path10);
       }
       filter(paths) {
         return makeArray(paths).filter(this.createFilter());
       }
       // @returns {TestResult}
-      test(path8) {
-        return this._test(path8, this._testCache, true);
+      test(path10) {
+        return this._test(path10, this._testCache, true);
       }
     };
     var factory = (options) => new Ignore(options);
-    var isPathValid = (path8) => checkPath(path8 && checkPath.convert(path8), path8, RETURN_FALSE);
+    var isPathValid = (path10) => checkPath(path10 && checkPath.convert(path10), path10, RETURN_FALSE);
     var setupWindows = () => {
       const makePosix = (str) => /^\\\\\?\\/.test(str) || /["<>|\u0000-\u001F]+/u.test(str) ? str : str.replace(/\\/g, "/");
       checkPath.convert = makePosix;
       const REGEX_TEST_WINDOWS_PATH_ABSOLUTE = /^[a-z]:\//i;
-      checkPath.isNotRelative = (path8) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path8) || isNotRelative(path8);
+      checkPath.isNotRelative = (path10) => REGEX_TEST_WINDOWS_PATH_ABSOLUTE.test(path10) || isNotRelative(path10);
     };
     if (
       // Detect `process` so that it can run in browsers.
@@ -2250,7 +2250,7 @@ var require_ignore = __commonJS({
 });
 
 // src/hook-stop.ts
-import { existsSync as existsSync6, readFileSync as readFileSync6 } from "fs";
+import { existsSync as existsSync8, readFileSync as readFileSync8 } from "fs";
 import { pathToFileURL as pathToFileURL3 } from "url";
 
 // ../../packages/project-memory-core/src/paths.ts
@@ -2427,8 +2427,526 @@ function matchesCustomDeny(relativePath, patterns) {
 }
 
 // ../../packages/project-memory-core/src/service.ts
-import path6, { basename } from "path";
+import path8, { basename } from "path";
 import { pathToFileURL as pathToFileURL2 } from "url";
+
+// ../../packages/project-memory-core/src/agents-bridge.ts
+import {
+  chmodSync as chmodSync2,
+  existsSync as existsSync3,
+  lstatSync as lstatSync2,
+  mkdirSync as mkdirSync2,
+  readFileSync as readFileSync3,
+  renameSync as renameSync2,
+  rmSync as rmSync2,
+  statSync as statSync3,
+  writeFileSync as writeFileSync2
+} from "fs";
+import path4 from "path";
+
+// ../../packages/project-memory-core/src/security.ts
+var import_ignore = __toESM(require_ignore(), 1);
+import { createHash } from "crypto";
+import { existsSync as existsSync2, lstatSync, readdirSync as readdirSync2, readFileSync as readFileSync2, realpathSync as realpathSync2, statSync as statSync2 } from "fs";
+import path3 from "path";
+
+// ../../packages/project-memory-core/src/git.ts
+import { execFileSync } from "child_process";
+import { realpathSync, statSync } from "fs";
+import path2 from "path";
+function git(pathValue, args) {
+  try {
+    return execFileSync("git", ["-C", pathValue, ...args], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"]
+    }).trim();
+  } catch {
+    return null;
+  }
+}
+function detectGitMetadata(inputPath) {
+  const realInput = realpathSync(path2.resolve(inputPath));
+  const directory = statSync(realInput).isDirectory() ? realInput : path2.dirname(realInput);
+  const root = git(directory, ["rev-parse", "--show-toplevel"]);
+  if (!root) {
+    return {
+      rootPath: directory,
+      isGit: false,
+      gitCommonDir: null,
+      remoteUrl: null,
+      headCommit: null
+    };
+  }
+  const rootPath = realpathSync(root);
+  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
+  const gitCommonDir = commonDirRaw ? realpathSync(path2.resolve(rootPath, commonDirRaw)) : null;
+  return {
+    rootPath,
+    isGit: true,
+    gitCommonDir,
+    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
+    headCommit: git(rootPath, ["rev-parse", "HEAD"])
+  };
+}
+function listGitFiles(rootPath) {
+  try {
+    const output = execFileSync(
+      "git",
+      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
+    );
+    return output.split("\0").filter(Boolean);
+  } catch {
+    return null;
+  }
+}
+
+// ../../packages/project-memory-core/src/security.ts
+var MAX_FILE_BYTES = 1024 * 1024;
+var MAX_SEARCH_RESULTS = 50;
+var MAX_SEARCH_FILES = 1e4;
+var MAX_EXCERPT_CHARS = 400;
+var DENIED_SEGMENTS = /* @__PURE__ */ new Set([
+  ".git",
+  "node_modules",
+  "dist",
+  "build",
+  "target",
+  ".next",
+  ".turbo",
+  "coverage"
+]);
+var DENIED_BASENAMES = /* @__PURE__ */ new Set([
+  "id_rsa",
+  "id_ed25519",
+  "credentials",
+  "credentials.json",
+  "service-account.json"
+]);
+var DENIED_EXTENSIONS = /* @__PURE__ */ new Set([".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"]);
+var SECRET_PATTERNS = [
+  /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/i,
+  /\bsk-[A-Za-z0-9_-]{20,}\b/,
+  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
+  /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/,
+  /\bAKIA[0-9A-Z]{16}\b/,
+  /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i
+];
+function normalizeRelative(relativePath) {
+  if (!relativePath || path3.isAbsolute(relativePath)) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path must be relative to the project root.", {
+      path: relativePath
+    });
+  }
+  const normalized = relativePath.replaceAll("\\", "/");
+  const parts = normalized.split("/").filter(Boolean);
+  if (parts.includes("..")) {
+    throw new ProjectMemoryError("PATH_DENIED", "Parent path traversal is not allowed.", {
+      path: relativePath
+    });
+  }
+  return parts.join("/");
+}
+function isDeniedPath(relativePath, customPatterns = []) {
+  const normalized = relativePath.replaceAll("\\", "/");
+  const parts = normalized.split("/").filter(Boolean);
+  const basename2 = parts.at(-1)?.toLowerCase() ?? "";
+  const extension = path3.extname(basename2);
+  return parts.some((part) => DENIED_SEGMENTS.has(part)) || /^\.env(?:\.|$)/i.test(basename2) || DENIED_BASENAMES.has(basename2) || DENIED_EXTENSIONS.has(extension) || matchesCustomDeny(normalized, customPatterns);
+}
+function containsSecret(text2) {
+  return SECRET_PATTERNS.some((pattern) => pattern.test(text2));
+}
+function assertNoSecret(text2, field) {
+  if (containsSecret(text2)) {
+    throw new ProjectMemoryError("SECRET_DETECTED", `Potential secret detected in ${field}.`, {
+      field
+    });
+  }
+}
+function sha256(data) {
+  return createHash("sha256").update(data).digest("hex");
+}
+function ensureInsideRoot(rootPath, candidatePath) {
+  const relative = path3.relative(rootPath, candidatePath);
+  if (relative === "" || !relative.startsWith("..") && !path3.isAbsolute(relative)) {
+    return;
+  }
+  throw new ProjectMemoryError("PATH_DENIED", "Resolved path escapes the project root.", {
+    path: candidatePath
+  });
+}
+function resolveReadableFile(rootPath, relativePath, customPatterns = []) {
+  const normalized = normalizeRelative(relativePath);
+  if (isDeniedPath(normalized, customPatterns)) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path is blocked by the project memory policy.", {
+      path: normalized
+    });
+  }
+  const realRoot = realpathSync2(rootPath);
+  const candidate = path3.resolve(realRoot, normalized);
+  if (!existsSync2(candidate)) {
+    throw new ProjectMemoryError("FILE_NOT_FOUND", "File does not exist.", { path: normalized });
+  }
+  const realCandidate = realpathSync2(candidate);
+  ensureInsideRoot(realRoot, realCandidate);
+  if (!statSync2(realCandidate).isFile()) {
+    throw new ProjectMemoryError("PATH_DENIED", "Path is not a regular file.", {
+      path: normalized
+    });
+  }
+  return { absolutePath: realCandidate, relativePath: normalized };
+}
+function isBinary(data) {
+  const sample = data.subarray(0, Math.min(data.length, 8192));
+  return sample.includes(0);
+}
+function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
+  const resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
+  const size = statSync2(resolved.absolutePath).size;
+  if (size > MAX_FILE_BYTES) {
+    throw new ProjectMemoryError("FILE_TOO_LARGE", "File exceeds the 1 MiB read limit.", {
+      path: resolved.relativePath,
+      size,
+      limit: MAX_FILE_BYTES
+    });
+  }
+  const buffer = readFileSync2(resolved.absolutePath);
+  if (isBinary(buffer)) {
+    throw new ProjectMemoryError("BINARY_FILE", "Binary files cannot be read.", {
+      path: resolved.relativePath
+    });
+  }
+  return {
+    path: resolved.relativePath,
+    content: buffer.toString("utf8"),
+    truncated: false,
+    size,
+    commit,
+    fileHash: sha256(buffer)
+  };
+}
+function walkNonGitFiles(rootPath) {
+  const matcher = (0, import_ignore.default)();
+  const gitignore = path3.join(rootPath, ".gitignore");
+  if (existsSync2(gitignore)) {
+    matcher.add(readFileSync2(gitignore, "utf8"));
+  }
+  const output = [];
+  const queue = [""];
+  while (queue.length > 0 && output.length < MAX_SEARCH_FILES) {
+    const relativeDir = queue.shift() ?? "";
+    const absoluteDir = path3.join(rootPath, relativeDir);
+    for (const entry of readdirSync2(absoluteDir, { withFileTypes: true })) {
+      const relative = path3.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
+      if (matcher.ignores(relative) || isDeniedPath(relative)) {
+        continue;
+      }
+      if (entry.isSymbolicLink()) {
+        continue;
+      }
+      if (entry.isDirectory()) {
+        queue.push(relative);
+      } else if (entry.isFile()) {
+        output.push(relative);
+      }
+      if (output.length >= MAX_SEARCH_FILES) {
+        break;
+      }
+    }
+  }
+  return output;
+}
+function listSearchableFiles(rootPath, customPatterns = []) {
+  const gitFiles = listGitFiles(rootPath);
+  const files = gitFiles ?? walkNonGitFiles(rootPath);
+  return files.filter((relativePath) => !isDeniedPath(relativePath, customPatterns)).slice(0, MAX_SEARCH_FILES);
+}
+function excerpt(line, matchIndex, queryLength) {
+  const half = Math.floor((MAX_EXCERPT_CHARS - queryLength) / 2);
+  const start = Math.max(0, matchIndex - half);
+  const end = Math.min(line.length, matchIndex + queryLength + half);
+  const prefix = start > 0 ? "..." : "";
+  const suffix = end < line.length ? "..." : "";
+  return `${prefix}${line.slice(start, end)}${suffix}`;
+}
+function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
+  const needle = query.trim().toLocaleLowerCase();
+  if (!needle) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Search query cannot be empty.");
+  }
+  const results = [];
+  for (const relativePath of listSearchableFiles(rootPath, customPatterns)) {
+    if (results.length >= MAX_SEARCH_RESULTS) {
+      break;
+    }
+    let resolved;
+    try {
+      resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
+    } catch {
+      continue;
+    }
+    const stats = lstatSync(resolved.absolutePath);
+    if (stats.size > MAX_FILE_BYTES) {
+      continue;
+    }
+    const buffer = readFileSync2(resolved.absolutePath);
+    if (isBinary(buffer)) {
+      continue;
+    }
+    const text2 = buffer.toString("utf8");
+    const lines = text2.split(/\r?\n/);
+    for (let index = 0; index < lines.length; index += 1) {
+      const line = lines[index] ?? "";
+      const matchIndex = line.toLocaleLowerCase().indexOf(needle);
+      if (matchIndex === -1) {
+        continue;
+      }
+      results.push({
+        path: resolved.relativePath,
+        line: index + 1,
+        excerpt: excerpt(line, matchIndex, needle.length),
+        commit,
+        fileHash: sha256(buffer)
+      });
+      if (results.length >= MAX_SEARCH_RESULTS) {
+        break;
+      }
+    }
+  }
+  return results;
+}
+
+// ../../packages/project-memory-core/src/agents-bridge.ts
+var POLICY_START = "<!-- TALO_MANAGED_POLICY_START -->";
+var POLICY_END = "<!-- TALO_MANAGED_POLICY_END -->";
+function hashFile(filePath) {
+  return sha256(readFileSync3(filePath));
+}
+function parseManagedBlock(content) {
+  const positions = (marker) => {
+    const found = [];
+    let offset = 0;
+    while (true) {
+      const index = content.indexOf(marker, offset);
+      if (index < 0) return found;
+      found.push(index);
+      offset = index + marker.length;
+    }
+  };
+  const starts = positions(POLICY_START);
+  const ends = positions(POLICY_END);
+  if (starts.length === 0 && ends.length === 0) return null;
+  const start = starts[0];
+  const endMarker = ends[0];
+  if (starts.length !== 1 || ends.length !== 1 || start === void 0 || endMarker === void 0 || start > endMarker) {
+    throw new ProjectMemoryError(
+      "AGENTS_MARKERS_INVALID",
+      "Talo Policy markers are incomplete, repeated, or nested."
+    );
+  }
+  const end = endMarker + POLICY_END.length;
+  return { start, end, block: content.slice(start, end) };
+}
+function fileInfo(filePath, root, ownership) {
+  const exists = existsSync3(filePath);
+  const scope = path4.resolve(filePath) === path4.join(path4.resolve(root), "AGENTS.md") ? "project-root" : "ancestor";
+  if (!exists)
+    return {
+      path: filePath,
+      exists: false,
+      scope,
+      ownership,
+      wholeFileHash: null,
+      managedBlockHash: null,
+      managedBlock: null
+    };
+  if (!lstatSync2(filePath).isFile())
+    throw new ProjectMemoryError("AGENTS_NOT_WRITABLE", "AGENTS.md must be a regular file.", {
+      path: filePath
+    });
+  const content = readFileSync3(filePath, "utf8");
+  const block = parseManagedBlock(content);
+  return {
+    path: filePath,
+    exists: true,
+    scope,
+    ownership,
+    wholeFileHash: hashFile(filePath),
+    managedBlockHash: block ? sha256(block.block) : null,
+    managedBlock: block?.block ?? null
+  };
+}
+function discoverAgents(projectRoot, currentPath = projectRoot, ownership = "unknown") {
+  const root = path4.resolve(projectRoot);
+  const targetPath = path4.join(root, "AGENTS.md");
+  const affected = [];
+  let cursor = path4.resolve(currentPath);
+  while (true) {
+    const candidate = path4.join(cursor, "AGENTS.md");
+    if (existsSync3(candidate) && path4.resolve(candidate) !== path4.resolve(targetPath)) {
+      const info = fileInfo(candidate, root, "unknown");
+      info.scope = cursor === root ? "project-root" : path4.relative(root, cursor).startsWith("..") ? "ancestor" : "nested";
+      affected.push(info);
+    }
+    const parent = path4.dirname(cursor);
+    if (parent === cursor) break;
+    cursor = parent;
+    if (path4.relative(root, cursor).startsWith("..")) {
+      const candidateAbove = path4.join(cursor, "AGENTS.md");
+      if (existsSync3(candidateAbove)) affected.push(fileInfo(candidateAbove, root, "unknown"));
+      break;
+    }
+  }
+  const target = fileInfo(targetPath, root, ownership);
+  const potentialConflicts = affected.length > 0 ? affected.map((info) => `AGENTS.md may also apply: ${info.path}`) : [];
+  return { projectRoot: root, target, affected, potentialConflicts };
+}
+function renderPolicyBlock(policy) {
+  const lines = [
+    POLICY_START,
+    "\u7531 Talo \u7BA1\u7406\u3002\u8BF7\u52FF\u624B\u5DE5\u4FEE\u6539\u672C\u533A\u5757\u3002",
+    `Project: ${policy.projectId}`,
+    `Policy: ${policy.policyId}`,
+    `Policy version: ${policy.version}`,
+    `Synced at: ${policy.bridge.lastSyncedAt ?? (/* @__PURE__ */ new Date()).toISOString()}`,
+    `Source fingerprint: ${policy.sourceFingerprint}`,
+    "",
+    "## Required actions",
+    ...policy.rules.flatMap((rule) => rule.requiredActions.map((item) => `- ${item}`)),
+    "",
+    "## Forbidden actions",
+    ...policy.rules.flatMap((rule) => rule.forbiddenActions.map((item) => `- ${item}`)),
+    "",
+    "## Trigger topics",
+    ...policy.rules.flatMap((rule) => rule.triggerTopics.map((item) => `- ${item}`)),
+    POLICY_END
+  ];
+  return lines.join("\n");
+}
+function replaceBlock(content, block) {
+  const newline = content.includes("\r\n") ? "\r\n" : "\n";
+  const normalized = block.replaceAll("\n", newline);
+  const located = parseManagedBlock(content);
+  if (located)
+    return `${content.slice(0, located.start)}${normalized}${content.slice(located.end)}`;
+  const prefix = content.trimEnd();
+  return prefix ? `${prefix}${newline}${newline}${normalized}${newline}` : `${normalized}${newline}`;
+}
+function writeAtomic(filePath, content, mode) {
+  mkdirSync2(path4.dirname(filePath), { recursive: true });
+  const temporary = `${filePath}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync2(temporary, content, { encoding: "utf8", mode });
+    if (process.platform !== "win32") chmodSync2(temporary, mode);
+    renameSync2(temporary, filePath);
+    if (process.platform !== "win32") chmodSync2(filePath, mode);
+  } finally {
+    rmSync2(temporary, { force: true });
+  }
+}
+function withAgentsLock(projectRoot, action) {
+  const lockPath = `${path4.join(path4.resolve(projectRoot), "AGENTS.md")}.talo.lock`;
+  try {
+    mkdirSync2(lockPath, { mode: 448 });
+  } catch (error) {
+    if (error.code !== "EEXIST") throw error;
+    try {
+      if (Date.now() - statSync3(lockPath).mtimeMs > 5 * 60 * 1e3) {
+        rmSync2(lockPath, { recursive: true, force: true });
+        mkdirSync2(lockPath, { mode: 448 });
+      } else {
+        throw new ProjectMemoryError(
+          "PROJECT_LOCKED",
+          "Another Talo process is synchronizing AGENTS.md.",
+          { lockPath }
+        );
+      }
+    } catch (lockError) {
+      if (lockError instanceof ProjectMemoryError) throw lockError;
+      throw new ProjectMemoryError(
+        "PROJECT_LOCKED",
+        "Another Talo process is synchronizing AGENTS.md.",
+        { lockPath }
+      );
+    }
+  }
+  try {
+    return action();
+  } finally {
+    rmSync2(lockPath, { recursive: true, force: true });
+  }
+}
+function syncAgentsPolicy(projectRoot, policy, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path4.join(path4.resolve(projectRoot), "AGENTS.md");
+    if (existsSync3(targetPath) && lstatSync2(targetPath).isSymbolicLink()) {
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not write through an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    }
+    const discovery = discoverAgents(projectRoot, projectRoot, ownership);
+    const existedBefore = existsSync3(targetPath);
+    const previous = existsSync3(targetPath) ? readFileSync3(targetPath, "utf8") : "";
+    const currentHash = existsSync3(targetPath) ? hashFile(targetPath) : null;
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash) {
+      throw new ProjectMemoryError("AGENTS_DRIFTED", "AGENTS.md changed before synchronization.", {
+        path: targetPath,
+        expectedWholeFileHash,
+        currentWholeFileHash: currentHash
+      });
+    }
+    const block = renderPolicyBlock(policy);
+    const next = replaceBlock(previous, block);
+    const mode = existsSync3(targetPath) ? statSync3(targetPath).mode & 511 : 420;
+    const changed = next !== previous;
+    if (changed) writeAtomic(targetPath, next, mode);
+    const wholeFileHash = hashFile(targetPath);
+    const managedBlockHash = sha256(block.replaceAll("\n", next.includes("\r\n") ? "\r\n" : "\n"));
+    return {
+      path: targetPath,
+      changed,
+      wholeFileHash,
+      managedBlockHash,
+      ownership: existedBefore ? ownership : "talo_created",
+      potentialConflicts: discovery.potentialConflicts
+    };
+  });
+}
+function removeAgentsPolicy(projectRoot, ownership, expectedWholeFileHash) {
+  return withAgentsLock(projectRoot, () => {
+    const targetPath = path4.join(path4.resolve(projectRoot), "AGENTS.md");
+    if (!existsSync3(targetPath)) return { removedBlock: false, deletedFile: false };
+    if (lstatSync2(targetPath).isSymbolicLink())
+      throw new ProjectMemoryError(
+        "AGENTS_NOT_WRITABLE",
+        "Talo will not remove an AGENTS.md symlink.",
+        { path: targetPath }
+      );
+    const currentHash = hashFile(targetPath);
+    if (expectedWholeFileHash && currentHash !== expectedWholeFileHash)
+      throw new ProjectMemoryError(
+        "AGENTS_DRIFTED",
+        "AGENTS.md changed before disabling the bridge.",
+        { path: targetPath }
+      );
+    const content = readFileSync3(targetPath, "utf8");
+    const located = parseManagedBlock(content);
+    if (!located) return { removedBlock: false, deletedFile: false };
+    const before = content.slice(0, located.start);
+    const after = content.slice(located.end);
+    const newline = content.includes("\r\n") ? "\r\n" : "\n";
+    const next = `${before.trimEnd()}${before.trim() && after.trim() ? newline : ""}${after.trimStart()}`;
+    if (ownership === "talo_created" && !next.trim()) {
+      rmSync2(targetPath);
+      return { removedBlock: true, deletedFile: true };
+    }
+    writeAtomic(targetPath, next ? `${next}${newline}` : "", statSync3(targetPath).mode & 511);
+    return { removedBlock: true, deletedFile: false };
+  });
+}
 
 // ../../packages/project-memory-core/src/display-title.ts
 var FALLBACK_ROLES = {
@@ -2985,59 +3503,8 @@ function buildProjectBrief(projectId, projectName, graph, guide, generatedAt = (
   };
 }
 
-// ../../packages/project-memory-core/src/git.ts
-import { execFileSync } from "child_process";
-import { realpathSync, statSync } from "fs";
-import path2 from "path";
-function git(pathValue, args) {
-  try {
-    return execFileSync("git", ["-C", pathValue, ...args], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"]
-    }).trim();
-  } catch {
-    return null;
-  }
-}
-function detectGitMetadata(inputPath) {
-  const realInput = realpathSync(path2.resolve(inputPath));
-  const directory = statSync(realInput).isDirectory() ? realInput : path2.dirname(realInput);
-  const root = git(directory, ["rev-parse", "--show-toplevel"]);
-  if (!root) {
-    return {
-      rootPath: directory,
-      isGit: false,
-      gitCommonDir: null,
-      remoteUrl: null,
-      headCommit: null
-    };
-  }
-  const rootPath = realpathSync(root);
-  const commonDirRaw = git(rootPath, ["rev-parse", "--git-common-dir"]);
-  const gitCommonDir = commonDirRaw ? realpathSync(path2.resolve(rootPath, commonDirRaw)) : null;
-  return {
-    rootPath,
-    isGit: true,
-    gitCommonDir,
-    remoteUrl: git(rootPath, ["remote", "get-url", "origin"]),
-    headCommit: git(rootPath, ["rev-parse", "HEAD"])
-  };
-}
-function listGitFiles(rootPath) {
-  try {
-    const output = execFileSync(
-      "git",
-      ["-C", rootPath, "ls-files", "-co", "--exclude-standard", "-z"],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 20 * 1024 * 1024 }
-    );
-    return output.split("\0").filter(Boolean);
-  } catch {
-    return null;
-  }
-}
-
 // ../../packages/project-memory-core/src/guide.ts
-import { createHash } from "crypto";
+import { createHash as createHash2 } from "crypto";
 var CITATION_WEIGHTS = {
   evidence: 3,
   report: 2,
@@ -3058,7 +3525,7 @@ function pairKey(left, right) {
   return [left, right].sort().join("\0");
 }
 function stableId(prefix, values) {
-  return `${prefix}_${createHash("sha256").update(values.join("\0")).digest("hex").slice(0, 16)}`;
+  return `${prefix}_${createHash2("sha256").update(values.join("\0")).digest("hex").slice(0, 16)}`;
 }
 function fileName(sourcePath) {
   return sourcePath.split("/").at(-1) ?? sourcePath;
@@ -3382,12 +3849,12 @@ function analyzeKnowledgeGraph(projectId, projectName, graph, generatedAt = (/* 
 }
 
 // ../../packages/project-memory-core/src/hub.ts
-import { createHash as createHash2 } from "crypto";
+import { createHash as createHash3 } from "crypto";
 function text(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
 function hash(value) {
-  return createHash2("sha256").update(value).digest("base64");
+  return createHash3("sha256").update(value).digest("base64");
 }
 var css = `
 :root{color-scheme:dark;--void:#080b12;--stage:#0c111b;--panel:#111827;--panel-raised:#151f30;--panel-soft:rgba(21,31,48,.72);--ink:#eef4ff;--ink-soft:#c7d3e4;--muted:#8190a7;--muted-bright:#aebbd0;--line:#253149;--line-soft:rgba(148,163,184,.14);--cyan:#71e5fb;--cyan-deep:#39cce8;--blue:#8dc8ff;--green:#62e5b1;--amber:#f7bd68;--red:#ff9bac;--purple:#c6a1ff;--shadow:0 18px 48px rgba(0,0,0,.24);--sans:"Avenir Next","PingFang SC","Microsoft YaHei",sans-serif;--mono:"SF Mono","Cascadia Code","Roboto Mono",ui-monospace,monospace}
@@ -3463,15 +3930,15 @@ function renderMemoryHubHtml(hub) {
 // ../../packages/project-memory-core/src/platform-projects.ts
 import {
   closeSync,
-  existsSync as existsSync2,
+  existsSync as existsSync4,
   openSync,
-  readdirSync as readdirSync2,
-  readFileSync as readFileSync2,
+  readdirSync as readdirSync3,
+  readFileSync as readFileSync4,
   readSync,
-  statSync as statSync2
+  statSync as statSync4
 } from "fs";
 import { homedir as homedir2 } from "os";
-import path3 from "path";
+import path5 from "path";
 import { fileURLToPath } from "url";
 var MAX_CODEX_SESSION_FILES = 2e3;
 var MAX_SESSION_META_BYTES = 256 * 1024;
@@ -3490,25 +3957,25 @@ function readFirstLine(filePath) {
   }
 }
 function listFiles(root, depth = 0, result = []) {
-  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync2(root)) return result;
+  if (depth > 8 || result.length >= MAX_CODEX_SESSION_FILES || !existsSync4(root)) return result;
   let entries;
   try {
-    entries = readdirSync2(root, { encoding: "utf8", withFileTypes: true });
+    entries = readdirSync3(root, { encoding: "utf8", withFileTypes: true });
   } catch {
     return result;
   }
   for (const entry of entries) {
     if (result.length >= MAX_CODEX_SESSION_FILES) break;
-    const entryPath = path3.join(root, entry.name);
+    const entryPath = path5.join(root, entry.name);
     if (entry.isDirectory()) listFiles(entryPath, depth + 1, result);
     else if (entry.isFile() && entry.name.endsWith(".jsonl")) result.push(entryPath);
   }
   return result;
 }
-function normalizeProjectPath(inputPath) {
+function normalizeProject(inputPath) {
   try {
-    if (!existsSync2(inputPath) || !statSync2(inputPath).isDirectory()) return null;
-    return detectGitMetadata(inputPath).rootPath;
+    if (!existsSync4(inputPath) || !statSync4(inputPath).isDirectory()) return null;
+    return detectGitMetadata(inputPath);
   } catch {
     return null;
   }
@@ -3522,8 +3989,8 @@ function addCandidate(candidates, candidate) {
 }
 function scanCodexProjects(options) {
   const homeDir = options.homeDir ?? homedir2();
-  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path3.join(homeDir, ".codex");
-  const sessionRoot = path3.join(codexHome, "sessions");
+  const codexHome = options.codexHome ?? process.env.CODEX_HOME ?? path5.join(homeDir, ".codex");
+  const sessionRoot = path5.join(codexHome, "sessions");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -3543,35 +4010,37 @@ function scanCodexProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "codex",
       platformProjectId: session.platformProjectId,
-      name: path3.basename(projectPath),
-      path: projectPath,
+      name: path5.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "codex-session"
+      source: "codex-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
 }
 function scanAntigravityProjects(options) {
   const homeDir = options.homeDir ?? homedir2();
-  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path3.join(homeDir, ".gemini");
-  const configRoot2 = path3.join(geminiHome, "config", "projects");
+  const geminiHome = options.geminiHome ?? process.env.GEMINI_HOME ?? path5.join(homeDir, ".gemini");
+  const configRoot2 = path5.join(geminiHome, "config", "projects");
   const candidates = /* @__PURE__ */ new Map();
   let entries;
   try {
-    entries = readdirSync2(configRoot2, { encoding: "utf8", withFileTypes: true });
+    entries = readdirSync3(configRoot2, { encoding: "utf8", withFileTypes: true });
   } catch {
     return [];
   }
   for (const entry of entries) {
     if (!entry.isFile() || !entry.name.endsWith(".json")) continue;
-    const filePath = path3.join(configRoot2, entry.name);
+    const filePath = path5.join(configRoot2, entry.name);
     try {
-      const config = JSON.parse(readFileSync2(filePath, "utf8"));
+      const config = JSON.parse(readFileSync4(filePath, "utf8"));
       for (const resource of config.projectResources?.resources ?? []) {
         if (typeof resource.folderUri !== "string") continue;
         let requestedPath;
@@ -3580,15 +4049,17 @@ function scanAntigravityProjects(options) {
         } catch {
           continue;
         }
-        const projectPath = normalizeProjectPath(requestedPath);
-        if (!projectPath) continue;
+        const project = normalizeProject(requestedPath);
+        if (!project) continue;
         addCandidate(candidates, {
           platform: "antigravity",
-          platformProjectId: config.id ?? path3.basename(entry.name, ".json"),
-          name: config.name?.trim() || path3.basename(projectPath),
-          path: projectPath,
+          platformProjectId: config.id ?? path5.basename(entry.name, ".json"),
+          name: config.name?.trim() || path5.basename(project.rootPath),
+          path: project.rootPath,
           lastSeenAt: config.updatedAt ?? null,
-          source: "antigravity-config"
+          source: "antigravity-config",
+          gitCommonDir: project.gitCommonDir,
+          remoteUrl: project.remoteUrl
         });
       }
     } catch {
@@ -3598,8 +4069,8 @@ function scanAntigravityProjects(options) {
 }
 function scanClaudeProjects(options) {
   const homeDir = options.homeDir ?? homedir2();
-  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path3.join(homeDir, ".claude");
-  const sessionRoot = path3.join(claudeHome, "projects");
+  const claudeHome = options.claudeHome ?? process.env.CLAUDE_HOME ?? path5.join(homeDir, ".claude");
+  const sessionRoot = path5.join(claudeHome, "projects");
   const sessionsByPath = /* @__PURE__ */ new Map();
   const candidates = /* @__PURE__ */ new Map();
   for (const sessionPath of listFiles(sessionRoot)) {
@@ -3629,15 +4100,17 @@ function scanClaudeProjects(options) {
     }
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "claude",
       platformProjectId: session.platformProjectId,
-      name: path3.basename(projectPath),
-      path: projectPath,
+      name: path5.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
-      source: "claude-session"
+      source: "claude-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl
     });
   }
   return [...candidates.values()];
@@ -3654,11 +4127,19 @@ function discoverDesktopPlatformProjects(options = {}) {
 }
 function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjects) {
   const hubById = new Map(hubProjects.map((project) => [project.projectId, project]));
-  const registeredByPath = new Map(
-    registeredProjects.map((project) => [project.primaryPath, project])
-  );
-  const projects = candidates.map((candidate) => {
-    const registered = registeredByPath.get(candidate.path) ?? null;
+  const uniqueCandidates = /* @__PURE__ */ new Map();
+  for (const candidate of candidates) {
+    const identity = candidate.gitCommonDir ? `git:${candidate.gitCommonDir}` : candidate.remoteUrl ? `remote:${candidate.remoteUrl}` : `path:${candidate.path}`;
+    const key = `${candidate.platform}:${identity}`;
+    const existing = uniqueCandidates.get(key);
+    if (!existing || (candidate.lastSeenAt ?? "") > (existing.lastSeenAt ?? "")) {
+      uniqueCandidates.set(key, candidate);
+    }
+  }
+  const projects = [...uniqueCandidates.values()].map((candidate) => {
+    const registered = registeredProjects.find(
+      (project) => project.primaryPath === candidate.path || candidate.gitCommonDir !== null && project.gitCommonDir === candidate.gitCommonDir || candidate.remoteUrl !== null && project.remoteUrl === candidate.remoteUrl
+    ) ?? null;
     const hubProject = registered ? hubById.get(registered.id) : null;
     return {
       ...candidate,
@@ -3683,230 +4164,140 @@ function buildDesktopPlatformInventory(candidates, registeredProjects, hubProjec
   return { generatedAt: (/* @__PURE__ */ new Date()).toISOString(), platforms: groups };
 }
 
-// ../../packages/project-memory-core/src/security.ts
-var import_ignore = __toESM(require_ignore(), 1);
-import { createHash as createHash3 } from "crypto";
-import { existsSync as existsSync3, lstatSync, readdirSync as readdirSync3, readFileSync as readFileSync3, realpathSync as realpathSync2, statSync as statSync3 } from "fs";
-import path4 from "path";
-var MAX_FILE_BYTES = 1024 * 1024;
-var MAX_SEARCH_RESULTS = 50;
-var MAX_SEARCH_FILES = 1e4;
-var MAX_EXCERPT_CHARS = 400;
-var DENIED_SEGMENTS = /* @__PURE__ */ new Set([
-  ".git",
-  "node_modules",
-  "dist",
-  "build",
-  "target",
-  ".next",
-  ".turbo",
-  "coverage"
-]);
-var DENIED_BASENAMES = /* @__PURE__ */ new Set([
-  "id_rsa",
-  "id_ed25519",
-  "credentials",
-  "credentials.json",
-  "service-account.json"
-]);
-var DENIED_EXTENSIONS = /* @__PURE__ */ new Set([".pem", ".key", ".p12", ".pfx", ".jks", ".keystore"]);
-var SECRET_PATTERNS = [
-  /-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----/i,
-  /\bsk-[A-Za-z0-9_-]{20,}\b/,
-  /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
-  /\bxox[baprs]-[A-Za-z0-9-]{20,}\b/,
-  /\bAKIA[0-9A-Z]{16}\b/,
-  /(?:password|passwd|secret|token|api[_-]?key)\s*[:=]\s*["']?[A-Za-z0-9_./+=-]{16,}/i
-];
-function normalizeRelative(relativePath) {
-  if (!relativePath || path4.isAbsolute(relativePath)) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path must be relative to the project root.", {
-      path: relativePath
-    });
-  }
-  const normalized = relativePath.replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  if (parts.includes("..")) {
-    throw new ProjectMemoryError("PATH_DENIED", "Parent path traversal is not allowed.", {
-      path: relativePath
-    });
-  }
-  return parts.join("/");
+// ../../packages/project-memory-core/src/policy.ts
+import { randomUUID } from "crypto";
+import {
+  chmodSync as chmodSync3,
+  existsSync as existsSync5,
+  lstatSync as lstatSync3,
+  mkdirSync as mkdirSync3,
+  readFileSync as readFileSync5,
+  renameSync as renameSync3,
+  rmSync as rmSync3,
+  writeFileSync as writeFileSync3
+} from "fs";
+import path6 from "path";
+var POLICY_SCHEMA_VERSION = 1;
+function policyPath(projectDir) {
+  return path6.join(projectDir, "policy.json");
 }
-function isDeniedPath(relativePath, customPatterns = []) {
-  const normalized = relativePath.replaceAll("\\", "/");
-  const parts = normalized.split("/").filter(Boolean);
-  const basename2 = parts.at(-1)?.toLowerCase() ?? "";
-  const extension = path4.extname(basename2);
-  return parts.some((part) => DENIED_SEGMENTS.has(part)) || /^\.env(?:\.|$)/i.test(basename2) || DENIED_BASENAMES.has(basename2) || DENIED_EXTENSIONS.has(extension) || matchesCustomDeny(normalized, customPatterns);
-}
-function containsSecret(text2) {
-  return SECRET_PATTERNS.some((pattern) => pattern.test(text2));
-}
-function assertNoSecret(text2, field) {
-  if (containsSecret(text2)) {
-    throw new ProjectMemoryError("SECRET_DETECTED", `Potential secret detected in ${field}.`, {
-      field
+function readPolicy(filePath) {
+  if (!existsSync5(filePath)) return null;
+  try {
+    const value = JSON.parse(readFileSync5(filePath, "utf8"));
+    if (value.schemaVersion !== POLICY_SCHEMA_VERSION || typeof value.policyId !== "string" || typeof value.projectId !== "string" || !Number.isInteger(value.version) || !Array.isArray(value.rules) || !Array.isArray(value.sources) || !value.bridge) {
+      throw new Error("invalid policy shape");
+    }
+    return value;
+  } catch (error) {
+    throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy is invalid.", {
+      path: filePath,
+      cause: error instanceof Error ? error.message : String(error)
     });
   }
 }
-function sha256(data) {
-  return createHash3("sha256").update(data).digest("hex");
-}
-function ensureInsideRoot(rootPath, candidatePath) {
-  const relative = path4.relative(rootPath, candidatePath);
-  if (relative === "" || !relative.startsWith("..") && !path4.isAbsolute(relative)) {
-    return;
-  }
-  throw new ProjectMemoryError("PATH_DENIED", "Resolved path escapes the project root.", {
-    path: candidatePath
-  });
-}
-function resolveReadableFile(rootPath, relativePath, customPatterns = []) {
-  const normalized = normalizeRelative(relativePath);
-  if (isDeniedPath(normalized, customPatterns)) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path is blocked by the project memory policy.", {
-      path: normalized
+function writePolicy(filePath, policy) {
+  mkdirSync3(path6.dirname(filePath), { recursive: true, mode: 448 });
+  const temporary = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    writeFileSync3(temporary, `${JSON.stringify(policy, null, 2)}
+`, {
+      encoding: "utf8",
+      mode: 384
     });
+    chmodSync3(temporary, 384);
+    renameSync3(temporary, filePath);
+    chmodSync3(filePath, 384);
+  } finally {
+    rmSync3(temporary, { force: true });
   }
-  const realRoot = realpathSync2(rootPath);
-  const candidate = path4.resolve(realRoot, normalized);
-  if (!existsSync3(candidate)) {
-    throw new ProjectMemoryError("FILE_NOT_FOUND", "File does not exist.", { path: normalized });
-  }
-  const realCandidate = realpathSync2(candidate);
-  ensureInsideRoot(realRoot, realCandidate);
-  if (!statSync3(realCandidate).isFile()) {
-    throw new ProjectMemoryError("PATH_DENIED", "Path is not a regular file.", {
-      path: normalized
-    });
-  }
-  return { absolutePath: realCandidate, relativePath: normalized };
 }
-function isBinary(data) {
-  const sample = data.subarray(0, Math.min(data.length, 8192));
-  return sample.includes(0);
+function validatePolicyInput(input) {
+  if (!input.summary.trim() || input.summary.length > 1e3) {
+    throw new ProjectMemoryError("INVALID_INPUT", "Policy summary must be 1-1000 characters.");
+  }
+  if (input.rules.length > 50) {
+    throw new ProjectMemoryError("INVALID_INPUT", "A Policy can contain at most 50 rules.");
+  }
+  for (const rule of input.rules) {
+    if (!rule.id.trim() || rule.id.length > 120 || !Number.isInteger(rule.priority)) {
+      throw new ProjectMemoryError("INVALID_INPUT", "Policy rule metadata is invalid.");
+    }
+    for (const text2 of [...rule.triggerTopics, ...rule.requiredActions, ...rule.forbiddenActions]) {
+      assertNoSecret(text2, "policy rule");
+      if (text2.length > 500)
+        throw new ProjectMemoryError("INVALID_INPUT", "Policy rule text is too long.");
+    }
+  }
 }
-function readProjectFile(rootPath, relativePath, commit, customPatterns = []) {
-  const resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
-  const size = statSync3(resolved.absolutePath).size;
-  if (size > MAX_FILE_BYTES) {
-    throw new ProjectMemoryError("FILE_TOO_LARGE", "File exceeds the 1 MiB read limit.", {
-      path: resolved.relativePath,
-      size,
-      limit: MAX_FILE_BYTES
-    });
+function updatePolicyRecord(current, project, input) {
+  validatePolicyInput(input);
+  if (current && input.expectedVersion !== void 0 && input.expectedVersion !== current.version) {
+    throw new ProjectMemoryError(
+      "POLICY_VERSION_CONFLICT",
+      "Policy version changed before this edit was saved.",
+      {
+        expectedVersion: input.expectedVersion,
+        currentVersion: current.version
+      }
+    );
   }
-  const buffer = readFileSync3(resolved.absolutePath);
-  if (isBinary(buffer)) {
-    throw new ProjectMemoryError("BINARY_FILE", "Binary files cannot be read.", {
-      path: resolved.relativePath
-    });
-  }
+  const now2 = (/* @__PURE__ */ new Date()).toISOString();
+  const sources = input.sources ?? [];
+  const sourceFingerprint = sha256(JSON.stringify(sources));
   return {
-    path: resolved.relativePath,
-    content: buffer.toString("utf8"),
-    truncated: false,
-    size,
-    commit,
-    fileHash: sha256(buffer)
+    schemaVersion: POLICY_SCHEMA_VERSION,
+    policyId: current?.policyId ?? randomUUID(),
+    projectId: current?.projectId ?? project.registeredProject?.id ?? "",
+    version: (current?.version ?? 0) + 1,
+    status: current?.bridge.enabled ? "pending_sync" : "disabled",
+    summary: input.summary.trim(),
+    rules: input.rules,
+    sources,
+    sourceFingerprint,
+    createdAt: current?.createdAt ?? now2,
+    updatedAt: now2,
+    updatedBy: input.actor,
+    bridge: current?.bridge ?? {
+      enabled: false,
+      consentAt: null,
+      targetPath: path6.join(project.rootPath, "AGENTS.md"),
+      fileOwnership: "preexisting",
+      createdFileHash: null,
+      lastWholeFileHash: null,
+      lastManagedBlockHash: null,
+      lastSyncedPolicyVersion: null,
+      lastSyncedAt: null,
+      syncStatus: "disabled",
+      lastError: null
+    }
   };
 }
-function walkNonGitFiles(rootPath) {
-  const matcher = (0, import_ignore.default)();
-  const gitignore = path4.join(rootPath, ".gitignore");
-  if (existsSync3(gitignore)) {
-    matcher.add(readFileSync3(gitignore, "utf8"));
-  }
-  const output = [];
-  const queue = [""];
-  while (queue.length > 0 && output.length < MAX_SEARCH_FILES) {
-    const relativeDir = queue.shift() ?? "";
-    const absoluteDir = path4.join(rootPath, relativeDir);
-    for (const entry of readdirSync3(absoluteDir, { withFileTypes: true })) {
-      const relative = path4.posix.join(relativeDir.replaceAll("\\", "/"), entry.name);
-      if (matcher.ignores(relative) || isDeniedPath(relative)) {
-        continue;
-      }
-      if (entry.isSymbolicLink()) {
-        continue;
-      }
-      if (entry.isDirectory()) {
-        queue.push(relative);
-      } else if (entry.isFile()) {
-        output.push(relative);
-      }
-      if (output.length >= MAX_SEARCH_FILES) {
-        break;
-      }
-    }
-  }
-  return output;
+function policySourceIsCurrent(project, source) {
+  if (source.kind !== "file" || !source.path) return true;
+  const target = path6.resolve(project.rootPath, source.path);
+  if (path6.isAbsolute(source.path) || path6.relative(project.rootPath, target).startsWith(".."))
+    return false;
+  if (!existsSync5(target) || !lstatSync3(target).isFile()) return false;
+  return sha256(readFileSync5(target)) === source.fileHash;
 }
-function listSearchableFiles(rootPath, customPatterns = []) {
-  const gitFiles = listGitFiles(rootPath);
-  const files = gitFiles ?? walkNonGitFiles(rootPath);
-  return files.filter((relativePath) => !isDeniedPath(relativePath, customPatterns)).slice(0, MAX_SEARCH_FILES);
-}
-function excerpt(line, matchIndex, queryLength) {
-  const half = Math.floor((MAX_EXCERPT_CHARS - queryLength) / 2);
-  const start = Math.max(0, matchIndex - half);
-  const end = Math.min(line.length, matchIndex + queryLength + half);
-  const prefix = start > 0 ? "..." : "";
-  const suffix = end < line.length ? "..." : "";
-  return `${prefix}${line.slice(start, end)}${suffix}`;
-}
-function searchProjectFiles(rootPath, query, commit, customPatterns = []) {
-  const needle = query.trim().toLocaleLowerCase();
-  if (!needle) {
-    throw new ProjectMemoryError("INVALID_INPUT", "Search query cannot be empty.");
-  }
-  const results = [];
-  for (const relativePath of listSearchableFiles(rootPath, customPatterns)) {
-    if (results.length >= MAX_SEARCH_RESULTS) {
-      break;
-    }
-    let resolved;
-    try {
-      resolved = resolveReadableFile(rootPath, relativePath, customPatterns);
-    } catch {
-      continue;
-    }
-    const stats = lstatSync(resolved.absolutePath);
-    if (stats.size > MAX_FILE_BYTES) {
-      continue;
-    }
-    const buffer = readFileSync3(resolved.absolutePath);
-    if (isBinary(buffer)) {
-      continue;
-    }
-    const text2 = buffer.toString("utf8");
-    const lines = text2.split(/\r?\n/);
-    for (let index = 0; index < lines.length; index += 1) {
-      const line = lines[index] ?? "";
-      const matchIndex = line.toLocaleLowerCase().indexOf(needle);
-      if (matchIndex === -1) {
-        continue;
+function assertPolicySourcesCurrent(project, policy) {
+  const stale = policy.sources.filter((source) => !policySourceIsCurrent(project, source));
+  if (stale.length > 0) {
+    throw new ProjectMemoryError(
+      "POLICY_SOURCE_STALE",
+      "A Policy source file changed or was removed.",
+      {
+        sources: stale.map((source) => ({ path: source.path, fileHash: source.fileHash }))
       }
-      results.push({
-        path: resolved.relativePath,
-        line: index + 1,
-        excerpt: excerpt(line, matchIndex, needle.length),
-        commit,
-        fileHash: sha256(buffer)
-      });
-      if (results.length >= MAX_SEARCH_RESULTS) {
-        break;
-      }
-    }
+    );
   }
-  return results;
 }
 
 // ../../packages/project-memory-core/src/view.ts
 import { createHash as createHash4 } from "crypto";
-import { existsSync as existsSync4, readFileSync as readFileSync4 } from "fs";
-import path5 from "path";
+import { existsSync as existsSync6, readFileSync as readFileSync6 } from "fs";
+import path7 from "path";
 import { fileURLToPath as fileURLToPath2, pathToFileURL } from "url";
 
 // ../../packages/project-memory-core/src/event-metadata.ts
@@ -4343,18 +4734,18 @@ function htmlAttribute(value) {
   return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 function browserAsset(name) {
-  const moduleDir = path5.dirname(fileURLToPath2(import.meta.url));
+  const moduleDir = path7.dirname(fileURLToPath2(import.meta.url));
   const candidates = [
-    path5.join(moduleDir, "browser", name),
-    path5.resolve(moduleDir, "..", "dist", "browser", name),
-    path5.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
-    path5.resolve(process.cwd(), "dist", "browser", name)
+    path7.join(moduleDir, "browser", name),
+    path7.resolve(moduleDir, "..", "dist", "browser", name),
+    path7.resolve(moduleDir, "../../../plugins/codex-project-memory/dist/browser", name),
+    path7.resolve(process.cwd(), "dist", "browser", name)
   ];
-  const assetPath = candidates.find((candidate) => existsSync4(candidate));
+  const assetPath = candidates.find((candidate) => existsSync6(candidate));
   if (!assetPath) {
     throw new Error(`Browser asset ${name} is missing. Run pnpm build:browser first.`);
   }
-  return readFileSync4(assetPath, "utf8");
+  return readFileSync6(assetPath, "utf8");
 }
 function contentHash(value) {
   return createHash4("sha256").update(value).digest("base64");
@@ -4544,8 +4935,8 @@ var ProjectMemoryService = class {
       name: projectName,
       primaryPath: detected.rootPath,
       isGit: detected.isGit,
-      gitCommonDir: detected.gitCommonDir,
-      remoteUrl: detected.remoteUrl,
+      gitCommonDir: detected.gitCommonDir ?? null,
+      remoteUrl: detected.remoteUrl ?? null,
       headCommit: detected.headCommit,
       ...relinkProjectId ? { relinkProjectId } : {}
     });
@@ -4566,8 +4957,190 @@ var ProjectMemoryService = class {
       currentDetection: current,
       pendingProposals: this.store.countPendingProposals(projectId),
       memoryCount: memories.length,
-      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null
+      lastMemoryUpdatedAt: memories[0]?.updatedAt ?? null,
+      policy: this.policyStatus(projectId)
     };
+  }
+  policyStatus(projectId) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy)
+      return { status: "unconfigured", policy: null, agents: discoverAgents(project.primaryPath) };
+    let sourceStatus = "current";
+    try {
+      assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    } catch {
+      sourceStatus = "stale";
+    }
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const drifted = policy.bridge.lastWholeFileHash && agents.target.wholeFileHash !== policy.bridge.lastWholeFileHash;
+    return {
+      status: sourceStatus === "stale" ? "stale" : drifted ? "drifted" : policy.status,
+      policy,
+      agents
+    };
+  }
+  updatePolicy(projectId, input) {
+    const project = this.store.requireProject(projectId);
+    const detected = this.detectProject(project.primaryPath);
+    const next = updatePolicyRecord(this.store.getPolicy(projectId), detected, input);
+    const saved = this.store.savePolicy(projectId, next);
+    if (saved.bridge.enabled) {
+      this.syncPolicyBridge(projectId);
+      return this.store.getPolicy(projectId) ?? saved;
+    }
+    return saved;
+  }
+  enablePolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Enabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy || policy.version < 1)
+      throw new ProjectMemoryError(
+        "POLICY_NOT_CONFIGURED",
+        "Create a Project Policy before enabling the bridge."
+      );
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const ownership = agents.target.exists ? policy.bridge.fileOwnership === "talo_created" ? "talo_created" : "preexisting" : "talo_created";
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        enabled: true,
+        consentAt: policy.bridge.consentAt ?? (/* @__PURE__ */ new Date()).toISOString(),
+        fileOwnership: ownership,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    const result = syncAgentsPolicy(
+      project.primaryPath,
+      pending,
+      ownership,
+      agents.target.wholeFileHash
+    );
+    const effective = {
+      ...pending,
+      status: "effective",
+      bridge: {
+        ...pending.bridge,
+        syncStatus: "in_sync",
+        lastWholeFileHash: result.wholeFileHash,
+        lastManagedBlockHash: result.managedBlockHash,
+        lastSyncedPolicyVersion: pending.version,
+        lastSyncedAt: pending.bridge.lastSyncedAt
+      }
+    };
+    this.store.savePolicy(projectId, effective, "policy_bridge_enabled");
+    return { policy: effective, sync: result };
+  }
+  syncPolicyBridge(projectId, acceptDrift = false) {
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy?.bridge.enabled)
+      throw new ProjectMemoryError("POLICY_NOT_CONFIGURED", "Policy bridge is not enabled.");
+    assertPolicySourcesCurrent(this.detectProject(project.primaryPath), policy);
+    const pending = {
+      ...policy,
+      status: "pending_sync",
+      bridge: {
+        ...policy.bridge,
+        syncStatus: "pending",
+        lastError: null,
+        lastSyncedAt: policy.bridge.lastSyncedPolicyVersion === policy.version ? policy.bridge.lastSyncedAt : (/* @__PURE__ */ new Date()).toISOString()
+      }
+    };
+    this.store.savePolicy(projectId, pending, "policy_sync_started");
+    try {
+      const result = syncAgentsPolicy(
+        project.primaryPath,
+        pending,
+        pending.bridge.fileOwnership,
+        acceptDrift ? null : pending.bridge.lastWholeFileHash
+      );
+      const effective = {
+        ...pending,
+        status: "effective",
+        bridge: {
+          ...pending.bridge,
+          syncStatus: "in_sync",
+          lastWholeFileHash: result.wholeFileHash,
+          lastManagedBlockHash: result.managedBlockHash,
+          lastSyncedPolicyVersion: pending.version
+        }
+      };
+      this.store.savePolicy(projectId, effective, "policy_synced");
+      return { policy: effective, sync: result };
+    } catch (error) {
+      const normalized = error instanceof ProjectMemoryError ? { code: error.code, message: error.message, details: error.details } : { code: "STORAGE_ERROR", message: String(error), details: {} };
+      const failed = {
+        ...pending,
+        status: "failed",
+        bridge: { ...pending.bridge, syncStatus: "failed", lastError: normalized }
+      };
+      this.store.savePolicy(projectId, failed, "policy_sync_failed");
+      throw error;
+    }
+  }
+  repairPolicyBridge(projectId, confirmed) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Repairing the Policy bridge requires explicit confirmation."
+      );
+    return this.syncPolicyBridge(projectId, true);
+  }
+  disablePolicyBridge(projectId, confirmed, removeCreatedFile = false) {
+    if (!confirmed)
+      throw new ProjectMemoryError(
+        "CONFIRMATION_REQUIRED",
+        "Disabling the Policy bridge requires explicit confirmation."
+      );
+    const project = this.store.requireProject(projectId);
+    const policy = this.store.getPolicy(projectId);
+    if (!policy) return { status: "unconfigured", disabled: false };
+    const agents = discoverAgents(
+      project.primaryPath,
+      project.primaryPath,
+      policy.bridge.fileOwnership
+    );
+    const currentHash = agents.target.wholeFileHash;
+    const userChanged = Boolean(
+      policy.bridge.lastWholeFileHash && currentHash && currentHash !== policy.bridge.lastWholeFileHash
+    );
+    const ownership = userChanged ? "user_claimed" : policy.bridge.fileOwnership;
+    const removed = userChanged ? { removedBlock: false, deletedFile: false } : removeAgentsPolicy(
+      project.primaryPath,
+      ownership === "talo_created" && removeCreatedFile ? "talo_created" : "preexisting",
+      currentHash
+    );
+    const disabled = {
+      ...policy,
+      status: "disabled",
+      bridge: {
+        ...policy.bridge,
+        enabled: false,
+        fileOwnership: ownership,
+        syncStatus: "disabled"
+      }
+    };
+    this.store.savePolicy(projectId, disabled, "policy_bridge_disabled");
+    return { policy: disabled, removed };
   }
   linkProjects(sourceProjectId, targetProjectId) {
     this.store.linkProjects(sourceProjectId, targetProjectId);
@@ -4658,7 +5231,7 @@ var ProjectMemoryService = class {
         stale,
         staleReason: stale ? "source_file_changed" : null,
         accessible: true,
-        fileUrl: pathToFileURL2(path6.resolve(metadata.rootPath, current.path)).href
+        fileUrl: pathToFileURL2(path8.resolve(metadata.rootPath, current.path)).href
       };
     } catch {
       return {
@@ -5664,6 +6237,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview: brief.handoff.coverage,
         latestActivityAt: latest?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest?.displayTitle ?? null,
@@ -5737,6 +6312,8 @@ var ProjectMemoryService = class {
         projectId: project.id,
         name: project.name,
         primaryPath: project.primaryPath,
+        gitCommonDir: project.gitCommonDir,
+        remoteUrl: project.remoteUrl,
         overview,
         latestActivityAt: latest?.narrative?.occurredAt ?? latest?.updatedAt ?? null,
         latestActivityTitle: latest ? buildMemoryDisplayTitle(latest) : null,
@@ -5789,7 +6366,7 @@ var ProjectMemoryService = class {
     return hub;
   }
   registerDesktopPlatformProject(platform, projectPath) {
-    const resolvedPath = path6.resolve(projectPath);
+    const resolvedPath = path8.resolve(projectPath);
     const candidate = discoverDesktopPlatformProjects().find(
       (project) => project.platform === platform && project.path === resolvedPath
     );
@@ -5800,7 +6377,8 @@ var ProjectMemoryService = class {
         { platform, path: resolvedPath }
       );
     }
-    this.registerProject(candidate.path, candidate.name);
+    const existing = this.store.getProjectByPath(candidate.path);
+    if (!existing) this.registerProject(candidate.path, candidate.name);
     return this.buildDesktopHubSnapshot();
   }
   buildDesktopProjectView(projectId) {
@@ -5809,7 +6387,8 @@ var ProjectMemoryService = class {
     const graph = this.buildGraph(projectId, null, 1, false);
     const guide = this.buildGraphGuide(projectId, graph, 12, generatedAt);
     const brief = this.buildProjectBrief(projectId, graph, 12, generatedAt, guide);
-    return buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    const view = buildGraphViewData(project.name, graph, generatedAt, guide, brief);
+    return { ...view, policy: this.policyStatus(projectId) };
   }
   writeMemoryHub(regenerateProjectPages = true) {
     const hub = this.buildMemoryHub(regenerateProjectPages);
@@ -5883,43 +6462,43 @@ ${instruction}
 };
 
 // ../../packages/project-memory-core/src/store.ts
-import { createHash as createHash5, randomUUID } from "crypto";
+import { createHash as createHash5, randomUUID as randomUUID2 } from "crypto";
 import {
   appendFileSync,
-  chmodSync as chmodSync2,
-  existsSync as existsSync5,
-  mkdirSync as mkdirSync2,
+  chmodSync as chmodSync4,
+  existsSync as existsSync7,
+  mkdirSync as mkdirSync4,
   readdirSync as readdirSync4,
-  readFileSync as readFileSync5,
-  renameSync as renameSync2,
-  rmSync as rmSync2,
-  statSync as statSync4,
-  writeFileSync as writeFileSync2
+  readFileSync as readFileSync7,
+  renameSync as renameSync4,
+  rmSync as rmSync4,
+  statSync as statSync5,
+  writeFileSync as writeFileSync4
 } from "fs";
-import path7 from "path";
+import path9 from "path";
 var SCHEMA_VERSION = 1;
 var MEMORY_SCHEMA_VERSION = 6;
 function now() {
   return (/* @__PURE__ */ new Date()).toISOString();
 }
 function ensurePrivateDirectory(directory) {
-  mkdirSync2(directory, { recursive: true, mode: 448 });
-  chmodSync2(directory, 448);
+  mkdirSync4(directory, { recursive: true, mode: 448 });
+  chmodSync4(directory, 448);
 }
 function writePrivateFile(filePath, content, hardenDirectory = true) {
   if (hardenDirectory) {
-    ensurePrivateDirectory(path7.dirname(filePath));
+    ensurePrivateDirectory(path9.dirname(filePath));
   } else {
-    mkdirSync2(path7.dirname(filePath), { recursive: true, mode: 448 });
+    mkdirSync4(path9.dirname(filePath), { recursive: true, mode: 448 });
   }
-  const temporaryPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  const temporaryPath = `${filePath}.${process.pid}.${randomUUID2()}.tmp`;
   try {
-    writeFileSync2(temporaryPath, content, { encoding: "utf8", mode: 384 });
-    chmodSync2(temporaryPath, 384);
-    renameSync2(temporaryPath, filePath);
-    chmodSync2(filePath, 384);
+    writeFileSync4(temporaryPath, content, { encoding: "utf8", mode: 384 });
+    chmodSync4(temporaryPath, 384);
+    renameSync4(temporaryPath, filePath);
+    chmodSync4(filePath, 384);
   } finally {
-    rmSync2(temporaryPath, { force: true });
+    rmSync4(temporaryPath, { force: true });
   }
 }
 function writeJson(filePath, value) {
@@ -5928,7 +6507,7 @@ function writeJson(filePath, value) {
 }
 function readJson(filePath) {
   try {
-    return JSON.parse(readFileSync5(filePath, "utf8"));
+    return JSON.parse(readFileSync7(filePath, "utf8"));
   } catch (error) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Unable to read project memory state.", {
       path: filePath,
@@ -5997,10 +6576,10 @@ ${JSON.stringify(metadata, null, 2)}
 ${sections.join("\n")}`;
 }
 function parseMemoryDocument(filePath, project) {
-  if (!existsSync5(filePath)) {
+  if (!existsSync7(filePath)) {
     return [];
   }
-  const text2 = readFileSync5(filePath, "utf8");
+  const text2 = readFileSync7(filePath, "utf8");
   const frontMatter = text2.match(/^---\n([\s\S]*?)\n---\n/);
   if (!frontMatter) {
     throw new ProjectMemoryError("STORAGE_ERROR", "Project MEMORY.md has invalid front matter.", {
@@ -6236,16 +6815,16 @@ var MemoryStore = class {
   locksRoot;
   constructor(dataDir) {
     this.storageRoot = dataDir;
-    this.registryPath = path7.join(dataDir, "registry.json");
-    this.linksPath = path7.join(dataDir, "links.json");
-    this.projectsRoot = path7.join(dataDir, "projects");
-    this.locksRoot = path7.join(dataDir, "locks");
+    this.registryPath = path9.join(dataDir, "registry.json");
+    this.linksPath = path9.join(dataDir, "links.json");
+    this.projectsRoot = path9.join(dataDir, "projects");
+    this.locksRoot = path9.join(dataDir, "locks");
     ensurePrivateDirectory(this.projectsRoot);
     ensurePrivateDirectory(this.locksRoot);
-    if (!existsSync5(this.registryPath)) {
+    if (!existsSync7(this.registryPath)) {
       writeJson(this.registryPath, { schemaVersion: SCHEMA_VERSION, projects: [] });
     }
-    if (!existsSync5(this.linksPath)) {
+    if (!existsSync7(this.linksPath)) {
       writeJson(this.linksPath, { schemaVersion: SCHEMA_VERSION, links: [] });
     }
     this.readRegistry();
@@ -6254,12 +6833,12 @@ var MemoryStore = class {
   close() {
   }
   acquireProjectLock(projectId) {
-    const lockPath = path7.join(this.locksRoot, `${projectId}.lock`);
+    const lockPath = path9.join(this.locksRoot, `${projectId}.lock`);
     const acquire = () => {
       try {
-        mkdirSync2(lockPath, { mode: 448 });
+        mkdirSync4(lockPath, { mode: 448 });
         writePrivateFile(
-          path7.join(lockPath, "owner.json"),
+          path9.join(lockPath, "owner.json"),
           `${JSON.stringify({ pid: process.pid, acquiredAt: now() }, null, 2)}
 `,
           false
@@ -6267,12 +6846,12 @@ var MemoryStore = class {
       } catch (error) {
         const code = error.code;
         if (code !== "EEXIST") throw error;
-        const age = Date.now() - statSync4(lockPath).mtimeMs;
+        const age = Date.now() - statSync5(lockPath).mtimeMs;
         if (age > 5 * 60 * 1e3) {
-          rmSync2(lockPath, { recursive: true, force: true });
-          mkdirSync2(lockPath, { mode: 448 });
+          rmSync4(lockPath, { recursive: true, force: true });
+          mkdirSync4(lockPath, { mode: 448 });
           writePrivateFile(
-            path7.join(lockPath, "owner.json"),
+            path9.join(lockPath, "owner.json"),
             `${JSON.stringify({ pid: process.pid, acquiredAt: now(), recovered: true }, null, 2)}
 `,
             false
@@ -6287,7 +6866,7 @@ var MemoryStore = class {
       }
     };
     acquire();
-    return () => rmSync2(lockPath, { recursive: true, force: true });
+    return () => rmSync4(lockPath, { recursive: true, force: true });
   }
   projectRevision(projectId) {
     const hash2 = createHash5("sha256");
@@ -6296,50 +6875,84 @@ var MemoryStore = class {
       this.relationsPath(projectId),
       this.linksPath
     ]) {
-      hash2.update(path7.basename(filePath));
-      hash2.update(existsSync5(filePath) ? readFileSync5(filePath) : Buffer.from("<missing>"));
+      hash2.update(path9.basename(filePath));
+      hash2.update(existsSync7(filePath) ? readFileSync7(filePath) : Buffer.from("<missing>"));
     }
     return hash2.digest("hex");
   }
   projectDir(projectId) {
-    return path7.join(this.projectsRoot, projectId);
+    return path9.join(this.projectsRoot, projectId);
   }
   projectPath(projectId) {
-    return path7.join(this.projectDir(projectId), "project.json");
+    return path9.join(this.projectDir(projectId), "project.json");
   }
   memoryPath(projectId) {
-    return path7.join(this.projectDir(projectId), "MEMORY.md");
+    return path9.join(this.projectDir(projectId), "MEMORY.md");
+  }
+  policyPath(projectId) {
+    return policyPath(this.projectDir(projectId));
+  }
+  getPolicy(projectId) {
+    this.requireProject(projectId);
+    const current = readPolicy(this.policyPath(projectId));
+    if (current && current.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy belongs to another project.", {
+        path: this.policyPath(projectId),
+        projectId
+      });
+    }
+    return current;
+  }
+  savePolicy(projectId, policy, eventType = "policy_updated") {
+    this.requireProject(projectId);
+    if (policy.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy identity is invalid.", {
+        projectId
+      });
+    }
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      writePolicy(this.policyPath(projectId), policy);
+      this.audit(eventType, projectId, policy.policyId, {
+        version: policy.version,
+        status: policy.status,
+        syncStatus: policy.bridge.syncStatus
+      });
+      return policy;
+    } finally {
+      releaseLock();
+    }
   }
   writeKnowledgeGraph(projectId, content, outputPath) {
     this.requireProject(projectId);
-    const target = outputPath ? path7.resolve(outputPath) : path7.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    const target = outputPath ? path9.resolve(outputPath) : path9.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
     writePrivateFile(target, content, outputPath === void 0);
     return target;
   }
   knowledgeGraphPath(projectId) {
     this.requireProject(projectId);
-    return path7.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
+    return path9.join(this.projectDir(projectId), "KNOWLEDGE_GRAPH.html");
   }
   writeMemoryHub(content, outputPath) {
-    writePrivateFile(path7.resolve(outputPath), content);
-    return path7.resolve(outputPath);
+    writePrivateFile(path9.resolve(outputPath), content);
+    return path9.resolve(outputPath);
   }
   relationsPath(projectId) {
-    return path7.join(this.projectDir(projectId), "RELATIONS.json");
+    return path9.join(this.projectDir(projectId), "RELATIONS.json");
   }
   proposalsDir(projectId) {
-    return path7.join(this.projectDir(projectId), "proposals");
+    return path9.join(this.projectDir(projectId), "proposals");
   }
   proposalPath(projectId, proposalId) {
-    return path7.join(this.proposalsDir(projectId), `${proposalId}.json`);
+    return path9.join(this.proposalsDir(projectId), `${proposalId}.json`);
   }
   auditPath(projectId) {
-    return path7.join(this.projectDir(projectId), "audit.jsonl");
+    return path9.join(this.projectDir(projectId), "audit.jsonl");
   }
   readRelationsDocument(projectId) {
     this.requireProject(projectId);
     const relationsPath = this.relationsPath(projectId);
-    if (!existsSync5(relationsPath)) {
+    if (!existsSync7(relationsPath)) {
       return { schemaVersion: SCHEMA_VERSION, projectId, relations: [] };
     }
     const document = readJson(relationsPath);
@@ -6390,14 +7003,14 @@ var MemoryStore = class {
     }
     const event = { eventType, projectId, subjectId, details, createdAt: now() };
     const auditPath = this.auditPath(projectId);
-    ensurePrivateDirectory(path7.dirname(auditPath));
+    ensurePrivateDirectory(path9.dirname(auditPath));
     appendFileSync(auditPath, `${JSON.stringify(event)}
 `, { encoding: "utf8", mode: 384 });
-    chmodSync2(auditPath, 384);
+    chmodSync4(auditPath, 384);
   }
   getProject(projectId) {
     const projectPath = this.projectPath(projectId);
-    return existsSync5(projectPath) ? readJson(projectPath) : null;
+    return existsSync7(projectPath) ? readJson(projectPath) : null;
   }
   listProjects() {
     return this.readRegistry().projects.map((entry) => this.getProject(entry.id)).filter((project) => Boolean(project)).sort(
@@ -6460,7 +7073,7 @@ var MemoryStore = class {
         this.audit("project_relinked", project2.id, project2.id, { path: input.primaryPath });
         return updated;
       }
-      const id = randomUUID();
+      const id = randomUUID2();
       const project = {
         id,
         name: input.name,
@@ -6568,7 +7181,7 @@ var MemoryStore = class {
     this.requireProject(projectId);
     const releaseLock = this.acquireProjectLock(projectId);
     try {
-      const proposalId = randomUUID();
+      const proposalId = randomUUID2();
       const baseMemorySnapshots = {};
       for (const update of updates) {
         const memory = this.getMemory(update.memoryId);
@@ -6585,20 +7198,20 @@ var MemoryStore = class {
         createdAt: now(),
         reviewedAt: null,
         items: candidates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending"
         })),
         updateItems: updates.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
           rejectionReason: null
         })),
         relationItems: relations.map((candidate) => ({
-          id: randomUUID(),
+          id: randomUUID2(),
           proposalId,
           candidate,
           status: "pending",
@@ -6622,7 +7235,7 @@ var MemoryStore = class {
   findProposalPath(proposalId) {
     for (const entry of this.readRegistry().projects) {
       const proposalPath = this.proposalPath(entry.id, proposalId);
-      if (existsSync5(proposalPath)) {
+      if (existsSync7(proposalPath)) {
         return proposalPath;
       }
     }
@@ -6915,7 +7528,7 @@ ${item.candidate.content.trim()}`;
         }
         const candidate = item.candidate;
         const memory = {
-          id: randomUUID(),
+          id: randomUUID2(),
           projectId: project.id,
           projectName: project.name,
           kind: candidate.kind,
@@ -7053,7 +7666,7 @@ ${item.candidate.content.trim()}`;
           continue;
         }
         const relation = {
-          id: randomUUID(),
+          id: randomUUID2(),
           ownerProjectId: project.id,
           fromMemoryId: fromMemory.id,
           fromProjectId: fromMemory.projectId,
@@ -7156,9 +7769,9 @@ ${item.candidate.content.trim()}`;
     if (unresolved.length === 0) return memories;
     const candidatesByKey = /* @__PURE__ */ new Map();
     const directory = this.proposalsDir(projectId);
-    if (existsSync5(directory)) {
+    if (existsSync7(directory)) {
       for (const file of readdirSync4(directory).filter((name) => name.endsWith(".json"))) {
-        const proposal = readJson(path7.join(directory, file));
+        const proposal = readJson(path9.join(directory, file));
         for (const item of proposal.items) {
           if (item.status !== "accepted") continue;
           const key = memoryIdentityKey(item.candidate.title, item.candidate.content);
@@ -7267,16 +7880,16 @@ ${memory.content}`.toLocaleLowerCase();
   countPendingProposals(projectId) {
     this.requireProject(projectId);
     const directory = this.proposalsDir(projectId);
-    if (!existsSync5(directory)) {
+    if (!existsSync7(directory)) {
       return 0;
     }
-    return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path7.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
+    return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => readJson(path9.join(directory, file))).filter((proposal) => proposal.status === "pending").length;
   }
   listProposals(status) {
     return this.listProjects().flatMap((project) => {
       const directory = this.proposalsDir(project.id);
-      if (!existsSync5(directory)) return [];
-      return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path7.join(directory, file))));
+      if (!existsSync7(directory)) return [];
+      return readdirSync4(directory).filter((file) => file.endsWith(".json")).map((file) => publicProposal(readJson(path9.join(directory, file))));
     }).filter((proposal) => !status || proposal.status === status).sort(
       (left, right) => right.createdAt.localeCompare(left.createdAt) || left.id.localeCompare(right.id)
     );
@@ -7388,10 +8001,10 @@ ${memory.content}`.toLocaleLowerCase();
 
 // src/hook-stop.ts
 function turnHasToolUse(transcriptPath, turnId) {
-  if (!transcriptPath || !existsSync6(transcriptPath)) {
+  if (!transcriptPath || !existsSync8(transcriptPath)) {
     return false;
   }
-  for (const line of readFileSync6(transcriptPath, "utf8").split(/\r?\n/)) {
+  for (const line of readFileSync8(transcriptPath, "utf8").split(/\r?\n/)) {
     if (!line.trim()) continue;
     try {
       const event = JSON.parse(line);
@@ -7433,7 +8046,7 @@ function evaluateStopHook(input, service) {
   };
 }
 function main() {
-  const input = JSON.parse(readFileSync6(0, "utf8"));
+  const input = JSON.parse(readFileSync8(0, "utf8"));
   const dataDir = ensureDataDir(resolveDataDir());
   const service = new ProjectMemoryService(new MemoryStore(dataDir), dataDir);
   try {

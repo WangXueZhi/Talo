@@ -12,7 +12,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AgentPlatform } from "./desktop-integration.js";
-import { detectGitMetadata } from "./git.js";
+import { detectGitMetadata, type GitMetadata } from "./git.js";
 import type { MemoryHubProject, ProjectRecord } from "./types.js";
 
 const MAX_CODEX_SESSION_FILES = 2000;
@@ -25,6 +25,8 @@ export interface DesktopPlatformProjectCandidate {
   path: string;
   lastSeenAt: string | null;
   source: "codex-session" | "claude-session" | "antigravity-config";
+  gitCommonDir: string | null;
+  remoteUrl: string | null;
 }
 
 export interface DesktopPlatformProject {
@@ -34,6 +36,8 @@ export interface DesktopPlatformProject {
   path: string;
   lastSeenAt: string | null;
   source: DesktopPlatformProjectCandidate["source"];
+  gitCommonDir: string | null;
+  remoteUrl: string | null;
   registered: boolean;
   registeredProjectId: string | null;
   memoryCount: number;
@@ -93,10 +97,10 @@ function listFiles(root: string, depth = 0, result: string[] = []): string[] {
   return result;
 }
 
-function normalizeProjectPath(inputPath: string): string | null {
+function normalizeProject(inputPath: string): GitMetadata | null {
   try {
     if (!existsSync(inputPath) || !statSync(inputPath).isDirectory()) return null;
-    return detectGitMetadata(inputPath).rootPath;
+    return detectGitMetadata(inputPath);
   } catch {
     return null;
   }
@@ -144,15 +148,17 @@ function scanCodexProjects(
     } catch {}
   }
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "codex",
       platformProjectId: session.platformProjectId,
-      name: path.basename(projectPath),
-      path: projectPath,
+      name: path.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
       source: "codex-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl,
     });
   }
   return [...candidates.values()];
@@ -191,15 +197,17 @@ function scanAntigravityProjects(
         } catch {
           continue;
         }
-        const projectPath = normalizeProjectPath(requestedPath);
-        if (!projectPath) continue;
+        const project = normalizeProject(requestedPath);
+        if (!project) continue;
         addCandidate(candidates, {
           platform: "antigravity",
           platformProjectId: config.id ?? path.basename(entry.name, ".json"),
-          name: config.name?.trim() || path.basename(projectPath),
-          path: projectPath,
+          name: config.name?.trim() || path.basename(project.rootPath),
+          path: project.rootPath,
           lastSeenAt: config.updatedAt ?? null,
           source: "antigravity-config",
+          gitCommonDir: project.gitCommonDir,
+          remoteUrl: project.remoteUrl,
         });
       }
     } catch {}
@@ -251,15 +259,17 @@ function scanClaudeProjects(
   }
 
   for (const [sessionCwd, session] of sessionsByPath) {
-    const projectPath = normalizeProjectPath(sessionCwd);
-    if (!projectPath) continue;
+    const project = normalizeProject(sessionCwd);
+    if (!project) continue;
     addCandidate(candidates, {
       platform: "claude",
       platformProjectId: session.platformProjectId,
-      name: path.basename(projectPath),
-      path: projectPath,
+      name: path.basename(project.rootPath),
+      path: project.rootPath,
       lastSeenAt: session.lastSeenAt,
       source: "claude-session",
+      gitCommonDir: project.gitCommonDir,
+      remoteUrl: project.remoteUrl,
     });
   }
   return [...candidates.values()];
@@ -287,11 +297,27 @@ export function buildDesktopPlatformInventory(
   hubProjects: MemoryHubProject[],
 ): DesktopPlatformInventory {
   const hubById = new Map(hubProjects.map((project) => [project.projectId, project]));
-  const registeredByPath = new Map(
-    registeredProjects.map((project) => [project.primaryPath, project]),
-  );
-  const projects = candidates.map((candidate) => {
-    const registered = registeredByPath.get(candidate.path) ?? null;
+  const uniqueCandidates = new Map<string, DesktopPlatformProjectCandidate>();
+  for (const candidate of candidates) {
+    const identity = candidate.gitCommonDir
+      ? `git:${candidate.gitCommonDir}`
+      : candidate.remoteUrl
+        ? `remote:${candidate.remoteUrl}`
+        : `path:${candidate.path}`;
+    const key = `${candidate.platform}:${identity}`;
+    const existing = uniqueCandidates.get(key);
+    if (!existing || (candidate.lastSeenAt ?? "") > (existing.lastSeenAt ?? "")) {
+      uniqueCandidates.set(key, candidate);
+    }
+  }
+  const projects = [...uniqueCandidates.values()].map((candidate) => {
+    const registered =
+      registeredProjects.find(
+        (project) =>
+          project.primaryPath === candidate.path ||
+          (candidate.gitCommonDir !== null && project.gitCommonDir === candidate.gitCommonDir) ||
+          (candidate.remoteUrl !== null && project.remoteUrl === candidate.remoteUrl),
+      ) ?? null;
     const hubProject = registered ? hubById.get(registered.id) : null;
     return {
       ...candidate,

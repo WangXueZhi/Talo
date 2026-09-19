@@ -2,13 +2,17 @@ import {
   ArrowLeft,
   Bot,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
   ClipboardCheck,
   Download,
   ExternalLink,
   Home,
   LoaderCircle,
+  Pencil,
   Plus,
   RefreshCw,
+  Save,
   Search,
   Settings,
   ShieldAlert,
@@ -25,6 +29,10 @@ import {
   downloadUpdate,
   getAppVersion,
   getProjectView,
+  enableProjectPolicy,
+  disableProjectPolicy,
+  syncProjectPolicy,
+  updateProjectPolicy,
   getReviewPolicy,
   installIntegration,
   openDownloadPage,
@@ -42,6 +50,7 @@ import type {
   DesktopIntegrationStatus,
   GraphViewData,
   MemoryHub,
+  ProjectPolicyView,
   ReviewPolicy,
 } from "./types";
 import {
@@ -49,6 +58,7 @@ import {
   filterProjectDirectoryItems,
   getProjectDirectoryCounts,
   getProjectDirectoryPlatformCounts,
+  preferredRegistrationPlatform,
   type ProjectDirectoryFilter,
   type ProjectDirectoryPlatformFilter,
   type ProjectDirectoryItem,
@@ -311,7 +321,9 @@ function HubView({
   t: ReturnType<typeof usePreferences>["t"];
 }) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<ProjectDirectoryFilter>("registered");
+  // Keep newly discovered projects visible so registering one platform does not
+  // hide the remaining platform candidates from the main directory.
+  const [filter, setFilter] = useState<ProjectDirectoryFilter>("all");
   const [platformFilter, setPlatformFilter] = useState<ProjectDirectoryPlatformFilter>("all");
   const [registeringPath, setRegisteringPath] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -329,7 +341,7 @@ function HubView({
   const visibleUnregisteredCount = visibleItems.length - visibleRegisteredCount;
 
   const registerProject = async (item: ProjectDirectoryItem) => {
-    const platform = item.platforms[0];
+    const platform = preferredRegistrationPlatform(item, platformFilter);
     if (!platform || registeringPath) return;
     setRegisteringPath(item.path);
     setNotice(null);
@@ -385,6 +397,70 @@ function HubView({
       </div>
     </section>
     {!hub && loading && <div class="loading-panel"><LoaderCircle class="spin" />{t("hub.loading")}</div>}
+  </section>;
+}
+
+function PolicyPanel({
+  projectId,
+  value,
+  onRefresh,
+  t,
+}: {
+  projectId: string;
+  value: Record<string, unknown> | undefined;
+  onRefresh: () => void;
+  t: ReturnType<typeof usePreferences>["t"];
+}) {
+  const policyView = value as ProjectPolicyView | undefined;
+  const policy = policyView?.policy;
+  const [summary, setSummary] = useState(policy?.summary ?? "");
+  const [required, setRequired] = useState(policy?.rules.flatMap((rule) => rule.requiredActions).join("\n") ?? "");
+  const [forbidden, setForbidden] = useState(policy?.rules.flatMap((rule) => rule.forbiddenActions).join("\n") ?? "");
+  const [topics, setTopics] = useState(policy?.rules.flatMap((rule) => rule.triggerTopics).join("\n") ?? "");
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  useEffect(() => {
+    setSummary(policy?.summary ?? "");
+    setRequired(policy?.rules.flatMap((rule) => rule.requiredActions).join("\n") ?? "");
+    setForbidden(policy?.rules.flatMap((rule) => rule.forbiddenActions).join("\n") ?? "");
+    setTopics(policy?.rules.flatMap((rule) => rule.triggerTopics).join("\n") ?? "");
+  }, [policy?.policyId, policy?.version]);
+
+  const run = async (operation: () => Promise<unknown>, success: string) => {
+    setBusy(true); setError(null); setNotice(null);
+    try { await operation(); setNotice(success); onRefresh(); }
+    catch (reason) { setError(message(reason)); }
+    finally { setBusy(false); }
+  };
+
+  const save = () => {
+    if (!summary.trim()) return setError(t("policy.summaryRequired"));
+    const rule = {
+      id: policy?.rules[0]?.id ?? "project-policy",
+      triggerTopics: topics.split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
+      requiredActions: required.split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
+      forbiddenActions: forbidden.split(/\r?\n/).map((item) => item.trim()).filter(Boolean),
+      priority: policy?.rules[0]?.priority ?? 100,
+    };
+    return run(() => updateProjectPolicy(projectId, { summary, rules: [rule], expectedVersion: policy?.version, actor: { platform: "desktop", adapterVersion: "0.14.5" } }), t("policy.saved"));
+  };
+
+  return <section class={`policy-panel${expanded ? " policy-panel-expanded" : ""}`}>
+    <div class="policy-panel-header"><div class="policy-panel-heading"><span class="eyebrow">{t("policy.title")}</span><h2>{t("policy.subtitle")}</h2></div><div class="policy-panel-header-actions"><span class={`policy-status policy-status-${policyView?.status ?? "unconfigured"}`}>{policyView?.status ?? "unconfigured"}</span>{policy && <button class="policy-toggle" aria-expanded={expanded} onClick={() => setExpanded((current) => !current)}>{expanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}{expanded ? t("policy.collapse") : t("policy.edit")}</button>}</div></div>
+    {policy ? <>
+      <div class="policy-facts"><span>v{policy.version}</span><span>{policy.bridge.syncStatus}</span><span>{policy.bridge.fileOwnership}</span><code>{policy.bridge.targetPath}</code></div>
+      {expanded ? <>
+        <label class="policy-field"><span>{t("policy.summary")}</span><textarea value={summary} onInput={(event) => setSummary(event.currentTarget.value)} /></label>
+        <div class="policy-editor-grid"><label class="policy-field"><span>{t("policy.required")}</span><textarea value={required} onInput={(event) => setRequired(event.currentTarget.value)} /></label><label class="policy-field"><span>{t("policy.forbidden")}</span><textarea value={forbidden} onInput={(event) => setForbidden(event.currentTarget.value)} /></label><label class="policy-field"><span>{t("policy.topics")}</span><textarea value={topics} onInput={(event) => setTopics(event.currentTarget.value)} /></label></div>
+      </> : <p class="policy-summary-preview">{policy.summary}</p>}
+      <div class="policy-actions">{expanded && <button class="primary-button" disabled={busy} onClick={() => void save()}><Save size={16} />{busy ? t("common.saving") : t("policy.save")}</button>}{!expanded && <button class="secondary-button" disabled={busy} onClick={() => setExpanded(true)}><Pencil size={16} />{t("policy.edit")}</button>}{policy.bridge.enabled ? <><button class="secondary-button" disabled={busy} onClick={() => void run(() => syncProjectPolicy(projectId), t("policy.synced"))}><RefreshCw size={16} />{t("policy.sync")}</button><button class="secondary-button" disabled={busy} onClick={() => void run(() => disableProjectPolicy(projectId), t("policy.disabled"))}>{t("policy.disable")}</button></> : <button class="secondary-button" disabled={busy} onClick={() => void run(() => enableProjectPolicy(projectId), t("policy.enabled"))}>{t("policy.enable")}</button>}</div>
+      {policy.bridge.lastError && <div class="issue-box"><ShieldAlert size={16} /><span>{policy.bridge.lastError.code}: {policy.bridge.lastError.message}</span></div>}
+      {policyView?.agents.potentialConflicts.map((item) => <div class="issue-box" key={item}><ShieldAlert size={16} /><span>{item}</span></div>)}
+    </> : <div class="policy-empty"><p>{t("policy.empty")}</p><button class="primary-button" disabled={busy} onClick={() => void run(() => updateProjectPolicy(projectId, { summary: t("policy.defaultSummary"), rules: [{ id: "project-policy", triggerTopics: [], requiredActions: [], forbiddenActions: [], priority: 100 }], actor: { platform: "desktop", adapterVersion: "0.14.5" } }), t("policy.created"))}>{t("policy.create")}</button></div>}
+    {notice && <div class="success-note"><CheckCircle2 size={16} />{notice}</div>}{error && <div class="error-banner"><ShieldAlert size={16} />{error}</div>}
   </section>;
 }
 
@@ -496,7 +572,7 @@ function App() {
       {route.name === "hub" && <HubView hub={hub} loading={loading} onRefresh={() => void loadHub(true)} onProject={(id) => void openProject(id)} onRegister={registerPlatformProject} onReview={() => setRoute({ name: "reviews" })} locale={language} t={t} />}
       {route.name === "reviews" && <ReviewView hub={hub} onHubChange={setHub} t={t} />}
       {route.name === "integrations" && <><SettingsPanel languagePreference={languagePreference} themePreference={themePreference} onLanguageChange={setLanguagePreference} onThemeChange={setThemePreference} update={update} checking={checkingUpdate} downloading={downloadingUpdate} updateError={updateError} updateNotice={updateNotice} onCheckUpdate={() => void checkUpdate(true)} onInstallUpdate={() => void installUpdate()} t={t} /><IntegrationsView onboarding={onboarding} onDone={finishOnboarding} t={t} /></>}
-      {route.name === "project" && <section class="project-view"><button class="back-button" onClick={() => setRoute({ name: "hub" })}><ArrowLeft size={17} />{t("project.back")}</button>{project ? <GraphApp data={project} locale={language} /> : <div class="loading-panel"><LoaderCircle class="spin" />{t("project.loading")}</div>}</section>}
+      {route.name === "project" && <section class="project-view"><button class="back-button" onClick={() => setRoute({ name: "hub" })}><ArrowLeft size={17} />{t("project.back")}</button>{project ? <><PolicyPanel projectId={route.projectId} value={project.policy} onRefresh={() => void openProject(route.projectId)} t={t} /><GraphApp data={project} locale={language} /></> : <div class="loading-panel"><LoaderCircle class="spin" />{t("project.loading")}</div>}</section>}
     </main>
   </div>;
 }

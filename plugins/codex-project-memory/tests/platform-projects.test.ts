@@ -91,6 +91,8 @@ describe("desktop platform projects", () => {
         path: "/tmp/registered-project",
         lastSeenAt: null,
         source: "codex-session" as const,
+        gitCommonDir: null,
+        remoteUrl: null,
       },
     ];
     const inventory = buildDesktopPlatformInventory(

@@ -116,6 +116,71 @@ export interface ProjectRecord {
   lastSeenAt: string;
 }
 
+export type ProjectPolicyStatus =
+  | "unconfigured"
+  | "pending_sync"
+  | "effective"
+  | "failed"
+  | "conflict"
+  | "stale"
+  | "disabled";
+
+export type PolicySyncStatus =
+  | "disabled"
+  | "in_sync"
+  | "pending"
+  | "failed"
+  | "drifted"
+  | "conflict";
+
+export type PolicyFileOwnership = "preexisting" | "talo_created" | "user_claimed";
+
+export interface ProjectPolicyRule {
+  id: string;
+  triggerTopics: string[];
+  requiredActions: string[];
+  forbiddenActions: string[];
+  priority: number;
+}
+
+export interface ProjectPolicySource {
+  kind: "file" | "memory";
+  projectId: string;
+  path: string | null;
+  memoryId: string | null;
+  commit: string | null;
+  fileHash: string;
+  locator: string | null;
+}
+
+export interface ProjectPolicyRecord {
+  schemaVersion: 1;
+  policyId: string;
+  projectId: string;
+  version: number;
+  status: ProjectPolicyStatus;
+  summary: string;
+  rules: ProjectPolicyRule[];
+  sources: ProjectPolicySource[];
+  sourceFingerprint: string;
+  createdAt: string;
+  updatedAt: string;
+  updatedBy: ProposalActor;
+  bridge: {
+    enabled: boolean;
+    consentAt: string | null;
+    targetPath: string;
+    fileOwnership: PolicyFileOwnership;
+    createdFileHash: string | null;
+    lastWholeFileHash: string | null;
+    lastManagedBlockHash: string | null;
+    lastSyncedPolicyVersion: number | null;
+    lastSyncedAt: string | null;
+    syncStatus: PolicySyncStatus;
+    lastError: { code: string; message: string; details: Record<string, unknown> } | null;
+  };
+}
+
 export interface DetectedProject {
   requestedPath: string;
   rootPath: string;
@@ -529,6 +594,8 @@ export interface MemoryHubProject {
   projectId: string;
   name: string;
   primaryPath: string;
+  gitCommonDir?: string | null;
+  remoteUrl?: string | null;
   overview: string;
   latestActivityAt: string | null;
   latestActivityTitle: string | null;

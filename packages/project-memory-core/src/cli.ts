@@ -177,6 +177,9 @@ function help(): Record<string, unknown> {
       "migrate-home": "migrate-home --from PATH --to PATH",
       shortcut: "shortcut install|remove",
       integration: "integration install|status|repair|remove codex|claude|antigravity",
+      policy: "policy show|update --path PATH|--project-id ID [--json JSON|--json-file FILE|stdin]",
+      "project-integration":
+        "integration status|enable|disable|sync|repair --path PATH|--project-id ID",
       desktop: "desktop hub | desktop project --project-id ID | desktop integrations",
       relations:
         "relations --memory-id ID [--direction in|out|both] [--types CSV] [--include-linked true]",
@@ -251,6 +254,27 @@ export function runCommand(argv: string[]): unknown {
   if (args.command === "integration") {
     const action = args.positionals[0];
     const platform = args.positionals[1] as AgentPlatform | undefined;
+    if (action && ["status", "enable", "disable", "sync", "repair"].includes(action) && !platform) {
+      const service = createService();
+      try {
+        const projectId =
+          args.options.get("project-id") ??
+          registeredProjectId(service, args.options.get("path") ?? process.cwd());
+        if (action === "status") return service.policyStatus(projectId);
+        if (action === "enable")
+          return service.enablePolicyBridge(projectId, args.options.get("confirm") === "true");
+        if (action === "disable")
+          return service.disablePolicyBridge(
+            projectId,
+            args.options.get("confirm") === "true",
+            args.options.get("remove-created-file") === "true",
+          );
+        if (action === "sync") return service.syncPolicyBridge(projectId);
+        return service.repairPolicyBridge(projectId, args.options.get("confirm") === "true");
+      } finally {
+        service.store.close();
+      }
+    }
     if (
       !action ||
       !["install", "status", "repair", "remove"].includes(action) ||
@@ -327,6 +351,31 @@ export function runCommand(argv: string[]): unknown {
         return detected.registeredProject
           ? service.projectStatus(detected.registeredProject.id)
           : { registered: false, detection: detected };
+      }
+      case "policy": {
+        const action = args.positionals[0];
+        const projectId = args.options.get("project-id") ?? registeredProjectId(service, pathValue);
+        if (action === "show") return service.policyStatus(projectId);
+        if (action === "update") {
+          const input = jsonInput(args) as {
+            summary: string;
+            rules: import("./types.js").ProjectPolicyRule[];
+            sources?: import("./types.js").ProjectPolicySource[];
+            actor?: ProposalActor;
+            expectedVersion?: number;
+          };
+          return service.updatePolicy(projectId, {
+            summary: input.summary,
+            rules: input.rules,
+            sources: input.sources,
+            expectedVersion: input.expectedVersion,
+            actor: input.actor ?? {
+              platform: args.options.get("platform") ?? "codex",
+              adapterVersion: args.options.get("adapter-version") ?? null,
+            },
+          });
+        }
+        throw new ProjectMemoryError("INVALID_INPUT", "Use `policy show` or `policy update`.");
       }
       case "load":
         return {

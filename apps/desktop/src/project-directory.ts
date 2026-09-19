@@ -21,6 +21,8 @@ export interface ProjectDirectoryItem {
   risk: RegisteredProject["risk"];
   needsAttention: boolean;
   searchText: string;
+  gitCommonDir: string | null;
+  remoteUrl: string | null;
 }
 
 export interface ProjectDirectoryCounts {
@@ -34,6 +36,14 @@ export interface ProjectDirectoryPlatformCounts {
   codex: number;
   claude: number;
   antigravity: number;
+}
+
+export function preferredRegistrationPlatform(
+  item: Pick<ProjectDirectoryItem, "platforms">,
+  platformFilter: ProjectDirectoryPlatformFilter,
+): AgentPlatform | null {
+  if (platformFilter !== "all" && item.platforms.includes(platformFilter)) return platformFilter;
+  return item.platforms[0] ?? null;
 }
 
 function cleanText(value: string | null | undefined): string {
@@ -77,12 +87,21 @@ function compareProjectDirectoryItems(left: ProjectDirectoryItem, right: Project
 }
 
 export function buildProjectDirectoryItems(hub: MemoryHub | null | undefined): ProjectDirectoryItem[] {
-  const byPath = new Map<string, ProjectDirectoryItem & { platformSet: Set<AgentPlatform> }>();
+  const byIdentity = new Map<string, ProjectDirectoryItem & { platformSet: Set<AgentPlatform> }>();
+  const identityFor = (path: string, gitCommonDir: string | null, remoteUrl: string | null) =>
+    gitCommonDir ? `git:${gitCommonDir}` : remoteUrl ? `remote:${remoteUrl}` : `path:${path}`;
+  const aliases = new Map<string, string>();
+  const findExisting = (path: string, gitCommonDir: string | null, remoteUrl: string | null) => {
+    const identity = identityFor(path, gitCommonDir, remoteUrl);
+    const key = aliases.get(identity) ?? identity;
+    return byIdentity.get(key);
+  };
 
   for (const project of hub?.projects ?? []) {
     const path = canonicalProjectPath(project.primaryPath);
     if (!path) continue;
-    byPath.set(path, {
+    const identity = identityFor(path, project.gitCommonDir ?? null, project.remoteUrl ?? null);
+    byIdentity.set(identity, {
       key: path,
       name: project.name,
       path: project.primaryPath,
@@ -99,14 +118,19 @@ export function buildProjectDirectoryItems(hub: MemoryHub | null | undefined): P
       risk: project.risk,
       needsAttention: project.needsAttention,
       searchText: "",
+      gitCommonDir: project.gitCommonDir ?? null,
+      remoteUrl: project.remoteUrl ?? null,
     });
+    aliases.set(`path:${path}`, identity);
+    if (project.gitCommonDir) aliases.set(`git:${project.gitCommonDir}`, identity);
+    if (project.remoteUrl) aliases.set(`remote:${project.remoteUrl}`, identity);
   }
 
   for (const group of hub?.platformProjects?.platforms ?? []) {
     for (const project of group.projects) {
       const path = canonicalProjectPath(project.path);
       if (!path) continue;
-      const existing = byPath.get(path);
+      const existing = findExisting(path, project.gitCommonDir ?? null, project.remoteUrl ?? null);
       if (existing) {
         existing.platformSet.add(project.platform);
         if (!existing.registered) {
@@ -116,7 +140,8 @@ export function buildProjectDirectoryItems(hub: MemoryHub | null | undefined): P
         }
         continue;
       }
-      byPath.set(path, {
+      const identity = identityFor(path, project.gitCommonDir ?? null, project.remoteUrl ?? null);
+      byIdentity.set(identity, {
         key: path,
         name: cleanText(project.name) || path.split("/").pop() || path,
         path: project.path,
@@ -133,11 +158,16 @@ export function buildProjectDirectoryItems(hub: MemoryHub | null | undefined): P
         risk: null,
         needsAttention: false,
         searchText: "",
+        gitCommonDir: project.gitCommonDir ?? null,
+        remoteUrl: project.remoteUrl ?? null,
       });
+      aliases.set(`path:${path}`, identity);
+      if (project.gitCommonDir) aliases.set(`git:${project.gitCommonDir}`, identity);
+      if (project.remoteUrl) aliases.set(`remote:${project.remoteUrl}`, identity);
     }
   }
 
-  return [...byPath.values()]
+  return [...byIdentity.values()]
     .map(({ platformSet, ...item }) => {
       const platforms = [...platformSet].sort(
         (left, right) =>

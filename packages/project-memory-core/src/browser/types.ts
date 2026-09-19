@@ -86,6 +86,7 @@ export interface GraphViewData {
   relations: BrowserRelation[];
   guide: GraphGuide;
   brief?: ProjectBrief;
+  policy?: Record<string, unknown>;
 }
 
 export type BrowserGraphGuide = GraphGuide;

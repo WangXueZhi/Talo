@@ -452,6 +452,101 @@ async fn get_project_view(app: AppHandle, project_id: String) -> Result<Value, S
 }
 
 #[tauri::command]
+async fn get_project_policy(app: AppHandle, project_id: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "policy".into(),
+                "show".into(),
+                "--project-id".into(),
+                project_id,
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn update_project_policy(
+    app: AppHandle,
+    project_id: String,
+    input: Value,
+) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "policy".into(),
+                "update".into(),
+                "--project-id".into(),
+                project_id,
+                "--json".into(),
+                serde_json::to_string(&input).map_err(|error| error.to_string())?,
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn sync_project_policy(app: AppHandle, project_id: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "integration".into(),
+                "sync".into(),
+                "--project-id".into(),
+                project_id,
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn enable_project_policy(app: AppHandle, project_id: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "integration".into(),
+                "enable".into(),
+                "--project-id".into(),
+                project_id,
+                "--confirm".into(),
+                "true".into(),
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
+async fn disable_project_policy(app: AppHandle, project_id: String) -> Result<Value, String> {
+    tauri::async_runtime::spawn_blocking(move || {
+        execute_cli(
+            &app,
+            &[
+                "integration".into(),
+                "disable".into(),
+                "--project-id".into(),
+                project_id,
+                "--confirm".into(),
+                "true".into(),
+            ],
+        )
+    })
+    .await
+    .map_err(|error| error.to_string())?
+}
+
+#[tauri::command]
 async fn register_platform_project(
     app: AppHandle,
     platform: String,
@@ -878,6 +973,11 @@ fn main() {
             commit_proposal,
             reject_proposal,
             get_project_view,
+            get_project_policy,
+            update_project_policy,
+            sync_project_policy,
+            enable_project_policy,
+            disable_project_policy,
             register_platform_project,
             scan_integrations,
             install_integration,

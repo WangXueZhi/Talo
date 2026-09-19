@@ -13,6 +13,7 @@ import {
 } from "node:fs";
 import path from "node:path";
 import { ProjectMemoryError } from "./errors.js";
+import { policyPath, readPolicy, writePolicy } from "./policy.js";
 import type {
   BriefRole,
   CitationRole,
@@ -27,6 +28,7 @@ import type {
   MemoryRelationRecord,
   MemoryUpdateCandidate,
   MemoryUpdateProposalItem,
+  ProjectPolicyRecord,
   ProjectRecord,
   ProposalActor,
   ProposalItem,
@@ -680,6 +682,47 @@ export class MemoryStore {
 
   private memoryPath(projectId: string): string {
     return path.join(this.projectDir(projectId), "MEMORY.md");
+  }
+
+  policyPath(projectId: string): string {
+    return policyPath(this.projectDir(projectId));
+  }
+
+  getPolicy(projectId: string): ProjectPolicyRecord | null {
+    this.requireProject(projectId);
+    const current = readPolicy(this.policyPath(projectId));
+    if (current && current.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy belongs to another project.", {
+        path: this.policyPath(projectId),
+        projectId,
+      });
+    }
+    return current;
+  }
+
+  savePolicy(
+    projectId: string,
+    policy: ProjectPolicyRecord,
+    eventType = "policy_updated",
+  ): ProjectPolicyRecord {
+    this.requireProject(projectId);
+    if (policy.projectId !== projectId) {
+      throw new ProjectMemoryError("STORAGE_ERROR", "Project Policy identity is invalid.", {
+        projectId,
+      });
+    }
+    const releaseLock = this.acquireProjectLock(projectId);
+    try {
+      writePolicy(this.policyPath(projectId), policy);
+      this.audit(eventType, projectId, policy.policyId, {
+        version: policy.version,
+        status: policy.status,
+        syncStatus: policy.bridge.syncStatus,
+      });
+      return policy;
+    } finally {
+      releaseLock();
+    }
   }
 
   writeKnowledgeGraph(projectId: string, content: string, outputPath?: string): string {

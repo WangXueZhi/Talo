@@ -132,6 +132,7 @@ Talo 直接读取审核后的 Markdown 与关系文件，不使用 embedding，�
 ├── integrations/
 └── projects/<project-id>/
     ├── project.json
+    ├── policy.json
     ├── MEMORY.md
     ├── RELATIONS.json
     ├── audit.jsonl
@@ -145,6 +146,27 @@ Talo 直接读取审核后的 Markdown 与关系文件，不使用 embedding，�
 项目 B 指向项目 A 的单向链接，只允许 B 读取 A 中允许的记忆和文本文件，不包含反向权限。
 所有文件读取都会规范化路径、限制在授权根目录内、检查拒绝规则，并防止符号链接逃逸。
 
+## Project Policy 与 AGENTS.md 桥接
+
+Project Policy 是项目规则的唯一来源，与普通记忆、Proposal 分开保存。它记录唯一项目标识、递增
+版本、规则摘要、已验证来源指纹、更新者和同步状态；历史记忆不能未经审核直接变成规则。
+
+用户在 CLI 或 Desktop 明确启用桥接后，Talo 只维护项目根目录 `AGENTS.md` 中的以下受管区块：
+
+```text
+<!-- TALO_MANAGED_POLICY_START -->
+...
+<!-- TALO_MANAGED_POLICY_END -->
+```
+
+区块之外的用户内容原样保留，子目录和祖先目录中的 `AGENTS.md` 只读发现并报告潜在作用域冲突。
+写入使用项目级 Policy 锁、`AGENTS.md.talo.lock`、整文件 hash 比对、临时文件和原子替换；标记
+损坏、用户漂移、来源过期或权限失败时安全失败，不静默覆盖。Policy 更新在桥接启用时自动同步，
+只有同步成功才标记为 `effective`；当前任务不热更新，下一次任务通过原生 `AGENTS.md` 加载新版本。
+
+最小接口为 `policy show|update` 和项目级 `integration status|enable|disable|sync|repair`。启用、
+禁用、repair 都需要显式确认；禁用默认保留文件，只有 Talo 创建且未被用户接管的空文件才允许清理。
+
 ## 平台集成
 
 ### Codex
@@ -156,7 +178,8 @@ Codex 插件提供 Skill、CLI、审核 Hook 和浏览器资源。Desktop 安装
 ### Claude Code 与 Antigravity
 
 两者都安装由构建流程生成的自包含 Skill，并调用同一个核心 CLI。安装是用户级、显式操作。
-注册项目不会向项目目录写入 `AGENTS.md`、`GEMINI.md` 或其他激活文件。
+注册项目不会自动写入项目文件；只有用户明确启用 Project Policy 桥接后，Talo 才会维护根目录
+`AGENTS.md` 的受管区块，不修改 `GEMINI.md` 或其他平台激活文件。
 
 ### 通用本地 Agent
 
