@@ -23,10 +23,11 @@ Set proposal actor metadata to the current adapter platform: `codex`, `claude`, 
    On Codex only, if this fails because the sandbox cannot write the active Talo home,
    run `integration repair codex` once instead of asking the user to diagnose paths or edit TOML.
    The repair installs both the normal writable root and a stable
-   `~/.project-memory/bin/project-memory` launcher with narrowly scoped Codex rules for memory
-   commands. If the current task still reports `MEMORY_HOME_NOT_ACCESSIBLE` because Codex Desktop
-   supplied a managed permission profile, immediately rerun the failed command through that stable
-   launcher with sandbox escalation. Reuse the stable launcher for subsequent Talo
+   platform-appropriate `~/.project-memory/bin/project-memory` launcher (Windows uses the
+   `.cmd` suffix) with narrowly scoped Codex rules for memory commands. If the current task still
+   reports `MEMORY_HOME_NOT_ACCESSIBLE` because Codex Desktop supplied a managed permission
+   profile, immediately rerun the failed command through that stable launcher with sandbox
+   escalation. Reuse the stable launcher for subsequent Talo
    commands in the same task; do not stop or require a new task merely because the managed profile
    ignored `writable_roots`. Never request a broad `node` or shell approval prefix.
 2. If the project is registered and the task has a clear goal, run `recall --path "$PWD" --query

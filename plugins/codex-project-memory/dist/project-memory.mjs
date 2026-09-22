@@ -2277,6 +2277,7 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   statSync,
   writeFileSync
 } from "fs";
@@ -2307,7 +2308,7 @@ function normalizeError(error) {
         path: filesystemError.path,
         cause: filesystemError.code,
         codexRepairCommand: "project-memory integration repair codex",
-        codexEscalationLauncher: "~/.project-memory/bin/project-memory",
+        codexEscalationLauncher: process.platform === "win32" ? "~/.project-memory/bin/project-memory.cmd" : "~/.project-memory/bin/project-memory",
         sandboxEscalationRequired: true,
         restartRequired: false
       }
@@ -2349,17 +2350,26 @@ function codexConfigPath(options) {
 function managedAccessPaths(options) {
   const dataRoot = path.resolve(options.dataRoot);
   const codexHome = path.dirname(codexConfigPath(options));
+  const launcherName = (options.platform ?? process.platform) === "win32" ? "project-memory.cmd" : "project-memory";
   return {
-    launcherPath: path.join(path.dirname(dataRoot), "bin", "project-memory"),
+    launcherPath: path.join(path.dirname(dataRoot), "bin", launcherName),
     rulesPath: path.join(codexHome, "rules", "project-memory.rules")
   };
 }
 function shellQuote(value) {
   return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
+function windowsQuote(value) {
+  return `"${value.replaceAll("%", "%%").replaceAll('"', '""')}"`;
+}
 function launcherContent(options) {
   const nodePath = path.resolve(options.nodePath ?? process.execPath);
   const cliPath = path.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
+  if ((options.platform ?? process.platform) === "win32") {
+    return `@echo off\r
+${windowsQuote(nodePath)} ${windowsQuote(cliPath)} %*\r
+`;
+  }
   const appNode = "/Applications/Talo.app/Contents/MacOS/project-memory-node";
   const appCli = "/Applications/Talo.app/Contents/Resources/resources/runtime/project-memory.mjs";
   const legacyAppNode = "/Applications/Project Memory.app/Contents/MacOS/project-memory-node";
@@ -2400,8 +2410,16 @@ function managedFallbackConfigured(options) {
 function ensureManagedFallback(options) {
   const { launcherPath, rulesPath } = managedAccessPaths(options);
   const launcherChanged = writeManagedFile(launcherPath, launcherContent(options), 448);
+  let legacyChanged = false;
+  if ((options.platform ?? process.platform) === "win32") {
+    const legacyPath = path.join(path.dirname(launcherPath), "project-memory");
+    if (existsSync(legacyPath) && readFileSync(legacyPath, "utf8").startsWith("#!/bin/sh")) {
+      rmSync(legacyPath, { force: true });
+      legacyChanged = true;
+    }
+  }
   const rulesChanged = writeManagedFile(rulesPath, rulesContent(launcherPath), 384);
-  return launcherChanged || rulesChanged;
+  return launcherChanged || legacyChanged || rulesChanged;
 }
 function skipSpaceAndComments(source, start) {
   let index = start;
@@ -2614,7 +2632,7 @@ import {
   readFileSync as readFileSync4,
   realpathSync as realpathSync3,
   renameSync as renameSync3,
-  rmSync as rmSync2,
+  rmSync as rmSync3,
   writeFileSync as writeFileSync3
 } from "fs";
 import { homedir as homedir3 } from "os";
@@ -2630,7 +2648,7 @@ import {
   readdirSync,
   readFileSync as readFileSync2,
   renameSync as renameSync2,
-  rmSync,
+  rmSync as rmSync2,
   writeFileSync as writeFileSync2
 } from "fs";
 import { homedir as homedir2 } from "os";
@@ -2870,7 +2888,7 @@ function migrateDataDir(sourceDir, targetDir) {
         { sourceCounts, stagedCounts }
       );
     }
-    if (existsSync2(target)) rmSync(target, { recursive: true, force: true });
+    if (existsSync2(target)) rmSync2(target, { recursive: true, force: true });
     renameSync2(staging, target);
     const targetCounts = inspectDataHomeCounts(target);
     selectDataDir(target);
@@ -2883,7 +2901,7 @@ function migrateDataDir(sourceDir, targetDir) {
       counts: targetCounts
     };
   } catch (error) {
-    rmSync(staging, { recursive: true, force: true });
+    rmSync2(staging, { recursive: true, force: true });
     throw error;
   }
 }
@@ -3407,7 +3425,7 @@ function inspectRule(rulePath, expectedHash) {
 function prepareSkill(target, sources) {
   cpSync2(sources.skillDir, target, { recursive: true, errorOnExist: true });
   const binDir = path5.join(target, "bin");
-  rmSync2(binDir, { recursive: true, force: true });
+  rmSync3(binDir, { recursive: true, force: true });
   mkdirSync3(path5.join(binDir, "browser"), { recursive: true, mode: 448 });
   cpSync2(sources.cliPath, path5.join(binDir, "project-memory.mjs"));
   cpSync2(
@@ -3483,12 +3501,12 @@ function installAntigravityIntegration(options = {}) {
   mkdirSync3(path5.dirname(paths.skillPath), { recursive: true, mode: 448 });
   const temporarySkill = `${paths.skillPath}.${process.pid}.${Date.now()}.tmp`;
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  rmSync2(temporarySkill, { recursive: true, force: true });
+  rmSync3(temporarySkill, { recursive: true, force: true });
   let desiredFiles;
   try {
     desiredFiles = prepareSkill(temporarySkill, sources);
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     throw error;
   }
   const previousRule = existsSync4(paths.rulePath) ? readFileSync4(paths.rulePath, "utf8") : null;
@@ -3496,7 +3514,7 @@ function installAntigravityIntegration(options = {}) {
   const nextRule = upsertManagedBlock(previousRule ?? "");
   const desiredRuleHash = sha256(ANTIGRAVITY_RULE);
   if (existingManifest && existingManifest.version === version && JSON.stringify(existingManifest.files) === JSON.stringify(desiredFiles) && existingManifest.ruleHash === desiredRuleHash && previousRule === nextRule) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     return { ...status, changed: false, action: "unchanged", restartRequired: false };
   }
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
@@ -3521,14 +3539,14 @@ function installAntigravityIntegration(options = {}) {
     writeAtomic(paths.rulePath, nextRule);
     writeAtomic(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
 `);
-    rmSync2(backupSkill, { recursive: true, force: true });
+    rmSync3(backupSkill, { recursive: true, force: true });
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
-    rmSync2(paths.skillPath, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
+    rmSync3(paths.skillPath, { recursive: true, force: true });
     if (movedExistingSkill && existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
-    if (previousRule === null) rmSync2(paths.rulePath, { force: true });
+    if (previousRule === null) rmSync3(paths.rulePath, { force: true });
     else writeAtomic(paths.rulePath, previousRule);
-    if (previousManifest === null) rmSync2(paths.manifestPath, { force: true });
+    if (previousManifest === null) rmSync3(paths.manifestPath, { force: true });
     else writeAtomic(paths.manifestPath, previousManifest);
     throw error;
   }
@@ -3572,15 +3590,15 @@ function removeAntigravityIntegration(options = {}) {
   renameSync3(paths.skillPath, backupSkill);
   try {
     if (nextRule) writeAtomic(paths.rulePath, nextRule);
-    else rmSync2(paths.rulePath, { force: true });
-    rmSync2(paths.manifestPath, { force: true });
+    else rmSync3(paths.rulePath, { force: true });
+    rmSync3(paths.manifestPath, { force: true });
   } catch (error) {
     writeAtomic(paths.rulePath, ruleContent);
     writeAtomic(paths.manifestPath, manifestContent);
     if (existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
     throw error;
   }
-  rmSync2(backupSkill, { recursive: true, force: true });
+  rmSync3(backupSkill, { recursive: true, force: true });
   return {
     ...antigravityIntegrationStatus(options),
     changed: true,
@@ -3636,16 +3654,16 @@ function installClaudeIntegration(options = {}) {
   mkdirSync3(path5.dirname(paths.skillPath), { recursive: true, mode: 448 });
   const temporarySkill = `${paths.skillPath}.${process.pid}.${Date.now()}.tmp`;
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
-  rmSync2(temporarySkill, { recursive: true, force: true });
+  rmSync3(temporarySkill, { recursive: true, force: true });
   let desiredFiles;
   try {
     desiredFiles = prepareSkill(temporarySkill, sources);
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     throw error;
   }
   if (existingManifest && existingManifest.version === version && JSON.stringify(existingManifest.files) === JSON.stringify(desiredFiles)) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
     return { ...status, changed: false, action: "unchanged", restartRequired: false };
   }
   const timestamp = (/* @__PURE__ */ new Date()).toISOString();
@@ -3668,12 +3686,12 @@ function installClaudeIntegration(options = {}) {
     renameSync3(temporarySkill, paths.skillPath);
     writeAtomic(paths.manifestPath, `${JSON.stringify(manifest, null, 2)}
 `);
-    rmSync2(backupSkill, { recursive: true, force: true });
+    rmSync3(backupSkill, { recursive: true, force: true });
   } catch (error) {
-    rmSync2(temporarySkill, { recursive: true, force: true });
-    rmSync2(paths.skillPath, { recursive: true, force: true });
+    rmSync3(temporarySkill, { recursive: true, force: true });
+    rmSync3(paths.skillPath, { recursive: true, force: true });
     if (movedExistingSkill && existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
-    if (previousManifest === null) rmSync2(paths.manifestPath, { force: true });
+    if (previousManifest === null) rmSync3(paths.manifestPath, { force: true });
     else writeAtomic(paths.manifestPath, previousManifest);
     throw error;
   }
@@ -3710,13 +3728,13 @@ function removeClaudeIntegration(options = {}) {
   const backupSkill = `${paths.skillPath}.${process.pid}.${Date.now()}.bak`;
   renameSync3(paths.skillPath, backupSkill);
   try {
-    rmSync2(paths.manifestPath, { force: true });
+    rmSync3(paths.manifestPath, { force: true });
   } catch (error) {
     writeAtomic(paths.manifestPath, manifestContent);
     if (existsSync4(backupSkill)) renameSync3(backupSkill, paths.skillPath);
     throw error;
   }
-  rmSync2(backupSkill, { recursive: true, force: true });
+  rmSync3(backupSkill, { recursive: true, force: true });
   return {
     ...claudeIntegrationStatus(options),
     changed: true,
@@ -4539,7 +4557,7 @@ import {
   existsSync as existsSync6,
   mkdirSync as mkdirSync4,
   renameSync as renameSync5,
-  rmSync as rmSync3,
+  rmSync as rmSync4,
   writeFileSync as writeFileSync5
 } from "fs";
 import { homedir as homedir5 } from "os";
@@ -4590,7 +4608,7 @@ function launcherIconPath(cliPath, explicitPath) {
 }
 function compileMacIcon(sourcePath, targetPath) {
   const iconsetPath = `${targetPath}.iconset`;
-  rmSync3(iconsetPath, { recursive: true, force: true });
+  rmSync4(iconsetPath, { recursive: true, force: true });
   mkdirSync4(iconsetPath, { recursive: true, mode: 448 });
   const sizes = [16, 32, 128, 256, 512];
   try {
@@ -4627,7 +4645,7 @@ function compileMacIcon(sourcePath, targetPath) {
     }
     chmodSync5(targetPath, 384);
   } finally {
-    rmSync3(iconsetPath, { recursive: true, force: true });
+    rmSync4(iconsetPath, { recursive: true, force: true });
   }
 }
 function macApplicationPath(homeDir) {
@@ -4652,8 +4670,8 @@ function installMacApplication(options) {
   const executable = path7.join(macos, "project-memory-launcher");
   const iconTarget = path7.join(resources, "Talo.icns");
   const legacyShortcut = legacyMacShortcutPath(options.homeDir);
-  rmSync3(staging, { recursive: true, force: true });
-  rmSync3(previous, { recursive: true, force: true });
+  rmSync4(staging, { recursive: true, force: true });
+  rmSync4(previous, { recursive: true, force: true });
   mkdirSync4(macos, { recursive: true, mode: 448 });
   mkdirSync4(browser, { recursive: true, mode: 448 });
   copyFileSync3(options.cliPath, embeddedCli);
@@ -4699,16 +4717,16 @@ exec ${shellQuote2(options.nodePath)} "$APP_ROOT/Contents/Resources/project-memo
   try {
     if (existsSync6(target)) renameSync5(target, previous);
     renameSync5(staging, target);
-    rmSync3(previous, { recursive: true, force: true });
+    rmSync4(previous, { recursive: true, force: true });
   } catch (error) {
-    rmSync3(staging, { recursive: true, force: true });
+    rmSync4(staging, { recursive: true, force: true });
     if (!existsSync6(target) && existsSync6(previous)) renameSync5(previous, target);
     throw error;
   }
   const legacyShortcutRemoved = existsSync6(legacyShortcut);
-  rmSync3(legacyShortcut, { force: true });
+  rmSync4(legacyShortcut, { force: true });
   const legacyApplicationRemoved = existsSync6(legacyApplication);
-  rmSync3(legacyApplication, { recursive: true, force: true });
+  rmSync4(legacyApplication, { recursive: true, force: true });
   return {
     installed: true,
     shortcutPath: target,
@@ -4750,13 +4768,13 @@ function removeShortcut(options = {}) {
     const appPath = macApplicationPath(homeDir);
     const legacyAppPath = legacyMacApplicationPath(homeDir);
     const legacyShortcutPath = legacyMacShortcutPath(homeDir);
-    rmSync3(appPath, { recursive: true, force: true });
-    rmSync3(legacyAppPath, { recursive: true, force: true });
-    rmSync3(legacyShortcutPath, { force: true });
+    rmSync4(appPath, { recursive: true, force: true });
+    rmSync4(legacyAppPath, { recursive: true, force: true });
+    rmSync4(legacyShortcutPath, { force: true });
     return { removed: true, shortcutPath: appPath, appPath, legacyAppPath, legacyShortcutPath };
   }
   const target = platform === "win32" ? path7.join(homeDir, "Desktop", "Talo.cmd") : path7.join(homeDir, ".local", "share", "applications", "project-memory.desktop");
-  rmSync3(target, { force: true });
+  rmSync4(target, { force: true });
   return { removed: true, shortcutPath: target };
 }
 
@@ -4772,7 +4790,7 @@ import {
   mkdirSync as mkdirSync5,
   readFileSync as readFileSync6,
   renameSync as renameSync6,
-  rmSync as rmSync4,
+  rmSync as rmSync5,
   statSync as statSync5,
   writeFileSync as writeFileSync6
 } from "fs";
@@ -4901,7 +4919,7 @@ function writeAtomic2(filePath, content, mode) {
     renameSync6(temporary, filePath);
     if (process.platform !== "win32") chmodSync6(filePath, mode);
   } finally {
-    rmSync4(temporary, { force: true });
+    rmSync5(temporary, { force: true });
   }
 }
 function withAgentsLock(projectRoot, action) {
@@ -4912,7 +4930,7 @@ function withAgentsLock(projectRoot, action) {
     if (error.code !== "EEXIST") throw error;
     try {
       if (Date.now() - statSync5(lockPath).mtimeMs > 5 * 60 * 1e3) {
-        rmSync4(lockPath, { recursive: true, force: true });
+        rmSync5(lockPath, { recursive: true, force: true });
         mkdirSync5(lockPath, { mode: 448 });
       } else {
         throw new ProjectMemoryError(
@@ -4933,7 +4951,7 @@ function withAgentsLock(projectRoot, action) {
   try {
     return action();
   } finally {
-    rmSync4(lockPath, { recursive: true, force: true });
+    rmSync5(lockPath, { recursive: true, force: true });
   }
 }
 function syncAgentsPolicy(projectRoot, policy, ownership, expectedWholeFileHash) {
@@ -4999,7 +5017,7 @@ function removeAgentsPolicy(projectRoot, ownership, expectedWholeFileHash) {
     const newline = content.includes("\r\n") ? "\r\n" : "\n";
     const next = `${before.trimEnd()}${before.trim() && after.trim() ? newline : ""}${after.trimStart()}`;
     if (ownership === "talo_created" && !next.trim()) {
-      rmSync4(targetPath);
+      rmSync5(targetPath);
       return { removedBlock: true, deletedFile: true };
     }
     writeAtomic2(targetPath, next ? `${next}${newline}` : "", statSync5(targetPath).mode & 511);
@@ -6232,7 +6250,7 @@ import {
   mkdirSync as mkdirSync6,
   readFileSync as readFileSync8,
   renameSync as renameSync7,
-  rmSync as rmSync5,
+  rmSync as rmSync6,
   writeFileSync as writeFileSync7
 } from "fs";
 import path10 from "path";
@@ -6268,7 +6286,7 @@ function writePolicy(filePath, policy) {
     renameSync7(temporary, filePath);
     chmodSync7(filePath, 384);
   } finally {
-    rmSync5(temporary, { force: true });
+    rmSync6(temporary, { force: true });
   }
 }
 function validatePolicyInput(input) {
@@ -8530,7 +8548,7 @@ import {
   readdirSync as readdirSync6,
   readFileSync as readFileSync10,
   renameSync as renameSync8,
-  rmSync as rmSync6,
+  rmSync as rmSync7,
   statSync as statSync7,
   writeFileSync as writeFileSync8
 } from "fs";
@@ -8557,7 +8575,7 @@ function writePrivateFile(filePath, content, hardenDirectory = true) {
     renameSync8(temporaryPath, filePath);
     chmodSync8(filePath, 384);
   } finally {
-    rmSync6(temporaryPath, { force: true });
+    rmSync7(temporaryPath, { force: true });
   }
 }
 function writeJson(filePath, value) {
@@ -8907,7 +8925,7 @@ var MemoryStore = class {
         if (code !== "EEXIST") throw error;
         const age = Date.now() - statSync7(lockPath).mtimeMs;
         if (age > 5 * 60 * 1e3) {
-          rmSync6(lockPath, { recursive: true, force: true });
+          rmSync7(lockPath, { recursive: true, force: true });
           mkdirSync7(lockPath, { mode: 448 });
           writePrivateFile(
             path13.join(lockPath, "owner.json"),
@@ -8925,7 +8943,7 @@ var MemoryStore = class {
       }
     };
     acquire();
-    return () => rmSync6(lockPath, { recursive: true, force: true });
+    return () => rmSync7(lockPath, { recursive: true, force: true });
   }
   projectRevision(projectId) {
     const hash2 = createHash5("sha256");

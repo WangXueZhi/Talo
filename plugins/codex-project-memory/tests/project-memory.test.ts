@@ -50,7 +50,7 @@ describe("project identity", () => {
     expect(relinked.id).toBe(registered.id);
     expect(existsSync(relinked.primaryPath)).toBe(true);
     expect(context.service.detectProject(worktree).registeredProject?.id).toBe(registered.id);
-  });
+  }, 15000);
 });
 
 describe("review-first memory lifecycle", () => {

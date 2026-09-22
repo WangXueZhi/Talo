@@ -5,6 +5,7 @@ import {
   mkdirSync,
   readFileSync,
   renameSync,
+  rmSync,
   statSync,
   writeFileSync,
 } from "node:fs";
@@ -30,6 +31,7 @@ export interface CodexMemoryAccessResult extends CodexMemoryAccessStatus {
 }
 
 export interface CodexMemoryAccessOptions {
+  platform?: NodeJS.Platform;
   homeDir?: string;
   env?: NodeJS.ProcessEnv;
   dataRoot: string;
@@ -80,8 +82,10 @@ function managedAccessPaths(options: CodexMemoryAccessOptions): {
 } {
   const dataRoot = path.resolve(options.dataRoot);
   const codexHome = path.dirname(codexConfigPath(options));
+  const launcherName =
+    (options.platform ?? process.platform) === "win32" ? "project-memory.cmd" : "project-memory";
   return {
-    launcherPath: path.join(path.dirname(dataRoot), "bin", "project-memory"),
+    launcherPath: path.join(path.dirname(dataRoot), "bin", launcherName),
     rulesPath: path.join(codexHome, "rules", "project-memory.rules"),
   };
 }
@@ -90,9 +94,16 @@ function shellQuote(value: string): string {
   return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 
+function windowsQuote(value: string): string {
+  return `"${value.replaceAll("%", "%%").replaceAll('"', '""')}"`;
+}
+
 function launcherContent(options: CodexMemoryAccessOptions): string {
   const nodePath = path.resolve(options.nodePath ?? process.execPath);
   const cliPath = path.resolve(options.cliPath ?? process.argv[1] ?? "project-memory.mjs");
+  if ((options.platform ?? process.platform) === "win32") {
+    return `@echo off\r\n${windowsQuote(nodePath)} ${windowsQuote(cliPath)} %*\r\n`;
+  }
   const appNode = "/Applications/Talo.app/Contents/MacOS/project-memory-node";
   const appCli = "/Applications/Talo.app/Contents/Resources/resources/runtime/project-memory.mjs";
   const legacyAppNode = "/Applications/Project Memory.app/Contents/MacOS/project-memory-node";
@@ -142,8 +153,16 @@ function managedFallbackConfigured(options: CodexMemoryAccessOptions): boolean {
 function ensureManagedFallback(options: CodexMemoryAccessOptions): boolean {
   const { launcherPath, rulesPath } = managedAccessPaths(options);
   const launcherChanged = writeManagedFile(launcherPath, launcherContent(options), 0o700);
+  let legacyChanged = false;
+  if ((options.platform ?? process.platform) === "win32") {
+    const legacyPath = path.join(path.dirname(launcherPath), "project-memory");
+    if (existsSync(legacyPath) && readFileSync(legacyPath, "utf8").startsWith("#!/bin/sh")) {
+      rmSync(legacyPath, { force: true });
+      legacyChanged = true;
+    }
+  }
   const rulesChanged = writeManagedFile(rulesPath, rulesContent(launcherPath), 0o600);
-  return launcherChanged || rulesChanged;
+  return launcherChanged || legacyChanged || rulesChanged;
 }
 
 function skipSpaceAndComments(source: string, start: number): number {

@@ -14,7 +14,10 @@ describe("error normalization", () => {
         path: "/Users/example/.project-memory/v1/projects",
         cause: "EPERM",
         codexRepairCommand: "project-memory integration repair codex",
-        codexEscalationLauncher: "~/.project-memory/bin/project-memory",
+        codexEscalationLauncher:
+          process.platform === "win32"
+            ? "~/.project-memory/bin/project-memory.cmd"
+            : "~/.project-memory/bin/project-memory",
         sandboxEscalationRequired: true,
         restartRequired: false,
       },

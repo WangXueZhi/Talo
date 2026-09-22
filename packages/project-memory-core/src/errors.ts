@@ -66,7 +66,10 @@ export function normalizeError(error: unknown): {
         path: filesystemError.path,
         cause: filesystemError.code,
         codexRepairCommand: "project-memory integration repair codex",
-        codexEscalationLauncher: "~/.project-memory/bin/project-memory",
+        codexEscalationLauncher:
+          process.platform === "win32"
+            ? "~/.project-memory/bin/project-memory.cmd"
+            : "~/.project-memory/bin/project-memory",
         sandboxEscalationRequired: true,
         restartRequired: false,
       },

@@ -46,7 +46,13 @@ describe("cross-project access", () => {
     writeFileSync(path.join(projectAPath, "large.txt"), Buffer.alloc(1024 * 1024 + 1, "a"));
     const outsidePath = path.join(context.root, "outside.txt");
     writeProjectFile(context.root, "outside.txt", "outside\n");
-    symlinkSync(outsidePath, path.join(projectAPath, "escape.txt"));
+    let symlinkAvailable = true;
+    try {
+      symlinkSync(outsidePath, path.join(projectAPath, "escape.txt"));
+    } catch (error) {
+      if (process.platform !== "win32") throw error;
+      symlinkAvailable = false;
+    }
     const projectA = context.service.registerProject(projectAPath);
     const projectB = context.service.registerProject(projectBPath);
     context.service.linkProjects(projectB.id, projectA.id);
@@ -60,9 +66,11 @@ describe("cross-project access", () => {
     expect(() => context.service.readFile(projectB.id, projectA.id, ".env")).toThrowError(
       /blocked/,
     );
-    expect(() => context.service.readFile(projectB.id, projectA.id, "escape.txt")).toThrowError(
-      /escapes/,
-    );
+    if (symlinkAvailable) {
+      expect(() => context.service.readFile(projectB.id, projectA.id, "escape.txt")).toThrowError(
+        /escapes/,
+      );
+    }
     expect(() => context.service.readFile(projectB.id, projectA.id, "binary.bin")).toThrowError(
       /Binary/,
     );

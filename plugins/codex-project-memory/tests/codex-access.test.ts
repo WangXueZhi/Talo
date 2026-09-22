@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
@@ -29,7 +29,7 @@ function fixture(config = "") {
 describe("Codex Talo sandbox access", () => {
   test("creates a minimal writable root configuration", () => {
     const paths = fixture();
-    const result = ensureCodexMemoryAccess(paths);
+    const result = ensureCodexMemoryAccess({ ...paths, platform: "linux" });
     expect(result).toMatchObject({ state: "configured", changed: true, restartRequired: true });
     expect(readFileSync(paths.configPath, "utf8")).toContain(
       `writable_roots = [${JSON.stringify(paths.dataRoot)}]`,
@@ -38,7 +38,7 @@ describe("Codex Talo sandbox access", () => {
     expect(readFileSync(result.launcherPath, "utf8")).toContain("Project Memory.app");
     expect(readFileSync(result.rulesPath, "utf8")).toContain('"detect"');
     expect(readFileSync(result.rulesPath, "utf8")).not.toContain('"forget"');
-    expect(inspectCodexMemoryAccess(paths).state).toBe("configured");
+    expect(inspectCodexMemoryAccess({ ...paths, platform: "linux" }).state).toBe("configured");
   });
 
   test("preserves existing settings and appends to writable roots", () => {
@@ -65,17 +65,50 @@ describe("Codex Talo sandbox access", () => {
 
   test("repairs a stale managed launcher after the desktop app is renamed", () => {
     const paths = fixture();
-    const installed = ensureCodexMemoryAccess(paths);
+    const installed = ensureCodexMemoryAccess({ ...paths, platform: "linux" });
     writeFileSync(
       installed.launcherPath,
       "#!/bin/sh\nexec '/Applications/Project Memory.app/Contents/MacOS/project-memory-node' \"$@\"\n",
     );
 
-    expect(inspectCodexMemoryAccess(paths).state).toBe("missing");
-    const repaired = ensureCodexMemoryAccess(paths);
+    expect(inspectCodexMemoryAccess({ ...paths, platform: "linux" }).state).toBe("missing");
+    const repaired = ensureCodexMemoryAccess({ ...paths, platform: "linux" });
     expect(repaired).toMatchObject({ state: "configured", changed: true });
     expect(readFileSync(repaired.launcherPath, "utf8")).toContain("/Applications/Talo.app");
-    expect(inspectCodexMemoryAccess(paths).state).toBe("configured");
+    expect(inspectCodexMemoryAccess({ ...paths, platform: "linux" }).state).toBe("configured");
+  });
+
+  test("uses a Windows cmd launcher and removes the legacy shell launcher", () => {
+    const paths = fixture();
+    const legacyPath = path.join(paths.homeDir, ".project-memory", "bin", "project-memory");
+    mkdirSync(path.dirname(legacyPath), { recursive: true });
+    writeFileSync(legacyPath, "#!/bin/sh\nexec node project-memory.mjs\n");
+
+    const installed = ensureCodexMemoryAccess({
+      ...paths,
+      platform: "win32",
+      nodePath: "C:\\Program Files\\nodejs\\node.exe",
+      cliPath: "C:\\Talo\\project-memory.mjs",
+    });
+
+    expect(installed.launcherPath).toBe(
+      path.join(paths.homeDir, ".project-memory", "bin", "project-memory.cmd"),
+    );
+    expect(readFileSync(installed.launcherPath, "utf8")).toBe(
+      '@echo off\r\n"C:\\Program Files\\nodejs\\node.exe" "C:\\Talo\\project-memory.mjs" %*\r\n',
+    );
+    expect(existsSync(legacyPath)).toBe(false);
+    expect(readFileSync(installed.rulesPath, "utf8")).toContain(
+      JSON.stringify(installed.launcherPath),
+    );
+    expect(
+      inspectCodexMemoryAccess({
+        ...paths,
+        platform: "win32",
+        nodePath: "C:\\Program Files\\nodejs\\node.exe",
+        cliPath: "C:\\Talo\\project-memory.mjs",
+      }).state,
+    ).toBe("configured");
   });
 
   test("adds the key to an existing sandbox table without duplicating it", () => {

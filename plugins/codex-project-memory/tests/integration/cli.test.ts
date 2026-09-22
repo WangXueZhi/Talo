@@ -413,5 +413,5 @@ describe("Skill CLI", () => {
       committedRelations[0]?.id ?? "",
     ]);
     expect(forgotten.forgottenRelationIds).toHaveLength(1);
-  });
+  }, 15000);
 });

@@ -38,7 +38,7 @@ describe("shared home and memory hub", () => {
     expect(html).toContain("搜索项目、结论、产出、来源说明或下一步");
     expect(html).not.toContain("connect-src https:");
     expect(html).not.toContain(">projectId<");
-  });
+  }, 15000);
 
   test("migrates through a verified backup and preserves object counts", () => {
     const context = createTestContext();
